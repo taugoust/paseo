@@ -126,10 +126,10 @@ buildNpmPackage rec {
     runHook postCheck
   '';
 
-  # npmRebuildFlags disables install scripts in the sandbox, but compact UI
-  # requires this export from @gorhom/bottom-sheet's modal portal internals.
+  # Install scripts are disabled in the sandbox. Apply the pinned upstream
+  # dependency patches explicitly, matching development and retaining parser fixes.
   preBuild = ''
-    patch -p1 < patches/@gorhom+bottom-sheet+5.2.14.patch
+    npm run postinstall
     grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/src/index.ts
     grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/lib/module/index.js
   '';
