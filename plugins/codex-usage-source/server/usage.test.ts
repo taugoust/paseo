@@ -225,6 +225,10 @@ test("discovers a Pi OAuth login independently of the CLI login", async () => {
     expect(inputs.map((account) => account.input)).toContainEqual({
       route: { store: "pi", path: join(directory, ".pi", "agent", "auth.json") },
     });
+    // Session-owned Pi routing must not be replaced by the global login.
+    expect(await discover({ kind: "session", provider: "pi", env: { HOME: directory } })).toEqual(
+      [],
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

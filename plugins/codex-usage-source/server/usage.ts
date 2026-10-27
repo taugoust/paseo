@@ -68,6 +68,9 @@ export async function discover(
       env: scope.env,
       home: scope.env.HOME || scope.env.USERPROFILE || homedir(),
     };
+  // Pi account selection is session-owned; global auth.json is not authoritative.
+  if (scope.kind === "session" && scope.provider === "pi") return [];
+
   const candidates = scope.kind === "global" ? globalRoutes(lookup) : sessionRoutes(scope, lookup);
   const present: UsageAccount[] = [];
   for (const input of candidates) {
