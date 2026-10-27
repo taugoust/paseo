@@ -120,6 +120,9 @@ buildNpmPackage rec {
     cd "$PASEO_BUILD"
     node packages/server/node_modules/vitest/vitest.mjs run --no-file-parallelism --maxWorkers=1 --exclude "**/*.e2e.test.ts" src/server/agent/providers/pi/agent.test.ts src/server/agent/providers/pi/cli-runtime.test.ts src/server/agent/providers/pi/tool-result-images.test.ts src/server/agent/providers/pi/usage-lifecycle.test.ts -t "permission modes refresh live state|bridge state explicitly|bridge metadata is absent|auto-compaction|extension command|Pi extension errors|extension_error|questionnaire|idle usage|idle refresh|actual final usage|compact|compaction|configured RPC timeout|admission|human command|human input|Pi tool result|tool images|routes native subagent snapshots"
     npm test --workspace=@getpaseo/builtin-plugins -- codex-usage-source/server
+    npm test --workspace=@getpaseo/plugin -- src/shared
+    npm test --workspace=@getpaseo/app -- src/components/markdown/renderer.test.ts src/components/synced-loader-state.test.ts
+    node packages/server/node_modules/vitest/vitest.mjs run --no-file-parallelism --maxWorkers=1 src/server/plugins/compiler.test.ts
     runHook postCheck
   '';
 
@@ -198,6 +201,9 @@ buildNpmPackage rec {
     cp node_modules/@babel/plugin-transform-classes/LICENSE "$out/lib/paseo/licenses/BABEL-CLASSES-MIT.txt"
     node nix/copy-highlight-licenses.mjs "$PWD" "$out/lib/paseo/licenses/highlight" "$out/lib/paseo"
     node nix/tests/highlight-licenses.test.mjs "$out/lib/paseo/licenses/highlight"
+    # NFT traces runtime files, not type-only imports of bundled shared helpers.
+    mkdir -p "$out/lib/paseo/packages/plugin/dist/shared"
+    cp packages/plugin/dist/shared/*.d.ts "$out/lib/paseo/packages/plugin/dist/shared/"
     mkdir -p "$out/lib/paseo/packages/app/src/components"
     cp packages/app/src/components/tool-call-details.tsx \
       "$out/lib/paseo/packages/app/src/components/tool-call-details.tsx"

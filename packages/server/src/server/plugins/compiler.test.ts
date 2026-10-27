@@ -193,6 +193,41 @@ export default function contribute() {
     expect(externalModules).toEqual([]);
   });
 
+  it("bundles shared helpers for both targets without requiring new host modules", async () => {
+    const entries = await createSplitPlugin();
+    const source = `import * as helpers from "@getpaseo/plugin/shared";
+import type * as SharedTypes from "@getpaseo/plugin/shared";
+const shared: typeof SharedTypes = helpers;
+export default function listHelpers() { return Object.keys(shared).sort(); }`;
+    await writeFile(entries.client, source);
+    await writeFile(entries.server, source);
+    const result = await compilePlugin(entries);
+    for (const code of [result.clientBundle, result.serverBundle]) {
+      expect(code).not.toBeNull();
+      const factory = runInNewContext(code!) as (requireModule: (specifier: string) => never) => {
+        default: () => string[];
+      };
+      const plugin = factory((specifier) => {
+        throw new Error(`Unexpected host runtime import: ${specifier}`);
+      });
+      expect(plugin.default().length).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(["@getpaseo/plugin/shared/private", "@getpaseo/plugin/shared/../server"])(
+    "does not open private SDK subpaths through the shared alias: %s",
+    async (specifier) => {
+      const entries = await createSplitPlugin();
+      await writeFile(
+        entries.client,
+        `import * as hidden from "${specifier}"; export default () => hidden;`,
+      );
+      await expect(compilePlugin({ client: entries.client, server: null })).rejects.toThrow(
+        "Unknown SDK",
+      );
+    },
+  );
+
   it("still requires local dependencies for protocol runtime imports", async () => {
     const entries = await createSplitPlugin();
     await writeFile(

@@ -353,6 +353,25 @@ it.each(['""', "''", "()"])("preserves an authored empty link title: %s", (title
 });
 
 describe("shared Markdown theme colours", () => {
+  it("keeps shared text, heading, and code metrics in compact and regular layouts", () => {
+    const regular = createMarkdownStyles(darkTheme, { blockGap: 16 }).markdownStyle;
+    const compact = createMarkdownStyles(darkTheme, { compact: true, blockGap: 12 }).markdownStyle;
+    expect(regular.paragraph).toMatchObject({
+      fontSize: darkTheme.fontSize.content,
+      lineHeight: 21,
+    });
+    expect(regular.h1).toMatchObject({ fontSize: 24, lineHeight: 31 });
+    expect(regular.codeBlock).toMatchObject({ fontSize: darkTheme.fontSize.code, lineHeight: 21 });
+    expect(compact.paragraph).toMatchObject({
+      fontSize: darkTheme.fontSize.base,
+      lineHeight: Math.round(darkTheme.fontSize.base * 1.4),
+    });
+    expect(compact.h1).toMatchObject({ fontSize: Math.round(darkTheme.fontSize.base * 1.6) });
+    expect(compact.codeBlock).toMatchObject({
+      fontSize: darkTheme.fontSize.code,
+      lineHeight: Math.round(darkTheme.fontSize.base * 1.4),
+    });
+  });
   it.each([
     ["dark", darkTheme],
     ["light", lightTheme],

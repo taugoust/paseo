@@ -1,4 +1,9 @@
 import type { MarkdownStyle } from "react-native-enriched-markdown";
+import {
+  getMarkdownCodeMetrics,
+  getMarkdownHeadingMetrics,
+  getMarkdownTextMetrics,
+} from "@getpaseo/plugin/shared";
 import type { Theme } from "@/styles/theme";
 import { isWeb } from "@/constants/platform";
 
@@ -12,17 +17,17 @@ export function createMarkdownStyles(
   const fontSize = compact ? theme.fontSize.base : theme.fontSize.content;
   // Every block is followed by the same gap; the library drops it after the last block.
   const block = { marginTop: 0, marginBottom: blockGap };
+  const textMetrics = getMarkdownTextMetrics(fontSize);
+  const codeMetrics = getMarkdownCodeMetrics(theme.fontSize.code, fontSize);
   const paragraph = {
-    fontSize,
+    ...textMetrics,
     fontFamily: theme.fontFamily.ui,
-    lineHeight: Math.round(fontSize * 1.4),
     color: theme.colors.foreground,
     ...block,
   };
-  const heading = (scale: number) => ({
+  const heading = (level: number) => ({
     ...paragraph,
-    fontSize: Math.round(fontSize * scale),
-    lineHeight: Math.round(fontSize * scale * 1.3),
+    ...getMarkdownHeadingMetrics(fontSize, level),
     fontWeight: "bold",
   });
   return {
@@ -30,12 +35,12 @@ export function createMarkdownStyles(
     selectionColor: theme.colors.terminal.selectionBackground,
     markdownStyle: {
       paragraph,
-      h1: heading(1.6),
-      h2: heading(1.4),
-      h3: heading(1.2),
-      h4: heading(1.1),
-      h5: heading(1),
-      h6: { ...heading(1), color: theme.colors.foregroundMuted },
+      h1: heading(1),
+      h2: heading(2),
+      h3: heading(3),
+      h4: heading(4),
+      h5: heading(5),
+      h6: { ...heading(6), color: theme.colors.foregroundMuted },
       list: {
         ...paragraph,
         bulletColor: theme.colors.foregroundMuted,
@@ -68,15 +73,15 @@ export function createMarkdownStyles(
       },
       code: {
         fontFamily: theme.fontFamily.mono === "ui-monospace" && !isWeb ? "" : theme.fontFamily.mono,
-        fontSize: theme.fontSize.code,
+        fontSize: codeMetrics.fontSize,
         color: theme.colors.foreground,
         backgroundColor: theme.colors.surface2,
         borderColor: "transparent",
       },
       codeBlock: {
         ...paragraph,
+        ...codeMetrics,
         fontFamily: theme.fontFamily.mono === "ui-monospace" && !isWeb ? "" : theme.fontFamily.mono,
-        fontSize: theme.fontSize.code,
         backgroundColor: theme.colors.surface2,
         borderColor: theme.colors.border,
         borderRadius: 8,

@@ -43,8 +43,20 @@ export default function () {
     throw new Error(`Bundled highlighting must not require host module ${name}`);
   });
   assert.ok(sharedModule.default().some((token) => token.style === "keyword"));
+  await writeFile(
+    entry,
+    `import * as helpers from "@getpaseo/plugin/shared";
+import type * as SharedTypes from "@getpaseo/plugin/shared";
+const shared: typeof SharedTypes = helpers;
+export default function listHelpers() { return Object.keys(shared); }`,
+  );
+  const bundled = await compilePlugin({ client: entry, server: null });
+  const helpersModule = (0, eval)(bundled.clientBundle)((name) => {
+    throw new Error(`Bundled shared helpers must not require host module ${name}`);
+  });
+  assert.ok(helpersModule.default().length > 0);
   console.log(
-    "PASS: native class lowering, eager host imports, and bundled highlighting with installed declarations",
+    "PASS: native class lowering, eager host imports, bundled highlighting and shared helpers with installed declarations",
   );
 } finally {
   await rm(root, { recursive: true, force: true });

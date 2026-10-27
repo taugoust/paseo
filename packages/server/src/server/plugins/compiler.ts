@@ -12,6 +12,11 @@ import {
 const nodeRequire = createRequire(import.meta.url);
 export const SERVER_HOST_MODULES = [...PLUGIN_SDK_SPECIFIERS, "zod"];
 const ESBUILD_BINARY_PATH = "ESBUILD_BINARY_PATH";
+// Pinned libraries are bundled, never supplied by an installed client host.
+const BUNDLED_SHARED_MODULES: readonly string[] = [
+  "@getpaseo/highlight",
+  "@getpaseo/plugin/shared",
+];
 
 // esbuild resolves its own platform binary via require.resolve() the first time its
 // module is evaluated. Inside the packaged desktop app that resolves to a path under
@@ -207,8 +212,9 @@ function createRuntimeBoundaryPlugin(target: PluginBuildTarget, pluginDirectory:
       ): Promise<Set<string>> {
         // Match the runtime alias for declarations too. Resolve from the pinned
         // package, then inspect its transitive types through the same boundaries.
-        const declarationImporter =
-          specifier === "@getpaseo/highlight" ? nodeRequire.resolve(specifier) : file;
+        const declarationImporter = BUNDLED_SHARED_MODULES.includes(specifier)
+          ? nodeRequire.resolve(specifier)
+          : file;
         const declaration = imports.resolve(specifier, declarationImporter, kind);
         const dependencyFiles = new Set<string>();
         if (declaration && (typeOnly || /\.d\.[cm]?ts$/.test(declaration)))
@@ -329,7 +335,8 @@ function runtimeSpecifierError(
       specifier.startsWith("@getpaseo/plugin/") ||
       specifier === "@paseo/plugin" ||
       specifier.startsWith("@paseo/plugin/")) &&
-    !(PLUGIN_SDK_SPECIFIERS as readonly string[]).includes(specifier)
+    !(PLUGIN_SDK_SPECIFIERS as readonly string[]).includes(specifier) &&
+    !BUNDLED_SHARED_MODULES.includes(specifier)
   )
     kind = "Unknown SDK";
   else if (target !== "server" && (isBuiltin(specifier) || specifier === "@types/node"))
@@ -405,7 +412,9 @@ async function compileTarget(entryPath: string, target: PluginBuildTarget): Prom
     mainFields: target === "client" ? ["module", "main"] : undefined,
     // Plugin authors import the fork-owned package, but the compiled plugin must
     // carry it and its grammars rather than requiring a new host runtime module.
-    alias: { "@getpaseo/highlight": nodeRequire.resolve("@getpaseo/highlight") },
+    alias: Object.fromEntries(
+      BUNDLED_SHARED_MODULES.map((specifier) => [specifier, nodeRequire.resolve(specifier)]),
+    ),
     // Metro lowers async syntax before Hermes sees app code. Plugin client bundles bypass Metro,
     // so apply the same compatibility transform before the app evaluates them from source.
     supported: target === "client" ? { "async-await": false } : undefined,

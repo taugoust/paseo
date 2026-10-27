@@ -42,7 +42,12 @@ const sherpaEnvModule =
 const runtimeDependencies = new Map([
   [
     "packages/server/dist/server/server/plugins/compiler.js",
-    ["@babel/core", "@babel/plugin-transform-classes", "@getpaseo/highlight"],
+    [
+      "@babel/core",
+      "@babel/plugin-transform-classes",
+      "@getpaseo/highlight",
+      "@getpaseo/plugin/shared",
+    ],
   ],
   ["packages/cli/dist/commands/daemon/local-daemon.js", ["@getpaseo/server"]],
   [terminalModule, ["@getpaseo/cli/bin/paseo", "node-pty/package.json"]],

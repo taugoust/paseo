@@ -13,6 +13,7 @@ import {
   type UsageWindow,
 } from "@getpaseo/plugin/server/usage";
 import { z } from "zod";
+import { quotaWindowDescriptors } from "@getpaseo/plugin/shared";
 import type { CodexUsageInput } from "../shared/input.js";
 
 const authSchema = z.object({
@@ -163,28 +164,13 @@ function usageWindows({
   summary?: boolean;
 }): UsageWindow[] {
   if (!rateLimit) return [];
-  return (["primary_window", "secondary_window"] as const).flatMap((slot) => {
-    const value = rateLimit[slot];
-    if (!value) return [];
-    const primary = slot === "primary_window";
-    // Codex does not always report a length. A slot is then only an unknown limit,
-    // never evidence of a five-hour or weekly period.
-    return [
-      windowFromReportedDuration({
-        durationSeconds: value.limit_window_seconds ?? null,
-        unknown: {
-          id: primary ? "unknown_primary" : "unknown_secondary",
-          label: primary ? "Primary limit" : "Secondary limit",
-          shortLabel: "",
-        },
-        scope,
-        summary,
-        utilizationPct: value.used_percent,
-        resetsAt: value.reset_at != null ? new Date(value.reset_at * 1000).toISOString() : null,
-        tone: toneFromUsedPct(value.used_percent),
-      }),
-    ];
-  });
+  // Missing duration is an unknown limit, never evidence of a five-hour or weekly period.
+  return quotaWindowDescriptors(rateLimit, { scope, summary }).map((window) =>
+    windowFromReportedDuration({
+      ...window,
+      tone: toneFromUsedPct(window.utilizationPct),
+    }),
+  );
 }
 
 export async function fetchUsage(
