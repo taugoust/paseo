@@ -28,6 +28,7 @@ interface KnownReport {
   source: UsageSource;
   logins: [Login, ...Login[]];
   label?: string;
+  sessionOnly?: boolean;
 }
 
 export interface AgentUsageLookup {
@@ -46,6 +47,7 @@ interface AgentReports {
   provider: string;
   model?: string;
   sessionKey: string;
+  env: Record<string, string>;
   reports: Map<string, KnownReport>;
 }
 
@@ -55,6 +57,7 @@ export class UsageSourceRegistry {
   private readonly known = new Map<string, KnownReport>();
   private defaults = new Map<string, KnownReport>();
   private readonly byAgent = new Map<string, AgentReports>();
+  private readonly discoveryRevision = new Map<string, number>();
   private readonly cache = new Map<string, { at: number; entry: UsageReportEntry }>();
   private readonly successful = new Map<string, NonNullable<UsageReportEntry["lastSuccessful"]>>();
   private readonly pending = new Map<string, Promise<UsageReportEntry>>();
@@ -103,18 +106,30 @@ export class UsageSourceRegistry {
       this.mergeKnown();
       ids = [...this.known.keys()];
     }
-    return Promise.all(
+    const entries = await Promise.all(
       [...new Set(ids)].flatMap((id) => {
         const known = reports.get(id);
         if (!known) return [];
         return [
           this.fetchId(id, known, options.forceRefresh).then((entry) => {
-            options.onReport?.(entry);
+            if (options.agentId === undefined) options.onReport?.(entry);
             return entry;
           }),
         ];
       }),
     );
+    if (options.agentId !== undefined) {
+      // Context cards arrive together in a deterministic order, including on
+      // native clients that render streamed reports in arrival order.
+      entries.sort(
+        (a, b) =>
+          a.sourceLabel.localeCompare(b.sourceLabel, "en") ||
+          (a.account.label ?? "").localeCompare(b.account.label ?? "", "en") ||
+          a.id.localeCompare(b.id, "en"),
+      );
+      for (const entry of entries) options.onReport?.(entry);
+    }
+    return entries;
   }
 
   private pruneAgents(): void {
@@ -132,24 +147,41 @@ export class UsageSourceRegistry {
       this.mergeKnown();
       return [];
     }
+    const revision = (this.discoveryRevision.get(agentId) ?? 0) + 1;
+    this.discoveryRevision.set(agentId, revision);
     const previous = this.byAgent.get(agentId);
     const sameScope =
       previous?.sessionKey === session.sessionKey &&
       previous.provider === session.provider &&
-      previous.model === session.model;
+      previous.model === session.model &&
+      session.provider !== "pi";
     if (sameScope) return [...previous.reports.keys()];
     const reports = await this.discover({
       kind: "session",
       provider: session.provider,
       model: session.model,
-      env: session.env,
+      env: { ...session.env, PASEO_AGENT_ID: agentId },
     });
-    // A query that finishes after a resume must not publish the previous launch's mapping.
-    if (this.agents.usageSession(agentId)?.sessionKey !== session.sessionKey) return [];
+    // Do not let an older query publish after a newer discovery or session transition.
+    const current = this.agents.usageSession(agentId);
+    if (
+      revision !== this.discoveryRevision.get(agentId) ||
+      !current ||
+      current.sessionKey !== session.sessionKey ||
+      current.provider !== session.provider ||
+      current.model !== session.model
+    ) {
+      if (revision === this.discoveryRevision.get(agentId)) {
+        this.byAgent.delete(agentId);
+        this.mergeKnown();
+      }
+      return [];
+    }
     this.byAgent.set(agentId, {
       sessionKey: session.sessionKey,
       provider: session.provider,
       model: session.model,
+      env: session.env,
       reports,
     });
     this.mergeKnown();
@@ -163,6 +195,7 @@ export class UsageSourceRegistry {
       ...[...this.byAgent.values()].map((agent) => agent.reports),
     ]) {
       for (const [id, report] of reports) {
+        if (report.sessionOnly) continue;
         if (this.sources.get(report.source.id) !== report.source) continue;
         const known = this.known.get(id);
         if (!known) {
@@ -205,6 +238,7 @@ export class UsageSourceRegistry {
                 key: z.string().regex(/^[A-Za-z0-9._-]{1,128}$/),
                 label: z.string().optional(),
                 harness: z.string().min(1).optional(),
+                sessionOnly: z.boolean().optional(),
                 input: z.json(),
               }),
             )
@@ -217,7 +251,13 @@ export class UsageSourceRegistry {
             if (known) {
               if (!known.logins.some((existing) => loginKey(existing) === loginKey(login)))
                 known.logins.push(login);
-            } else reports.set(id, { source, logins: [login], label: account.label });
+            } else
+              reports.set(id, {
+                source,
+                logins: [login],
+                label: account.label,
+                sessionOnly: account.sessionOnly,
+              });
           }
         } catch (error) {
           this.logger.warn({ sourceId: source.id, err: error }, "Usage source discovery failed");

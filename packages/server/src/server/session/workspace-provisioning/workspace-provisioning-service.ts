@@ -1,3 +1,4 @@
+import { getTmuxTopology } from "../../tmux-topology.js";
 import type { PluginLifecycle } from "../../plugins/lifecycle/index.js";
 import { describeHookWorkspace } from "../../plugins/lifecycle/index.js";
 import { basename, resolve } from "node:path";
@@ -129,6 +130,13 @@ export function createWorkspaceProvisioningService(deps: {
     input: ImportWorkspaceInput,
     operation: (workspace: PersistedWorkspaceRecord) => Promise<T>,
   ): Promise<ImportWorkspaceResult<T>> {
+    const topology = getTmuxTopology();
+    if (
+      topology &&
+      (!input.requestedWorkspaceId || !topology.placements.has(input.requestedWorkspaceId))
+    ) {
+      throw new Error("Import requires an explicit projected tmux workspaceId");
+    }
     if (input.requestedWorkspaceId) {
       const workspace = await workspaceRegistry.get(input.requestedWorkspaceId);
       if (!workspace || workspace.archivedAt) {
@@ -138,7 +146,7 @@ export function createWorkspaceProvisioningService(deps: {
       if (!project || project.archivedAt) {
         throw new Error(`Project not found: ${workspace.projectId}`);
       }
-      if (!createRealpathAwarePathMatcher(workspace.cwd)(input.cwd)) {
+      if (!topology && !createRealpathAwarePathMatcher(workspace.cwd)(input.cwd)) {
         throw new Error(`Import cwd does not match workspace: ${workspace.workspaceId}`);
       }
       return {
@@ -247,6 +255,8 @@ export function createWorkspaceProvisioningService(deps: {
     },
   ): Promise<PersistedWorkspaceRecord> {
     const normalizedCwd = resolve(cwd);
+    const topology = getTmuxTopology();
+    if (topology) return topology.createWorkspace(projectId, normalizedCwd, title ?? undefined);
     const checkout = await workspaceGitService.getCheckout(normalizedCwd);
     const project = projectId
       ? await refreshProjectKind(await requireActiveProject(projectId), normalizedCwd, checkout)
@@ -272,6 +282,14 @@ export function createWorkspaceProvisioningService(deps: {
   async function createWorkspaceForWorktree(
     input: CreateWorktreeWorkspaceInput,
   ): Promise<PersistedWorkspaceRecord> {
+    const topology = getTmuxTopology();
+    if (topology)
+      return topology.createWorkspace(
+        input.projectId,
+        resolve(input.cwd),
+        input.title ?? undefined,
+        input.untrustedSource,
+      );
     const sourceCwd = resolve(input.sourceCwd);
     const repoRoot = resolve(input.repoRoot);
     const cwd = resolve(input.cwd);
@@ -352,6 +370,8 @@ export function createWorkspaceProvisioningService(deps: {
   }
 
   async function findOrCreateWorkspaceForDirectory(cwd: string): Promise<PersistedWorkspaceRecord> {
+    if (getTmuxTopology())
+      throw new Error("Explicit workspaceId required for tmux placement; cwd is not identity");
     const normalizedCwd = resolve(cwd);
     // Path-based discovery selects public work; explicit-ID recovery bypasses this selector.
     const workspaces = (await workspaceRegistry.list())
@@ -480,6 +500,7 @@ export function createWorkspaceProvisioningService(deps: {
     workspaceCwd?: string,
     workspaceCheckout?: Awaited<ReturnType<WorkspaceGitService["getCheckout"]>>,
   ): Promise<PersistedProjectRecord> {
+    if (project.projectId.startsWith("prj_tmux_")) return project;
     const projectCheckout =
       workspaceCwd && workspaceCheckout && areEquivalentPaths(project.rootPath, workspaceCwd)
         ? workspaceCheckout

@@ -1,4 +1,5 @@
 import { getPaseoToolLeafName } from "../tool-name-normalization.js";
+import { buildGenericToolSections } from "../generic-tool-presentation.js";
 import { getPaseoToolEntry, type PaseoToolDetailSpec } from "./catalog.js";
 
 export interface PaseoToolDetailField {
@@ -142,32 +143,6 @@ function fieldsFromValue(
   }));
 }
 
-function parseJsonText(value: unknown): unknown {
-  if (typeof value !== "string") return undefined;
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return undefined;
-  }
-}
-
-function unwrapMcpResult(output: unknown): unknown {
-  if (!isRecord(output)) return output;
-
-  if (output.structuredContent !== undefined) {
-    return output.structuredContent;
-  }
-
-  if (Array.isArray(output.content) && output.content.length === 1) {
-    const item = output.content[0];
-    if (isRecord(item) && item.type === "text") {
-      return parseJsonText(item.text) ?? item.text;
-    }
-  }
-
-  return output;
-}
-
 export function buildPaseoToolDetailSections(
   toolName: string,
   input: unknown,
@@ -190,14 +165,15 @@ export function buildPaseoToolDetailSections(
     sections.push({ kind: "fields", title: "Details", fields: inputFields });
   }
 
-  const outputFields = fieldsFromValue(
-    unwrapMcpResult(output),
-    spec.outputFields,
-    undefined,
-    spec.outputFields,
+  // Keep prose, nontext blocks and unexpected fields rather than projecting a
+  // catalog whitelist or replacing the full envelope with structuredContent.
+  sections.push(
+    // Each generated section is shared; preserve copy-on-write when relabeling.
+    // eslint-disable-next-line oxc/no-map-spread
+    ...buildGenericToolSections("paseo_result", null, output).map((section) => ({
+      ...section,
+      title: section.title === "Output" ? "Result" : section.title,
+    })),
   );
-  if (outputFields.length > 0) {
-    sections.push({ kind: "fields", title: "Result", fields: outputFields });
-  }
   return sections;
 }

@@ -84,6 +84,16 @@ export function validateButton(
   validation: ButtonValidation,
 ): ResolvedPluginButton {
   validateIcon(button.icon, validation);
+  if (button.iconVisible !== undefined && typeof button.iconVisible !== "boolean")
+    throw new Error("Plugin button iconVisible must be a boolean");
+  if (
+    button.desktopPopoverWidth !== undefined &&
+    (typeof button.desktopPopoverWidth !== "number" ||
+      !Number.isFinite(button.desktopPopoverWidth) ||
+      button.desktopPopoverWidth < 280 ||
+      button.desktopPopoverWidth > 1280)
+  )
+    throw new Error("Plugin desktop popover width must be between 280 and 1280");
   return {
     ...button,
     title: requireText(button.title, "title"),

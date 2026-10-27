@@ -215,6 +215,63 @@ async function createSession(
   return { pi, session, events };
 }
 
+test("permission modes refresh live state, fail closed, and verify explicit writes", async () => {
+  const pi = new FakePi();
+  let enabled: boolean | null = null;
+  let rejectSet = false;
+  let sessionIdMismatch = false;
+  let unknownMode = false;
+  pi.queueSessionSetup((runtimeSession) => {
+    runtimeSession.request = async (command) => {
+      if (command.type === "get_security_mode" && enabled === null)
+        throw new Error("operator unavailable");
+      if (command.type === "set_security_mode" && !rejectSet) enabled = command.enabled as boolean;
+      let modeId = enabled ? "pi-prompts-on" : "pi-prompts-off";
+      if (unknownMode) modeId = "unknown";
+      return {
+        sessionId: sessionIdMismatch ? "stale-session" : runtimeSession.state.sessionId,
+        runtimeEpoch: "runtime-epoch",
+        modeId,
+      };
+    };
+  });
+  const { session, events } = await createSession(pi);
+  onTestFinished(() => session.close());
+
+  expect(await session.getAvailableModes()).toEqual([]);
+  expect(await session.getCurrentMode()).toBeNull();
+  expect(enabled).toBeNull(); // connection/read did not infer or apply a default
+
+  enabled = true;
+  pi.latestSession().emit({ type: "security_mode_changed" });
+  for (
+    let attempt = 0;
+    attempt < 10 && !events.eventTypes().includes("mode_changed");
+    attempt += 1
+  ) {
+    await waitForImmediate();
+  }
+  expect(events.eventTypes()).toContain("mode_changed");
+  expect(await session.getAvailableModes()).toEqual([
+    { id: "pi-prompts-on", label: "Dangerous ask" },
+    { id: "pi-prompts-off", label: "Full access" },
+  ]);
+  expect(await session.getCurrentMode()).toBe("pi-prompts-on");
+
+  await session.setMode("pi-prompts-off");
+  expect(enabled).toBe(false);
+  rejectSet = true;
+  await expect(session.setMode("pi-prompts-on")).rejects.toThrow("could not be verified");
+  await expect(session.setMode("unknown")).rejects.toThrow("Unsupported Pi security mode");
+
+  rejectSet = false;
+  sessionIdMismatch = true;
+  expect(await session.getAvailableModes()).toEqual([]);
+  sessionIdMismatch = false;
+  unknownMode = true;
+  expect(await session.getAvailableModes()).toEqual([]);
+});
+
 test("forwards launch-context env to the Pi process launch", async () => {
   const pi = new FakePi();
   const client = createClient(pi);
@@ -432,6 +489,191 @@ class SessionEvents {
 }
 
 describe("PiRpcAgentSession", () => {
+  test("closing a questionnaire controller clears its cards without denying the terminal dialog", async () => {
+    const { pi, session } = await createSession();
+    const fake = pi.latestSession();
+    fake.emit({
+      type: "tool_execution_start",
+      toolCallId: "q-close",
+      toolName: "questionnaire",
+      args: {
+        questions: [
+          {
+            id: "scope",
+            label: "Scope",
+            prompt: "Choose?",
+            options: [{ value: "one", label: "One" }],
+          },
+        ],
+      },
+    });
+    expect(session.getPendingPermissions()).toHaveLength(0);
+    fake.emit({
+      type: "extension_ui_request",
+      id: "raw-close",
+      method: "select",
+      title: "Question · Scope\n\nChoose?",
+      paseoQuestionnaire: { v: 1, toolCallId: "q-close", index: 0, input: true },
+      options: ["1. One", "Other (write an answer)", "Answer in terminal", "Cancel questionnaire"],
+    });
+    expect(session.getPendingPermissions()).toHaveLength(1);
+    await session.close();
+    expect(session.getPendingPermissions()).toEqual([]);
+    expect(fake.extensionUiResponses).toEqual([]);
+  });
+
+  for (const phase of ["batch", "custom-input"] as const) {
+    test(`clears the questionnaire ${phase} permission when its terminal tool wins`, async () => {
+      const { pi, session } = await createSession();
+      const fake = pi.latestSession();
+      const received: AgentStreamEvent[] = [];
+      session.subscribe((event) => received.push(event));
+      const callId = "q-terminal-wins";
+      const title = "Question · Scope\n\nChoose?";
+      try {
+        fake.emit({
+          type: "tool_execution_start",
+          toolCallId: callId,
+          toolName: "questionnaire",
+          args: {
+            questions: [
+              {
+                id: "scope",
+                label: "Scope",
+                prompt: "Choose?",
+                options: [{ value: "one", label: "One" }],
+              },
+            ],
+          },
+        });
+        fake.emit({
+          type: "extension_ui_request",
+          id: "raw-select",
+          method: "select",
+          title,
+          paseoQuestionnaire: { v: 1, toolCallId: callId, index: 0, input: true },
+          options: [
+            "1. One",
+            "Other (write an answer)",
+            "Answer in terminal",
+            "Cancel questionnaire",
+          ],
+        });
+        expect(session.getPendingPermissions()).toHaveLength(1);
+        if (phase === "custom-input") {
+          await session.respondToPermission(`pi-questionnaire:${callId}`, {
+            behavior: "allow",
+            updatedInput: {
+              answers: { "1. Scope · scope": "2. Other (write an answer)" },
+            },
+          });
+          fake.emit({
+            type: "extension_ui_request",
+            id: "raw-input",
+            method: "input",
+            title,
+            placeholder: "Type your answer",
+            paseoQuestionnaire: { v: 1, toolCallId: callId, index: 0, input: true },
+          });
+          expect(session.getPendingPermissions()).toHaveLength(1);
+        }
+        const permissionId = session.getPendingPermissions()[0]!.id;
+        fake.emit({
+          type: "tool_execution_end",
+          toolCallId: callId,
+          toolName: "questionnaire",
+          isError: false,
+          result: { content: [{ type: "text", text: "Answered in terminal" }] },
+        });
+        expect(session.getPendingPermissions()).toEqual([]);
+        expect(received).toContainEqual(
+          expect.objectContaining({
+            type: "permission_resolved",
+            requestId: permissionId,
+            resolution: expect.objectContaining({ behavior: "deny" }),
+          }),
+        );
+        expect(fake.extensionUiResponses).toContainEqual({
+          id: phase === "batch" ? "raw-select" : "raw-input",
+          response: { cancelled: true },
+        });
+      } finally {
+        await session.close();
+      }
+    });
+  }
+
+  test("maps a raw questionnaire dialog cancellation to its batched native form", async () => {
+    const { pi, session } = await createSession();
+    const fake = pi.latestSession();
+    try {
+      fake.emit({
+        type: "tool_execution_start",
+        toolCallId: "q-cancel",
+        toolName: "questionnaire",
+        args: {
+          questions: [
+            {
+              id: "scope",
+              label: "Scope",
+              prompt: "Choose?",
+              options: [{ value: "one", label: "One" }],
+            },
+          ],
+        },
+      });
+      fake.emit({
+        type: "extension_ui_request",
+        id: "raw-cancel",
+        method: "select",
+        title: "Question · Scope\n\nChoose?",
+        paseoQuestionnaire: { v: 1, toolCallId: "q-cancel", index: 0, input: true },
+        options: [
+          "1. One",
+          "Other (write an answer)",
+          "Answer in terminal",
+          "Cancel questionnaire",
+        ],
+      });
+      expect(session.getPendingPermissions().map((request) => request.id)).toEqual([
+        "pi-questionnaire:q-cancel",
+      ]);
+      fake.emit({ type: "extension_ui_cancel", id: "raw-cancel" });
+      expect(session.getPendingPermissions()).toEqual([]);
+      expect(fake.extensionUiResponses).toContainEqual({
+        id: "raw-cancel",
+        response: { cancelled: true },
+      });
+    } finally {
+      await session.close();
+    }
+  });
+
+  test("surfaces Pi extension errors as native error notifications without changing their text", async () => {
+    const { pi, session, events } = await createSession();
+    const error = 'Literal failure {"code":1}\n  preserved indentation';
+    pi.latestSession().emit({
+      type: "extension_error",
+      extensionPath: "command:fixture",
+      event: "command",
+      error,
+    });
+    expect(events.timelineItems()).toContainEqual({
+      type: "notification",
+      level: "error",
+      message: `Pi extension error (command:fixture):\n${error}`,
+    });
+    const count = events.timelineItems().length;
+    pi.latestSession().emit({
+      type: "extension_error",
+      error: { message: "not a native text frame" },
+    });
+    expect(events.timelineItems()).toHaveLength(count);
+    await session.close();
+    pi.latestSession().emit({ type: "extension_error", error: "late shutdown error" });
+    expect(events.timelineItems()).toHaveLength(count);
+  });
+
   test("completes a turn and answers a dialog when an adapter throws", async () => {
     const { pi, session, events } = await createSession();
     Object.assign(session, {
@@ -785,6 +1027,60 @@ describe("PiRpcAgentSession", () => {
       { type: "notification", level: "info", message: "no type" },
     ]);
 
+    await session.close();
+  });
+
+  test("routes native subagent snapshots only through the private extension UI method", async () => {
+    const { pi, session, events } = await createSession();
+    let mapped = 0;
+    Object.assign(session, {
+      extensionHost: createPiExtensionHost(undefined, [
+        {
+          id: "native-subagent-test",
+          createSession: () => ({
+            mapRuntimeNotification: (message: string) => {
+              mapped += 1;
+              return message.startsWith("PI_NATIVE_SUBAGENTS_V1:")
+                ? {
+                    subagents: [
+                      {
+                        type: "upsert",
+                        id: "binding-1",
+                        title: "worker",
+                        toolCallId: "binding-1",
+                        status: "running",
+                      },
+                    ],
+                  }
+                : undefined;
+            },
+          }),
+        },
+      ]),
+    });
+    const fakeSession = pi.latestSession();
+    const marker = 'PI_NATIVE_SUBAGENTS_V1:{"version":1,"bindings":[]}';
+
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "spoof",
+      method: "notify",
+      message: marker,
+    });
+    expect(mapped).toBe(0);
+    expect(events.timelineItems()).toEqual([]);
+
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "private-snapshot",
+      method: "paseo_native_subagents",
+      message: marker,
+    });
+    expect(mapped).toBe(1);
+    expect(events.eventTypes()).toContain("provider_subagent");
+    expect(events.timelineItems()).toEqual([]);
+    expect(events.turnCompletedEvents()).toEqual([]);
+    expect(fakeSession.extensionUiResponses).toEqual([]);
     await session.close();
   });
 
@@ -1153,7 +1449,7 @@ describe("PiRpcAgentSession", () => {
     ]);
   });
 
-  test("canceling a silent Pi extension command leaves the session usable", async () => {
+  test("canceling a silent Pi extension command waits for its aborted receipt and leaves the session usable", async () => {
     const { pi, session, events } = await createSession();
     const fakeSession = pi.latestSession();
 
@@ -1166,14 +1462,21 @@ describe("PiRpcAgentSession", () => {
       message: "Search finished",
     });
     await session.interrupt();
+    expect(events.turnLifecycleEvents().filter((event) => event.type === "turn_canceled")).toEqual(
+      [],
+    );
+    // An abort ACK is not a model terminal event. The bridge cancels only its
+    // command wait and returns an explicit aborted receipt with unknown work outcome.
+    await fakeSession.failHeldPrompt(
+      new Error("Command wait aborted; its work may still be running in the terminal."),
+    );
     const cancellation = await events.nextTurnCancellation();
     await session.startTurn("next request");
-    await fakeSession.failHeldPrompt(new Error("Canceled prompt timed out"));
 
     expect(cancellation).toEqual({
       type: "turn_canceled",
       provider: "pi",
-      reason: "interrupted",
+      reason: "Command wait aborted; its work may still be running in the terminal.",
       turnId: firstTurn.turnId,
     });
     expect(fakeSession.prompts).toEqual([
@@ -2345,6 +2648,92 @@ describe("PiRpcAgentSession", () => {
     });
   });
 
+  test("refreshes idle usage after a successful model change and manual compaction", async () => {
+    const scheduler = new ManualUsagePollScheduler();
+    const { pi, session, events } = await createSession(new FakePi(), scheduler);
+    const fakeSession = pi.latestSession();
+    fakeSession.setModelResult = { provider: "openai", id: "larger", name: "Larger" };
+    fakeSession.stats = { contextUsage: { contextWindow: 2_000, tokens: 800 } };
+
+    await session.setModel("openai/larger");
+    await flushTurnScheduling();
+    expect(events.usageUpdatedEvents()).toHaveLength(1);
+    expect(events.usageUpdatedEvents()[0]).toMatchObject({
+      usage: { contextWindowMaxTokens: 2_000, contextWindowUsedTokens: 800 },
+    });
+    expect(scheduler.activePollCount()).toBe(0);
+
+    fakeSession.stats = { contextUsage: { contextWindow: 2_000, tokens: 50 } };
+    fakeSession.emit({ type: "compaction_end", reason: "manual" });
+    await flushTurnScheduling();
+    expect(events.usageUpdatedEvents()).toHaveLength(2);
+    expect(events.usageUpdatedEvents()[1]).toMatchObject({
+      usage: { contextWindowMaxTokens: 2_000, contextWindowUsedTokens: 50 },
+    });
+    expect(scheduler.activePollCount()).toBe(0);
+  });
+
+  test("drops idle refresh results superseded by a new turn", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    fakeSession.setModelResult = { provider: "openai", id: "larger", name: "Larger" };
+    let resolveStats!: (stats: Awaited<ReturnType<typeof fakeSession.getSessionStats>>) => void;
+    fakeSession.getSessionStats = () =>
+      new Promise((resolve) => {
+        resolveStats = resolve;
+      });
+
+    await session.setModel("openai/larger");
+    await session.startTurn("new generation");
+    resolveStats({ contextUsage: { contextWindow: 2_000, tokens: 800 } });
+    await flushTurnScheduling();
+
+    expect(events.usageUpdatedEvents()).toHaveLength(0);
+    await session.close();
+  });
+
+  test("refreshes actual final usage after an aborted terminal without completing it", async () => {
+    const { pi, session, events } = await createSession();
+    const fake = pi.latestSession();
+    fake.stats = { contextUsage: { contextWindow: 1_000, tokens: 65 } };
+    const { turnId } = await session.startTurn("cancel");
+    fake.emit({ type: "agent_start" });
+    fake.emit({ type: "turn_start" });
+    fake.finishTurn({ role: "assistant", content: [], stopReason: "aborted" });
+    await flushTurnScheduling();
+    expect(events.turnLifecycleEvents()).toEqual([
+      { type: "turn_started", turnId },
+      { type: "turn_canceled", turnId },
+    ]);
+    expect(events.turnCompletedEvents()).toHaveLength(0);
+    expect(events.usageUpdatedEvents()).toHaveLength(1);
+    expect(events.usageUpdatedEvents()[0]).toMatchObject({
+      usage: { contextWindowUsedTokens: 65 },
+    });
+    await session.close();
+  });
+
+  test("refreshes actual final usage after a failed terminal without completing it", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    fakeSession.stats = { contextUsage: { contextWindow: 1_000, tokens: 75 } };
+    const { turnId } = await session.startTurn("fail");
+    fakeSession.emit({ type: "agent_start" });
+    fakeSession.emit({ type: "turn_start" });
+    fakeSession.finishTurn({ role: "assistant", content: [], errorMessage: "failed" });
+    await flushTurnScheduling();
+
+    expect(events.turnLifecycleEvents()).toEqual([
+      { type: "turn_started", turnId },
+      { type: "turn_failed", turnId },
+    ]);
+    expect(events.turnCompletedEvents()).toHaveLength(0);
+    expect(events.usageUpdatedEvents()).toHaveLength(1);
+    expect(events.usageUpdatedEvents()[0]).toMatchObject({
+      usage: { contextWindowUsedTokens: 75 },
+    });
+  });
+
   test("stops scheduling polls after turn completion and close", async () => {
     const scheduler = new ManualUsagePollScheduler();
     const { pi, session } = await createSession(new FakePi(), scheduler);
@@ -3053,7 +3442,7 @@ describe("PiRpcAgentClient", () => {
       {
         type: "timeline",
         provider: "pi",
-        item: { type: "compaction", status: "loading", trigger: "manual" },
+        item: { type: "notification", level: "info", message: "Compacting context..." },
       },
       {
         type: "timeline",
@@ -3063,7 +3452,7 @@ describe("PiRpcAgentClient", () => {
     ]);
   });
 
-  test("closes Pi compact loading marker when RPC rejects after compaction starts", async () => {
+  test("reports Pi compact rejection without a false successful marker", async () => {
     const { pi, session } = await createSession();
     const fakeSession = pi.latestSession();
     fakeSession.emitCompactEnd = false;
@@ -3078,12 +3467,7 @@ describe("PiRpcAgentClient", () => {
       {
         type: "timeline",
         provider: "pi",
-        item: { type: "compaction", status: "loading", trigger: "manual" },
-      },
-      {
-        type: "timeline",
-        provider: "pi",
-        item: { type: "compaction", status: "completed", trigger: "manual" },
+        item: { type: "notification", level: "info", message: "Compacting context..." },
       },
       {
         type: "timeline",
@@ -3095,6 +3479,48 @@ describe("PiRpcAgentClient", () => {
       },
     ]);
   });
+
+  for (const aborted of [false, true]) {
+    test(`reports Pi compaction ${aborted ? "cancellation" : "failure"} once using existing native notifications`, async () => {
+      const { pi, session } = await createSession();
+      const fake = pi.latestSession();
+      fake.compact = async () => {
+        fake.emit({ type: "compaction_start", reason: "manual" });
+        fake.emit({
+          type: "compaction_end",
+          reason: "manual",
+          aborted,
+          ...(aborted ? {} : { errorMessage: "synthetic failure" }),
+        });
+        throw new Error(aborted ? "Compaction canceled" : "synthetic failure");
+      };
+      const handler = (session as AgentSession).tryHandleOutOfBand?.("/compact");
+      const events: AgentStreamEvent[] = [];
+      try {
+        await handler?.run({ emit: (event) => events.push(event) });
+        expect(events).toHaveLength(2);
+        expect(events[0]).toMatchObject({
+          type: "timeline",
+          item: { type: "notification", level: "info" },
+        });
+        expect(events[1]).toMatchObject({
+          type: "timeline",
+          item: {
+            type: "notification",
+            level: aborted ? "info" : "error",
+            message: aborted
+              ? "Context compaction canceled."
+              : "Context compaction failed: synthetic failure",
+          },
+        });
+        expect(
+          events.some((event) => event.type === "timeline" && event.item.type === "compaction"),
+        ).toBe(false);
+      } finally {
+        await session.close();
+      }
+    });
+  }
 
   test("executes Pi autocompact through RPC instead of prompt text", async () => {
     const { pi, session } = await createSession();
@@ -3177,6 +3603,37 @@ describe("PiRpcAgentClient", () => {
         },
       },
     ]);
+  });
+
+  test("restricts rewind only when bridge state explicitly disables it", async () => {
+    const pi = new FakePi();
+    pi.queueSessionSetup((session) => {
+      session.state = {
+        ...session.state,
+        bridgeCapabilities: {
+          supportsRewindConversation: false,
+          supportsAutoCompactionControl: false,
+        },
+      };
+    });
+    const client = createClient(pi);
+    const session = (await client.createSession(createConfig())) as PiRpcAgentSession;
+
+    expect(session.capabilities.supportsRewindConversation).toBe(false);
+    expect(await session.listCommands()).not.toContainEqual(
+      expect.objectContaining({ name: "autocompact" }),
+    );
+    await session.close();
+  });
+
+  test("keeps native rewind capability when bridge metadata is absent", async () => {
+    const { session } = await createSession();
+
+    expect(session.capabilities.supportsRewindConversation).toBe(true);
+    expect(await session.listCommands()).toContainEqual(
+      expect.objectContaining({ name: "autocompact" }),
+    );
+    await session.close();
   });
 
   test("rewinds conversation through the Pi tree navigation bridge", async () => {

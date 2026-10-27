@@ -94,6 +94,11 @@ export interface PiSessionState {
   isCompacting: boolean;
   autoCompactionEnabled?: boolean;
   sessionFile?: string;
+  /** Optional restrictions supplied by a terminal-attached Pi bridge. */
+  bridgeCapabilities?: {
+    supportsRewindConversation?: boolean;
+    supportsAutoCompactionControl?: boolean;
+  };
   sessionId: string;
   sessionName?: string;
   messageCount: number;

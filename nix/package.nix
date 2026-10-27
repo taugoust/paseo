@@ -4,6 +4,7 @@
   buildNpmPackage,
   nodejs_22,
   python3,
+  tmux,
   makeWrapper,
   autoPatchelfHook,
   # node-pty needs libuv headers on Linux
@@ -25,7 +26,8 @@ buildNpmPackage rec {
 
   src = lib.cleanSourceWith {
     src = ./..;
-    filter = path: type:
+    filter =
+      path: type:
       let
         baseName = builtins.baseNameOf path;
         relPath = lib.removePrefix (toString ./..) path;
@@ -52,16 +54,19 @@ buildNpmPackage rec {
       # not necessarily documentation: skills/*/SKILL.md is a runtime file the
       # daemon's trace script copies into the output.
       && builtins.match "/[^/]+\\.md" relPath == null
-      # Exclude test fixtures and debug files
-      && !(lib.hasSuffix ".test.ts" baseName)
+      # Keep unit tests in the derivation source: the Nix check phase runs
+      # focused fork-owned behavioral suites against the built packages.
       && !(lib.hasSuffix ".e2e.test.ts" baseName)
       && baseName != "node_modules"
+      && baseName != ".npm-logs"
       && baseName != ".git"
       && baseName != ".paseo"
       && baseName != ".DS_Store";
   };
 
   nodejs = nodejs_22;
+  # Bound individual compiler heaps; release builds also use a memory-capped scope.
+  NODE_OPTIONS = "--max-old-space-size=3072";
 
   # Default hash lives in nix/npm-deps.hash (see arg default above).
   # CI auto-updates that file when package-lock.json changes (see .github/workflows/).
@@ -75,7 +80,8 @@ buildNpmPackage rec {
   nativeBuildInputs = [
     python3 # for node-gyp (node-pty compilation)
     makeWrapper
-  ] ++ lib.optionals stdenv.hostPlatform.isLinux [
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
     autoPatchelfHook
   ];
 
@@ -84,8 +90,47 @@ buildNpmPackage rec {
     stdenv.cc.cc.lib # libstdc++ for sherpa-onnx prebuilt binaries
   ];
 
-  # Don't use the default npm build hook — we need a custom build sequence
+  # Don't use the default npm build/check hooks — Nix runs a focused set of
+  # fork-owned behavioral checks after building the daemon workspaces.
   dontNpmBuild = true;
+  doCheck = true;
+  nativeCheckInputs = [ tmux ];
+
+  checkPhase = ''
+    runHook preCheck
+    node --test nix/tests/source-filter.test.mjs
+    export PASEO_BUILD="$PWD"
+    export PASEO_INSTALL="$PWD"
+    export PASEO_SOURCE="$PWD"
+    export PASEO_SUBAGENT_STORE_MODULE="$PWD/packages/server/dist/server/server/agent/provider-subagents/store.js"
+    export PASEO_TOPOLOGY_COMPILED=1
+    export TYPESCRIPT_PATH="$PWD/node_modules/typescript"
+    mkdir -p "$TMPDIR/paseo-tests"
+    cp -r nix/tests/. "$TMPDIR/paseo-tests/"
+    cp packages/server/src/server/tmux-topology.ts "$TMPDIR/paseo-tests/tmux-topology.ts"
+    cd "$TMPDIR/paseo-tests"
+    node --experimental-test-module-mocks --test --test-concurrency=1 cli-workspace-ids.test.mjs pi-reaped-subagents.test.mjs pi-child-notifications.test.mjs pi-import-selection.test.mjs pi-progress.test.mjs quiet-harness-messages.test.mjs tmux-topology.test.mjs tmux-topology-trust.test.mjs tmux-topology-hooks.test.mjs tmux-close-live.test.mjs generic-tool-presentation.test.mjs pi-added-task-detail.test.mjs
+    node --experimental-vm-modules --test --test-concurrency=1 generic-tool-components.test.mjs
+    node native-tool-error.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/native-tool-error.js"
+    node native-subagent-links.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/native-subagent-links.js"
+    node replacement-settlement.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/agent-manager.js"
+    node tool-error-content.test.mjs "$PASEO_INSTALL/packages/protocol/dist/tool-call-display.js"
+    node task-outcomes.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/tool-call-mapper.js"
+    node pi-web-search-detail.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/tool-call-mapper.js"
+    node pi-questionnaire-adapter.test.mjs "$PASEO_INSTALL" questionnaire-input.json
+    cd "$PASEO_BUILD"
+    node packages/server/node_modules/vitest/vitest.mjs run --no-file-parallelism --maxWorkers=1 --exclude "**/*.e2e.test.ts" src/server/agent/providers/pi/agent.test.ts src/server/agent/providers/pi/cli-runtime.test.ts src/server/agent/providers/pi/tool-result-images.test.ts src/server/agent/providers/pi/usage-lifecycle.test.ts -t "permission modes refresh live state|bridge state explicitly|bridge metadata is absent|auto-compaction|extension command|Pi extension errors|extension_error|questionnaire|idle usage|idle refresh|actual final usage|compact|compaction|configured RPC timeout|admission|human command|human input|Pi tool result|tool images|routes native subagent snapshots"
+    npm test --workspace=@getpaseo/builtin-plugins -- codex-usage-source/server
+    runHook postCheck
+  '';
+
+  # npmRebuildFlags disables install scripts in the sandbox, but compact UI
+  # requires this export from @gorhom/bottom-sheet's modal portal internals.
+  preBuild = ''
+    patch -p1 < patches/@gorhom+bottom-sheet+5.2.14.patch
+    grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/src/index.ts
+    grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/lib/module/index.js
+  '';
 
   buildPhase = ''
     runHook preBuild
@@ -141,6 +186,30 @@ buildNpmPackage rec {
     makeWrapper ${nodejs}/bin/node $out/bin/paseo \
       --add-flags "$out/lib/paseo/packages/cli/dist/index.js" \
       --set NODE_PATH "$out/lib/paseo/node_modules"
+
+    # Retain fork-owned Nix behavioral tests for independent downstream checks.
+    mkdir -p "$out/lib/paseo/nix"
+    cp -r nix/tests "$out/lib/paseo/nix/"
+    cp packages/server/src/server/tmux-topology.ts "$out/lib/paseo/nix/tests/tmux-topology.ts"
+
+    # Preserve the exact installed sources used by the downstream hermetic
+    # component checks, along with the Babel license notices.
+    mkdir -p "$out/lib/paseo/licenses"
+    cp node_modules/@babel/core/LICENSE "$out/lib/paseo/licenses/BABEL-CORE-MIT.txt"
+    cp node_modules/@babel/plugin-transform-classes/LICENSE "$out/lib/paseo/licenses/BABEL-CLASSES-MIT.txt"
+    node nix/copy-highlight-licenses.mjs "$PWD" "$out/lib/paseo/licenses/highlight" "$out/lib/paseo"
+    node nix/tests/highlight-licenses.test.mjs "$out/lib/paseo/licenses/highlight"
+    mkdir -p "$out/lib/paseo/packages/app/src/components"
+    cp packages/app/src/components/tool-call-details.tsx \
+      "$out/lib/paseo/packages/app/src/components/tool-call-details.tsx"
+    cp packages/app/src/components/message.tsx "$out/lib/paseo/packages/app/src/components/message.tsx"
+    mkdir -p "$out/lib/paseo/packages/app/src/types"
+    cp packages/app/src/types/stream.ts "$out/lib/paseo/packages/app/src/types/stream.ts"
+    cp -r packages/server/node_modules/node-pty/prebuilds \
+      "$out/lib/paseo/packages/server/node_modules/node-pty/"
+
+    node nix/tests/plugin-hermes-classes.test.mjs \
+      "$out/lib/paseo/packages/server/dist/server/server/plugins/compiler.js"
 
     runHook postInstall
   '';

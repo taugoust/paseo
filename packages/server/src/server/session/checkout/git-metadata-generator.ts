@@ -3,6 +3,7 @@ import {
   StructuredAgentFallbackError,
   StructuredAgentResponseError,
   generateStructuredAgentResponseWithFallback,
+  type StructuredGenerationProvider,
 } from "../../agent/agent-response-loop.js";
 import type { AgentManager } from "../../agent/agent-manager.js";
 import type { ProviderSnapshotManager } from "../../agent/provider-snapshot-manager.js";
@@ -28,7 +29,10 @@ export interface PullRequestText {
  * commit/PR commands and asks this for the wording when the user left it blank.
  */
 export interface GitMetadataGenerator {
-  generateCommitMessage(cwd: string): Promise<string>;
+  generateCommitMessage(
+    cwd: string,
+    currentSelection?: ResolveStructuredGenerationProvidersOptions["currentSelection"],
+  ): Promise<string>;
   generatePullRequestText(cwd: string, baseRef?: string): Promise<PullRequestText>;
 }
 
@@ -49,6 +53,7 @@ export interface StructuredTextGenerationRequest<T> {
   schema: z.ZodType<T>;
   schemaName: string;
   agentTitle: string;
+  currentSelection?: ResolveStructuredGenerationProvidersOptions["currentSelection"];
 }
 
 type GitMetadataDiffSource = Pick<WorkspaceGitService, "getCheckoutDiff" | "resolveRepoRoot">;
@@ -90,6 +95,9 @@ interface PromptForDiffInput {
 export function createGitMetadataGenerator(deps: {
   workspaceGitService: GitMetadataDiffSource;
   generation: StructuredTextGeneration;
+  getFocusedSelection?: (
+    cwd: string,
+  ) => ResolveStructuredGenerationProvidersOptions["currentSelection"];
 }): GitMetadataGenerator {
   const { workspaceGitService, generation } = deps;
 
@@ -113,7 +121,7 @@ export function createGitMetadataGenerator(deps: {
   }
 
   return {
-    async generateCommitMessage(cwd) {
+    async generateCommitMessage(cwd, currentSelection = deps.getFocusedSelection?.(cwd)) {
       const prompt = await buildPromptForDiff({
         cwd,
         diffOptions: { mode: "uncommitted", includeStructured: true },
@@ -130,10 +138,11 @@ export function createGitMetadataGenerator(deps: {
           schema: COMMIT_MESSAGE_SCHEMA,
           schemaName: "CommitMessage",
           agentTitle: "Commit generator",
+          ...(currentSelection ? { currentSelection } : {}),
         });
         return result.message;
       } catch (error) {
-        if (isStructuredGenerationFailure(error)) {
+        if (!currentSelection && isStructuredGenerationFailure(error)) {
           return COMMIT_MESSAGE_FALLBACK;
         }
         throw error;
@@ -182,13 +191,18 @@ export function createAgentStructuredTextGeneration(deps: {
   ) => ResolveStructuredGenerationProvidersOptions["currentSelection"];
 }): StructuredTextGeneration {
   return {
-    async generate({ cwd, prompt, schema, schemaName, agentTitle }) {
-      const providers = await resolveStructuredGenerationProviders({
-        cwd,
-        providerSnapshotManager: deps.providerSnapshotManager,
-        daemonConfig: deps.readDaemonConfig(),
-        currentSelection: deps.getFocusedSelection(cwd),
-      });
+    async generate({ cwd, prompt, schema, schemaName, agentTitle, currentSelection }) {
+      const focusedSelection =
+        schemaName === "CommitMessage" ? currentSelection : deps.getFocusedSelection(cwd);
+      const providers =
+        focusedSelection && schemaName === "CommitMessage"
+          ? resolveSelectedProvider(focusedSelection)
+          : await resolveStructuredGenerationProviders({
+              cwd,
+              providerSnapshotManager: deps.providerSnapshotManager,
+              daemonConfig: deps.readDaemonConfig(),
+              currentSelection: focusedSelection,
+            });
       return generateStructuredAgentResponseWithFallback({
         manager: deps.agentManager,
         cwd,
@@ -205,6 +219,25 @@ export function createAgentStructuredTextGeneration(deps: {
       });
     },
   };
+}
+
+function resolveSelectedProvider(
+  selection: NonNullable<ResolveStructuredGenerationProvidersOptions["currentSelection"]>,
+): StructuredGenerationProvider[] {
+  const provider = selection.provider?.trim();
+  const model = selection.model?.trim();
+  if (!provider || !model) {
+    throw new Error(
+      "Cannot generate commit message: focused agent has no selected provider and model",
+    );
+  }
+  return [
+    {
+      provider,
+      model,
+      ...(selection.thinkingOptionId ? { thinkingOptionId: selection.thinkingOptionId } : {}),
+    },
+  ];
 }
 
 function renderFileList(structured: CheckoutDiff["structured"]): string {

@@ -1,5 +1,6 @@
 import { AgentDirectory } from "./agent/directory.js";
 import { searchTimeline } from "./agent/chat-search/index.js";
+import { getTmuxTopology } from "./tmux-topology.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { BrowserAutomationHostCapabilitySchema } from "@getpaseo/protocol/browser-automation/capabilities";
 import type {
@@ -120,6 +121,7 @@ import {
   setAgentModeCommand,
   updateAgentCommand,
 } from "./agent/lifecycle-command.js";
+import { isManagedPiChild } from "./pi-child-notifications.js";
 import { buildStoredAgentPayload, toAgentPayload } from "./agent/agent-projections.js";
 import {
   appendTimelineItemIfAgentKnown,
@@ -943,6 +945,7 @@ export class Session {
       checkoutDiffManager,
       gitMetadataGenerator: createGitMetadataGenerator({
         workspaceGitService: this.workspaceGitService,
+        getFocusedSelection: (cwd) => this.getFocusedAgentSelectionForCwd(cwd),
         generation: createAgentStructuredTextGeneration({
           agentManager: this.agentManager,
           providerSnapshotManager,
@@ -1578,7 +1581,8 @@ export class Session {
 
   /**
    * Interrupt the agent's active run so the next prompt starts a fresh turn.
-   * Returns once the manager confirms the stream has been cancelled.
+   * Returns after the bounded cancellation observation; the stream may still
+   * be unwinding. Only actual terminal events publish an idle snapshot.
    */
   private async interruptAgentIfRunning(agentId: string): Promise<void> {
     const snapshot = this.agentManager.getAgent(agentId);
@@ -1617,7 +1621,7 @@ export class Session {
         { agentId },
         "interruptAgentIfRunning: reported running but no active run was cancelled",
       );
-      throw new AgentRunCancellationError(agentId, "stop");
+      throw new AgentRunCancellationError(agentId, "stop", cancellation);
     }
   }
 
@@ -2066,6 +2070,13 @@ export class Session {
     const storedRecord = await this.agentStorage.get(payload.id);
     payload.title = storedRecord?.title ?? null;
     payload.archivedAt = storedRecord?.archivedAt ?? null;
+    if (await isManagedPiChild(payload)) {
+      // Keep real attention internally and continue delivering attention
+      // events, but do not expose child completion as client badge state.
+      payload.requiresAttention = false;
+      payload.attentionReason = null;
+      payload.attentionTimestamp = null;
+    }
     return payload;
   }
 
@@ -3616,6 +3627,9 @@ export class Session {
     this.sessionLogger.info({ projectId, requestId }, "session: project.remove.request");
 
     try {
+      // Kill exactly the session first. Reprojection moves linked windows to
+      // their surviving sessions before the generic metadata cleanup below.
+      await getTmuxTopology()?.closeProject(projectId);
       const project = await this.projectRegistry.get(projectId);
       const resolvedProjectId = project?.projectId ?? projectId;
       const projectWorkspaces = (await this.workspaceRegistry.list()).filter(
@@ -5241,10 +5255,25 @@ export class Session {
   /**
    * Build the current agent list payload (live + persisted), optionally filtered by labels.
    */
-  private listAgentPayloads(
+  private async listAgentPayloads(
     filter?: Parameters<AgentDirectory["list"]>[0],
   ): Promise<AgentSnapshotPayload[]> {
-    return this.agentDirectory.list(filter);
+    const agents = await this.agentDirectory.list(filter);
+    // Persisted agents bypass enrichAgentPayload; project at the shared boundary
+    // so workspace snapshots and agent-list requests receive identical badges.
+    return Promise.all(
+      // Preserve the persisted snapshot; enrich it with a copy-on-write projection.
+      // eslint-disable-next-line oxc/no-map-spread
+      agents.map(async (agent) => {
+        if (!(await isManagedPiChild(agent))) return agent;
+        return {
+          ...agent,
+          requiresAttention: false,
+          attentionReason: null,
+          attentionTimestamp: null,
+        };
+      }),
+    );
   }
 
   private async resolveAgentIdentifier(

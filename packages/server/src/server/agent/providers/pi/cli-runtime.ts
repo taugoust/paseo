@@ -113,16 +113,26 @@ class PiCliRuntimeSession implements PiRuntimeSession {
     message: string,
     images?: Array<{ type: "image"; data: string; mimeType: string }>,
   ): Promise<PiPromptAck> {
-    const { id: requestId, promise } = this.process.startRequest({
-      type: "prompt",
-      message,
-      ...(images?.length ? { images } : {}),
-    });
+    // A prompt can await an extension command or a human dialog. Only its
+    // response, process death, or session close can establish its outcome.
+    const { id: requestId, promise } = this.process.startRequest(
+      {
+        type: "prompt",
+        message,
+        ...(images?.length ? { images } : {}),
+      },
+      JSONL_RPC_NO_TIMEOUT,
+    );
     const data = await promise;
     if (typeof data === "object" && data !== null && !Array.isArray(data)) {
       const { agentInvoked } = data as Record<string, unknown>;
       if (typeof agentInvoked === "boolean") {
         return { requestId, agentInvoked };
+      }
+      // Pi 1.4 reports preflight disposition instead of the older boolean.
+      const disposition = (data as Record<string, unknown>).disposition;
+      if (disposition === "handled" || disposition === "queued" || disposition === "started") {
+        return { requestId, agentInvoked: disposition !== "handled" };
       }
     }
     return { requestId };
@@ -132,7 +142,7 @@ class PiCliRuntimeSession implements PiRuntimeSession {
     message: string,
     images?: Array<{ type: "image"; data: string; mimeType: string }>,
   ): Promise<void> {
-    await this.request({
+    await this.waitForCompletion({
       type: "steer",
       message,
       ...(images?.length ? { images } : {}),
@@ -155,7 +165,9 @@ class PiCliRuntimeSession implements PiRuntimeSession {
   }
 
   async abort(): Promise<void> {
-    await this.requestStopWork({ type: "abort" });
+    // Abort is idle-gated: observation deadlines do not mean refusal. The
+    // manager bounds UI latency; process death/close still rejects this RPC.
+    await this.process.requestStopWork({ type: "abort" }, JSONL_RPC_NO_TIMEOUT);
   }
 
   async getState(): Promise<PiSessionState> {
@@ -249,9 +261,9 @@ class PiCliRuntimeSession implements PiRuntimeSession {
   }
 
   private async waitForCompletion(command: PiRpcCommand): Promise<void> {
-    // Pi only replies after its compaction work is durable. Its child process and
-    // session close paths already reject pending RPCs, so no elapsed-time failure
-    // is useful here.
+    // Completion-bearing commands can await durable work or human interaction.
+    // Child process and session close paths already reject pending RPCs; a
+    // control-plane elapsed deadline would misreport still-running work.
     await this.process.request(command, JSONL_RPC_NO_TIMEOUT);
   }
 

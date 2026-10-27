@@ -72,7 +72,9 @@ async function streamReports(input: {
   const { reports } = await requireClient(serverId).listUsageReports(
     { agentId, forceRefresh },
     (report) => {
-      if (signal?.aborted) return;
+      // Commit context cards together: a fast cache report must not jump down
+      // when a slower account report arrives. Global usage still streams.
+      if (signal?.aborted || agentId !== undefined) return;
       queryClient.setQueryData<UsageReportEntry[]>(queryKey, (current) =>
         upsertReport(current, report),
       );
@@ -195,6 +197,7 @@ export function useAgentUsage(serverId: string, agentId: string): AgentUsageView
     // fetches again; retrying would hold the loading sentence for seconds instead.
     retry: false,
     staleTimeMs: REPORTS_STALE_TIME_MS,
+    refetchInterval: 5_000,
   });
   return resolveAgentUsageView({ canReport, query: toQueryState(query) });
 }

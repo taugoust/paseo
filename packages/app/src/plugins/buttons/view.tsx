@@ -76,12 +76,23 @@ function ButtonEnvironment({ view, children }: { view: ButtonView; children: Rea
   );
 }
 
-function ButtonIcon({ view, icon }: { view: ButtonView; icon: PluginButtonIcon }) {
+function ButtonIcon({
+  view,
+  icon,
+  visible,
+}: {
+  view: ButtonView;
+  icon: PluginButtonIcon;
+  visible?: boolean;
+}) {
   const color = view.props.theme.colors.foregroundMuted;
   const size = view.entry.placement === "composer" ? 14 : 16;
   return (
     <View
-      style={styles.icon}
+      style={[
+        styles.icon,
+        visible === false && { position: "absolute", width: 0, height: 0, opacity: 0 },
+      ]}
       pointerEvents="none"
       accessible={false}
       accessibilityElementsHidden
@@ -264,11 +275,13 @@ function ButtonControl({ view }: { view: ButtonView }) {
         ? [
             composerPillStyles.body,
             styles.button,
+            { justifyContent: "center" as const },
+            button.iconVisible === false && !entry.pending && { gap: 0 },
             (hovered || pressed || entry.open) && styles.active,
             disabled && styles.disabled,
           ]
         : headerButtonStyle(props.layout.compact, { hovered, pressed, open: entry.open }, disabled),
-    [composer, disabled, entry.open, props.layout.compact],
+    [composer, disabled, entry.open, entry.pending, button.iconVisible, props.layout.compact],
   );
   const contents = (
     <>
@@ -277,7 +290,7 @@ function ButtonControl({ view }: { view: ButtonView }) {
           <LoadingSpinner size={14} color={props.theme.colors.foregroundMuted} />
         </View>
       ) : (
-        <ButtonIcon view={view} icon={button.icon} />
+        <ButtonIcon view={view} icon={button.icon} visible={button.iconVisible} />
       )}
       {label ? (
         <Text numberOfLines={1} style={composer ? styles.composerLabel : styles.label}>
@@ -328,6 +341,13 @@ function ButtonControl({ view }: { view: ButtonView }) {
       </Tooltip>
       {expanded ? (
         <PluginPopoverSurface
+          desktopWidth={
+            button.behavior.kind === "popover" &&
+            !props.layout.compact &&
+            props.layout.platform === "web"
+              ? button.desktopPopoverWidth
+              : undefined
+          }
           sheetTitle={button.title}
           side={composer ? "top" : "bottom"}
           align={composer ? "start" : "end"}
@@ -638,6 +658,7 @@ const styles = StyleSheet.create((theme) => ({
   disabled: { opacity: theme.opacity[50] },
   tooltipLabel: { fontSize: theme.fontSize.sm, color: theme.colors.foreground },
   composerLabel: {
+    textAlign: "center",
     fontSize: theme.fontSize.sm,
     color: theme.colors.foregroundMuted,
     flexShrink: 1,

@@ -54,7 +54,14 @@ function AgentUsageCards({
   refreshable: boolean;
 }) {
   const { display } = useUsageDisplay(reports);
-  return reports.map((entry) => (
+  // Network completion order must not determine the context popover's layout.
+  const ordered = [...reports].sort(
+    (a, b) =>
+      a.sourceLabel.localeCompare(b.sourceLabel, "en") ||
+      (a.account.label ?? "").localeCompare(b.account.label ?? "", "en") ||
+      a.id.localeCompare(b.id, "en"),
+  );
+  return ordered.map((entry) => (
     <UsageCard
       key={entry.id}
       serverId={serverId}

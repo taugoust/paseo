@@ -40,14 +40,28 @@ export function PluginEnvironmentProvider({
 type PluginPopoverSurfaceProps = Pick<
   MenuSurfaceProps,
   "children" | "pages" | "sheetTitle" | "sheetTrailing" | "side" | "align" | "offset" | "testID"
->;
+> & { desktopWidth?: number };
 
 /**
  * The surface every plugin popover opens in: anchored to its trigger on wide layouts, a bottom
  * sheet on compact ones when the enclosing `MenuRoot` uses `compactMode="sheet"`.
  */
-export function PluginPopoverSurface(props: PluginPopoverSurfaceProps) {
-  return <MenuSurface {...props} minWidth={280} maxWidth={420} maxHeight={440} scrollable />;
+export function PluginPopoverSurface({ desktopWidth, ...props }: PluginPopoverSurfaceProps) {
+  const width =
+    typeof desktopWidth === "number" && Number.isFinite(desktopWidth)
+      ? Math.max(280, Math.min(1280, desktopWidth))
+      : undefined;
+  // AnchoredSurface additionally clamps to the available viewport.
+  return (
+    <MenuSurface
+      {...props}
+      width={width}
+      minWidth={280}
+      maxWidth={width ?? 420}
+      maxHeight={440}
+      scrollable
+    />
+  );
 }
 
 export function PluginPopoverContent({ children }: { children: ReactNode }) {

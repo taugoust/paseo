@@ -119,6 +119,7 @@ export function reconcileWorkspacePlacement(input: {
   checkout: ProjectCheckoutLitePayload | null;
   updatedAt: string;
 }): WorkspacePlacementUpdate | null {
+  if (input.workspace.workspaceId.startsWith("wks_tmux_")) return null;
   if (!input.checkout) return null;
   const observed = initialWorkspacePlacement({
     source: "checkout",

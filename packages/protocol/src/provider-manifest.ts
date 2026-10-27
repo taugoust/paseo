@@ -245,7 +245,16 @@ export const AGENT_PROVIDER_DEFINITIONS: AgentProviderDefinition[] = [
     label: "Pi",
     description: "Minimal terminal-based coding agent with multi-provider LLM support",
     defaultModeId: null,
-    modes: [],
+    modes: [
+      { id: "pi-prompts-on", label: "Dangerous ask", icon: "ShieldAlert", colorTier: "safe" },
+      {
+        id: "pi-prompts-off",
+        label: "Full access",
+        icon: "ShieldOff",
+        colorTier: "dangerous",
+        isUnattended: true,
+      },
+    ],
   },
   {
     id: "omp",

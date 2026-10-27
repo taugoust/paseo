@@ -1,4 +1,5 @@
 import type { Logger } from "pino";
+import { getTmuxTopology } from "../tmux-topology.js";
 
 import {
   AgentRunCancellationError,
@@ -103,7 +104,7 @@ export async function cancelAgentRunCommand(
       { agentId },
       "cancelAgentRunCommand: reported running but no active run was cancelled",
     );
-    throw new AgentRunCancellationError(agentId, "stop");
+    throw new AgentRunCancellationError(agentId, "stop", result.cancellation);
   }
 
   return { agent: result.agent, cancelled: result.cancelled };
@@ -116,42 +117,80 @@ export interface ArchiveAgentResult {
   record: StoredAgentRecord | null;
 }
 
-export async function archiveAgentCommand(
+interface ArchivePlan {
+  tmuxClosed: boolean;
+  liveAgent: ReturnType<AgentLifecycleCommandDependencies["agentManager"]["getAgent"]>;
+}
+
+async function retireTopologyGhost(
+  topology: NonNullable<ReturnType<typeof getTmuxTopology>>,
+  prior: StoredAgentRecord | null,
+  agentId: string,
+): Promise<boolean> {
+  if (prior?.provider !== "pi") return false;
+  return (await topology.retireSupersededAgent(agentId, prior.workspaceId ?? undefined)) === true;
+}
+
+async function prepareArchive(
   dependencies: AgentLifecycleCommandDependencies,
   agentId: string,
-): Promise<ArchiveAgentResult> {
+): Promise<ArchivePlan> {
+  const topology = getTmuxTopology();
+  const prior = topology ? await dependencies.agentStorage.get(agentId) : null;
+  const historyId = prior?.labels?.["pi.independentHistory"];
+  const historyOnly =
+    typeof historyId === "string" &&
+    historyId.length > 0 &&
+    prior?.persistence?.nativeHandle === `independent:${historyId}:${agentId}`;
+  const ghostRetired = topology ? await retireTopologyGhost(topology, prior, agentId) : false;
   const liveAgent = dependencies.agentManager.getAgent(agentId);
+  if (liveAgent && !ghostRetired) {
+    const { cancellation } = await requestAgentRunCancellation(dependencies, agentId);
+    if (cancellation.status !== "settled" && cancellation.status !== "not_running")
+      throw new AgentRunCancellationError(agentId, "archive", cancellation);
+  }
+  const tmuxClosed =
+    ghostRetired ||
+    (prior?.provider === "pi" &&
+      (await topology?.closeAgent(agentId, prior.workspaceId ?? undefined, historyOnly)));
+  return { tmuxClosed: !!tmuxClosed, liveAgent };
+}
+
+async function archivePlannedAgent(
+  dependencies: AgentLifecycleCommandDependencies,
+  agentId: string,
+  plan: ArchivePlan,
+): Promise<ArchiveAgentResult> {
   let record: StoredAgentRecord | null;
-  if (liveAgent) {
-    await requestAgentRunCancellation(dependencies, agentId);
+  if (plan.tmuxClosed) {
+    // Topology retires only the confirmed missing owner; other pane children remain untouched.
+    record = await dependencies.agentStorage.get(agentId);
+  } else if (plan.liveAgent) {
     await dependencies.agentManager.clearAgentAttention(agentId).catch(() => undefined);
     const archived = await dependencies.agentManager.archiveAgent(agentId);
-    if (liveAgent.internal) {
-      return { agentId, archivedAt: archived.archivedAt, record: null };
-    }
+    if (plan.liveAgent.internal) return { agentId, archivedAt: archived.archivedAt, record: null };
     record = await dependencies.agentStorage.get(agentId);
   } else {
     record = await archiveStoredAgent(dependencies, agentId);
   }
+  if (!record) throw new Error(`Agent not found in storage after archive: ${agentId}`);
+  if (!record.archivedAt) throw new Error(`Agent missing archivedAt after archive: ${agentId}`);
+  return { agentId, archivedAt: record.archivedAt, record };
+}
 
-  if (!record) {
-    throw new Error(`Agent not found in storage after archive: ${agentId}`);
-  }
-  if (!record.archivedAt) {
-    throw new Error(`Agent missing archivedAt after archive: ${agentId}`);
-  }
-
-  return {
-    agentId,
-    archivedAt: record.archivedAt,
-    record,
-  };
+export async function archiveAgentCommand(
+  dependencies: AgentLifecycleCommandDependencies,
+  agentId: string,
+): Promise<ArchiveAgentResult> {
+  const plan = await prepareArchive(dependencies, agentId);
+  return archivePlannedAgent(dependencies, agentId, plan);
 }
 
 export async function closeAgentCommand(
   dependencies: Pick<AgentLifecycleCommandDependencies, "agentManager">,
   agentId: string,
 ): Promise<void> {
+  if (await getTmuxTopology()?.closeAgent(agentId)) return;
   await dependencies.agentManager.closeAgent(agentId);
 }
 

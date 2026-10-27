@@ -4,6 +4,7 @@ import {
   buildPaseoToolDisplay,
 } from "./paseo-tool-presentation/index.js";
 import { stripCwdPrefix } from "./path-utils.js";
+import { buildGenericToolDisplay, readableValue } from "./generic-tool-presentation.js";
 
 export type ToolCallDisplayInput = Pick<
   ToolCallTimelineItem,
@@ -51,6 +52,28 @@ function humanizeToolName(name: string): string {
     .replace(/^./, (character) => character.toUpperCase());
 }
 
+// Read only known error-envelope fields. Do not stringify Pi text blocks or
+// traverse details/non-text payloads; the original structured error is retained.
+function readErrorContent(error: unknown, depth = 0): string | undefined {
+  if (!isRecord(error) || depth >= 8) {
+    return undefined;
+  }
+  if (typeof error.content === "string") {
+    return error.content;
+  }
+  if (Array.isArray(error.content)) {
+    const text = error.content
+      .flatMap((block) =>
+        isRecord(block) && block.type === "text" && typeof block.text === "string"
+          ? [block.text]
+          : [],
+      )
+      .join("\n");
+    return text.length > 0 ? text : undefined;
+  }
+  return isRecord(error.error) ? readErrorContent(error.error, depth + 1) : undefined;
+}
+
 function formatErrorText(error: unknown): string | undefined {
   if (error === null || error === undefined) {
     return undefined;
@@ -58,11 +81,12 @@ function formatErrorText(error: unknown): string | undefined {
   if (typeof error === "string") {
     return error;
   }
-  if (isRecord(error) && typeof error.content === "string") {
-    return error.content;
+  const content = readErrorContent(error);
+  if (content !== undefined) {
+    return content;
   }
   try {
-    return JSON.stringify(error, null, 2);
+    return readableValue(error);
   } catch {
     return String(error);
   }
@@ -165,6 +189,8 @@ export function buildToolCallDisplayModel(input: ToolCallDisplayInput): ToolCall
       ...(errorText ? { errorText } : {}),
     };
   }
+  const genericDisplay = buildGenericToolDisplay(input.name, input.detail);
+  if (genericDisplay) return { ...genericDisplay, ...(errorText ? { errorText } : {}) };
   const canonicalDisplay = buildCanonicalDetailDisplay(input);
   const unknownDetailOverride = buildUnknownDetailOverride(input);
   const displayName =

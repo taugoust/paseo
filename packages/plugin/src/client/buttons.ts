@@ -37,6 +37,10 @@ export interface PluginButton {
   visible?: boolean;
   disabled?: boolean;
   behavior: PluginButtonBehavior;
+  /** Hide the root icon slot without unmounting its component. */
+  iconVisible?: boolean;
+  /** Preferred root popover width (280–1280) on desktop; presentation-only updates keep it open. */
+  desktopPopoverWidth?: number;
 }
 
 export interface PluginButtonRegistration {

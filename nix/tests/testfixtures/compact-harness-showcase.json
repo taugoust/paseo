@@ -1,0 +1,199 @@
+[
+  {
+    "case": "Successful job wait",
+    "name": "background_job",
+    "input": {
+      "action": "wait",
+      "job_id": "job-0123456789abcdef01234567",
+      "lines": 20,
+      "timeout_ms": 1000
+    },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "job-0123456789abcdef01234567  Finished exit=0  17s  Build preview\ncwd: /synthetic/workspace\ncommand: build-preview --check\nBuild complete.\nAll checks passed."
+        }
+      ],
+      "details": {
+        "action": "wait",
+        "job_id": "job-0123456789abcdef01234567",
+        "status": "completed",
+        "exit_code": 0,
+        "name": "Build preview",
+        "timed_out": false,
+        "retention": "five-minutes-after-output-retrieval",
+        "pane_id": "%42",
+        "tmux_socket": "/synthetic/tmux",
+        "output_source": "log"
+      }
+    },
+    "after": "Build preview\nFinished · 17s\n\nBuild complete.\nAll checks passed."
+  },
+  {
+    "case": "Failed job wait",
+    "name": "background_job",
+    "input": { "action": "wait", "job_id": "job-0123456789abcdef01234567", "lines": 20 },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "job-0123456789abcdef01234567  Failed exit=2  17s  Build preview\ncwd: /synthetic/workspace\ncommand: build-preview --check\nreason: Build exited with code 2\nerror: missing synthetic fixture"
+        }
+      ],
+      "details": {
+        "action": "wait",
+        "job_id": "job-0123456789abcdef01234567",
+        "status": "failed",
+        "exit_code": 2,
+        "signal": "SIGTERM",
+        "name": "Build preview",
+        "timed_out": false
+      },
+      "isError": true
+    },
+    "after": "Build preview\nFailed · exit 2 · SIGTERM · 17s\n\nreason: Build exited with code 2\nerror: missing synthetic fixture"
+  },
+  {
+    "case": "Subagent native result",
+    "name": "subagent",
+    "input": { "operation": "result", "job_id": "subagent-job-0123456789abcdef01234567" },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Reviewed the synthetic renderer.\n\nThe timeout is not a failure.\nAll three focused checks pass."
+        }
+      ],
+      "details": {
+        "tui_subagent": true,
+        "operation": "result",
+        "job_id": "subagent-job-0123456789abcdef01234567",
+        "child_id": "subagent-child-0123456789abcdef01234567",
+        "artifact": "/synthetic/private/report-1.json",
+        "offset": 0,
+        "next_offset": 98,
+        "complete": true,
+        "terminal_id": "synthetic",
+        "report_sequence": 1
+      }
+    },
+    "after": "Reviewed the synthetic renderer.\n\nThe timeout is not a failure.\nAll three focused checks pass."
+  },
+  {
+    "case": "Subagent native wait",
+    "name": "subagent",
+    "input": {
+      "operation": "wait",
+      "job_id": "subagent-job-0123456789abcdef01234567",
+      "wait_ms": 1000
+    },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "subagent-job-0123456789abcdef01234567 running (single, background)\n1. subagent-child-0123456789abcdef01234567 task_id=subagent-task-0123456789abcdef01234567 running"
+        }
+      ],
+      "details": {
+        "tui_subagent": true,
+        "operation": "wait",
+        "job_id": "subagent-job-0123456789abcdef01234567",
+        "group": {
+          "job_id": "subagent-job-0123456789abcdef01234567",
+          "mode": "single",
+          "background": true,
+          "status": "running",
+          "children": [
+            {
+              "child": 1,
+              "child_id": "subagent-child-0123456789abcdef01234567",
+              "task_id": "subagent-task-0123456789abcdef01234567",
+              "task": "Synthetic delegated prompt; not a user-facing answer",
+              "status": "running",
+              "attempt": 1,
+              "cwd": "/synthetic/workspace",
+              "report": "/synthetic/private/report.json"
+            }
+          ]
+        }
+      }
+    },
+    "after": "Worker 1 · Running"
+  },
+  {
+    "case": "Progress checklist",
+    "name": "update_progress",
+    "input": {
+      "goal_id": "synthetic-goal",
+      "steps": [
+        { "id": "step-1", "text": "Inspect renderer", "status": "completed" },
+        { "id": "step-2", "text": "Run focused checks", "status": "in_progress" },
+        { "id": "step-3", "text": "Review screenshots", "status": "pending" }
+      ]
+    },
+    "before": {
+      "content": [{ "type": "text", "text": "update_progress: ✓ 1/3 completed; … 2 remaining" }],
+      "details": {
+        "version": 5,
+        "goalId": "synthetic-goal",
+        "steps": [
+          { "text": "Inspect renderer", "status": "completed" },
+          { "text": "Run focused checks", "status": "in_progress" },
+          { "text": "Review screenshots", "status": "pending" }
+        ]
+      }
+    },
+    "after": "✓ Inspect renderer\n… Run focused checks\n○ Review screenshots"
+  },
+  {
+    "case": "Goal management",
+    "name": "goal_manage",
+    "input": { "action": "status", "goal_id": "synthetic-goal" },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"goal\":{\"id\":\"synthetic-goal\",\"objective\":\"Make harness tools readable\"},\"remaining\":100}"
+        }
+      ],
+      "details": {
+        "presentation": {
+          "version": 1,
+          "tool": "goal_manage",
+          "action": "status",
+          "objective": "Make harness tools readable"
+        },
+        "goal": { "id": "synthetic-goal", "objective": "Make harness tools readable" }
+      }
+    },
+    "after": "Objective: Make harness tools readable"
+  },
+  {
+    "case": "Goal wait",
+    "name": "goal_wait",
+    "input": {
+      "goal_id": "synthetic-goal",
+      "reason": "Waiting for the arranged review callback.",
+      "resume_after_ms": 1
+    },
+    "before": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Goal waiting: Waiting for the arranged review callback.\nRequested resume_after_ms 1 was clamped to 10000."
+        }
+      ],
+      "details": {
+        "goal": "Make harness tools readable",
+        "goal_id": "synthetic-goal",
+        "reason": "Waiting for the arranged review callback.",
+        "requested_resume_after_ms": 1,
+        "resume_after_ms": 10000,
+        "resume_at": 1900000000000
+      },
+      "terminate": true
+    },
+    "after": "Goal waiting: Waiting for the arranged review callback."
+  }
+]

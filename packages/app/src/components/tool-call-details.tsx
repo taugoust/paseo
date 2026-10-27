@@ -8,16 +8,15 @@ import {
 } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import { StyleSheet } from "react-native-unistyles";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import type { ToolCallDetail } from "@getpaseo/protocol/agent-types";
+import { buildGenericToolSections } from "@getpaseo/protocol/generic-tool-presentation";
 import {
   buildPaseoToolDetailSections,
   type PaseoToolDetailSection,
 } from "@getpaseo/protocol/paseo-tool-presentation/index";
 import { buildLineDiff, parseUnifiedDiff, type DiffLine } from "@/utils/tool-call-parsers";
 import { highlightDiffLines } from "@/utils/diff-highlight";
-import { hasMeaningfulToolCallDetail } from "@/utils/tool-call-detail-state";
 import { inlineUnistylesStyle } from "@/styles/unistyles-inline-style";
 import { CODE_SURFACE_DATASET } from "@/styles/code-surface";
 import { extensionFromPath, highlightToKeyedLines } from "@/utils/highlight-cache";
@@ -569,72 +568,15 @@ function buildSearchSections(detail: SearchDetail, ds: DetailStyles): ReactNode[
   return out;
 }
 
-function serializeUnknownValue(value: unknown): string {
-  try {
-    return typeof value === "string" ? value : JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-
 interface UnknownDetail {
   input: unknown;
   output: unknown;
 }
 
-function buildUnknownSections(detail: UnknownDetail, ds: DetailStyles, t: TFunction): ReactNode[] {
-  const plainInputText =
-    typeof detail.input === "string" && detail.output === null ? detail.input : null;
-
-  if (plainInputText !== null) {
-    return [<ScrollablePlainTextSection key="unknown-plain-text" text={plainInputText} ds={ds} />];
-  }
-
-  const sectionsFromTopLevel = [
-    { title: t("toolCallDetails.input"), value: detail.input },
-    { title: t("toolCallDetails.output"), value: detail.output },
-  ].filter((entry) =>
-    hasMeaningfulToolCallDetail({
-      type: "unknown",
-      input: entry.value ?? null,
-      output: null,
-    }),
-  );
-
-  const out: ReactNode[] = [];
-  for (const section of sectionsFromTopLevel) {
-    const value = serializeUnknownValue(section.value);
-    if (!value.length) {
-      continue;
-    }
-    out.push(
-      <View key={`${section.title}-header`} style={styles.groupHeader}>
-        <Text style={styles.groupHeaderText}>{section.title}</Text>
-      </View>,
-    );
-    out.push(
-      <View key={`${section.title}-value`} style={styles.section}>
-        <ScrollView
-          horizontal
-          nestedScrollEnabled
-          style={ds.jsonScrollCombined}
-          contentContainerStyle={styles.jsonContent}
-          showsHorizontalScrollIndicator={true}
-        >
-          <Text selectable style={styles.scrollText} dataSet={CODE_SURFACE_DATASET}>
-            {value}
-          </Text>
-        </ScrollView>
-      </View>,
-    );
-  }
-  return out;
-}
-
 function PaseoDetailSection({ section }: { section: PaseoToolDetailSection }) {
   return (
     <View style={styles.paseoSection}>
-      <Text style={styles.paseoSectionTitle}>{section.title}</Text>
+      {section.title ? <Text style={styles.paseoSectionTitle}>{section.title}</Text> : null}
       {section.kind === "prose" ? (
         <Text selectable style={styles.paseoProse}>
           {section.text}
@@ -670,7 +612,6 @@ function buildDetailSections(
   detail: ToolCallDetail | undefined,
   diffLines: DiffLine[] | undefined,
   ds: DetailStyles,
-  t: TFunction,
 ): ReactNode[] {
   if (!detail) return [];
   if (detail.type === "shell") {
@@ -741,7 +682,23 @@ function buildDetailSections(
     return [<ScrollablePlainTextSection key="plain-text" text={detail.text} ds={ds} />];
   }
   if (detail.type === "unknown") {
-    return buildPaseoUnknownSections(toolName, detail) ?? buildUnknownSections(detail, ds, t);
+    const sections =
+      buildPaseoUnknownSections(toolName, detail) ??
+      buildGenericToolSections(toolName ?? "", detail.input, detail.output).map((section) => (
+        <PaseoDetailSection key={section.title} section={section} />
+      ));
+    return sections.length
+      ? [
+          <ScrollView
+            key="structured-details"
+            style={ds.scrollAreaStyle}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+          >
+            {sections}
+          </ScrollView>,
+        ]
+      : [];
   }
   return [];
 }
@@ -793,7 +750,7 @@ export function ToolCallDetailsContent({
   const ds = useDetailStyles(detail, resolvedMaxHeight, fillAvailableHeight);
   const diffLines = useDiffLines(detail);
 
-  const sections: ReactNode[] = buildDetailSections(toolName, detail, diffLines, ds, t);
+  const sections: ReactNode[] = buildDetailSections(toolName, detail, diffLines, ds);
 
   if (errorText) {
     sections.push(<ErrorSection key="error" errorText={errorText} ds={ds} />);
@@ -838,9 +795,9 @@ const styles = StyleSheet.create((theme) => {
       fontWeight: theme.fontWeight.normal,
     },
     paseoSection: {
-      gap: theme.spacing[3],
-      paddingHorizontal: theme.spacing[4],
-      paddingVertical: theme.spacing[4],
+      gap: theme.spacing[2],
+      paddingHorizontal: theme.spacing[3],
+      paddingVertical: theme.spacing[3],
       borderBottomWidth: theme.borderWidth[1],
       borderBottomColor: theme.colors.border,
     },
@@ -856,21 +813,25 @@ const styles = StyleSheet.create((theme) => {
       overflowWrap: "anywhere",
     },
     paseoFields: {
-      gap: theme.spacing[3],
+      gap: theme.spacing[2],
     },
     paseoFieldRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "flex-start",
-      gap: theme.spacing[4],
+      columnGap: theme.spacing[3],
+      rowGap: theme.spacing[1],
     },
     paseoFieldLabel: {
-      width: 120,
+      flexBasis: 96,
+      flexShrink: 0,
       color: theme.colors.foregroundMuted,
       fontSize: theme.fontSize.sm,
       lineHeight: Math.round(theme.fontSize.base * 1.5),
     },
     paseoFieldValue: {
       flex: 1,
+      flexBasis: 160,
       minWidth: 0,
       color: theme.colors.foreground,
       fontSize: theme.fontSize.base,

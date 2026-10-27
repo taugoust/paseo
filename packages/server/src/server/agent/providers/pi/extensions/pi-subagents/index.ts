@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { extractTextFromToolResult } from "../../tool-call-mapper.js";
+import { extractTextFromToolResult, mapToolDetail, parseToolArgs } from "../../tool-call-mapper.js";
 import type { PiExtension, PiExtensionToolCall, PiExtensionToolMapping } from "../contract.js";
+import { createNativeSubagentMapper } from "./native-subagent-links.js";
 
 const Args = z
   .object({
@@ -71,6 +72,7 @@ export const piSubagents: PiExtension = {
   createSession: () => {
     const callsByRun = new Map<string, string>();
     const readSessions = new Set<string>();
+    const mapNativeRuntimeNotification = createNativeSubagentMapper(readSessions);
     /** Keyed by async directory, which both status.json and the completion notice carry. */
     const asyncRuns = new Map<string, { owner: string; polling: boolean }>();
     const rememberAsyncRun = (details: z.infer<typeof Details>, call: PiExtensionToolCall) => {
@@ -170,7 +172,27 @@ export const piSubagents: PiExtension = {
       };
     };
     return {
+      mapRuntimeNotification(message) {
+        return mapNativeRuntimeNotification(message);
+      },
       mapToolCall(call) {
+        // Work Agents owns bridge workers; keep the normal tool timeline mapper.
+        // The legacy synthetic ID also covers history from pre-opt-out bridges.
+        if (
+          call.toolName === "subagent" &&
+          (/::paseo-child::\d+$/.test(call.callId) ||
+            (typeof call.args === "object" &&
+              call.args !== null &&
+              "_paseoWorkAgent" in call.args &&
+              call.args._paseoWorkAgent === true) ||
+            (typeof call.result === "object" && call.result?.details?.tui_subagent === true))
+        ) {
+          const { _paseoWorkAgent: _, ...args } = (call.args ?? {}) as Record<string, unknown>;
+          return {
+            detail: mapToolDetail(parseToolArgs(call.toolName, args), call.result),
+            subagents: [{ type: "hide" as const, id: call.callId }],
+          };
+        }
         if (call.toolName === "bg_wait") return mapWait(call);
         if (call.toolName === "subagent") return mapSpawn(call);
         return undefined;

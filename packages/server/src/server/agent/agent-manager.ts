@@ -1,3 +1,8 @@
+import {
+  hasIndependentHistory,
+  resolveIndependentCwd,
+} from "./providers/pi/independent-session.js";
+import { getTmuxTopology } from "../tmux-topology.js";
 import { projectTimelineRows } from "./timeline-projection.js";
 import type { PluginLifecycle } from "../plugins/lifecycle/index.js";
 import { describeHookAgent, publishAgentStream } from "../plugins/lifecycle/index.js";
@@ -128,9 +133,16 @@ export class AgentManagerShuttingDownError extends Error {
 }
 
 export class AgentRunCancellationError extends Error {
-  constructor(agentId: string, action: "reload" | "replace" | "rewind" | "stop") {
+  constructor(
+    agentId: string,
+    action: "reload" | "replace" | "rewind" | "stop" | "archive",
+    result: AgentRunCancellationResult,
+  ) {
     super(
-      `Cannot ${action} agent ${agentId} because its active run cancellation was not acknowledged`,
+      result.status === "refused"
+        ? `Cannot ${action} agent ${agentId}: interrupt failed: ${String(result.error)}`
+        : `Cannot ${action} agent ${agentId}: cancellation is still in progress`,
+      result.status === "refused" ? { cause: result.error } : undefined,
     );
     this.name = "AgentRunCancellationError";
   }
@@ -139,7 +151,15 @@ export class AgentRunCancellationError extends Error {
 export type AgentRunCancellationResult =
   | { status: "not_running" }
   | { status: "settled" }
-  | { status: "refused" };
+  | { status: "in_progress" }
+  | { status: "refused"; error: unknown };
+
+interface RunInterrupt {
+  token: string;
+  status: "pending" | "acknowledged" | "failed";
+  error?: unknown;
+  promise: Promise<void>;
+}
 
 /** A session that will run in a directory needs that directory to be there. */
 async function assertUsableWorkingDirectory(cwd: string): Promise<void> {
@@ -748,6 +768,9 @@ export class AgentManager {
   private readonly steerEventBarriers = new Map<string, SteerEventBarrier>();
   private readonly foregroundMutationTails = new Map<string, Promise<void>>();
   private readonly runs = new AgentRunState();
+  // The settled promise is unique to a run token. Weak ownership retains late
+  // failures for repeated Stop without leaking completed runs indefinitely.
+  private readonly runInterrupts = new WeakMap<Promise<void>, RunInterrupt>();
   private readonly subscribers = new Set<SubscriptionRecord>();
   private readonly idFactory: () => string;
   private readonly registry?: AgentStorage;
@@ -1288,6 +1311,19 @@ export class AgentManager {
       });
       config = { ...request.config, internal: config.internal };
       options = { ...options, env: request.env };
+    }
+    if (hasIndependentHistory(config)) config = { ...config, cwd: resolveIndependentCwd(config) };
+    const topology = getTmuxTopology();
+    if (topology && config.provider === "pi") {
+      const workspaceId =
+        options.workspaceId ??
+        (await topology.createWorkspace(undefined, config.cwd, options.initialTitle ?? undefined))
+          .workspaceId;
+      options = {
+        ...options,
+        workspaceId,
+        env: { ...options.env, ...(await topology.agentEnv(workspaceId, resolvedAgentId)) },
+      };
     }
     await this.deleteAgentState(resolvedAgentId);
     const { storedConfig, launchConfig, paseoToolPolicy } = await this.prepareSessionConfig(
@@ -1830,6 +1866,7 @@ export class AgentManager {
     requestedArchivedAt?: string,
   ): Promise<{ archivedAt: string }> {
     const agent = this.requireAgent(agentId);
+    await this.cancelAgentRunBefore(agentId, "archive");
     if (agent.internal) {
       // Nothing about an internal agent is on disk, and archiving must not put
       // it there. Its final snapshot is kept in memory for a while (see
@@ -2358,6 +2395,55 @@ export class AgentManager {
     }
 
     await this.unarchiveSnapshot(matched.id);
+  }
+
+  /** A confirmed missing tmux pane retires only its last observed Pi owner.
+   * Do not use archiveAgent/archiveSnapshot: those cascade to other child panes.
+   * Do not sync native archive state: the bridge's reaped tombstone is authoritative.
+   */
+  async archiveMissingTmuxAgent(agentId: string, workspaceId: string): Promise<boolean> {
+    return this.runLifecycleMutation(agentId, async () => {
+      const registry = this.requireRegistry();
+      const record = await registry.get(agentId);
+      if (
+        !record ||
+        record.provider !== "pi" ||
+        record.workspaceId !== workspaceId ||
+        !workspaceId.startsWith("wks_tmux_")
+      )
+        return false;
+      const archivedAt = record.archivedAt ?? new Date().toISOString();
+      const archived = buildArchivedAgentRecord(record, { archivedAt, updatedAt: archivedAt });
+      if (!record.archivedAt) await registry.upsert(archived);
+      const live = this.agents.get(agentId);
+      if (live) {
+        live.updatedAt = new Date(archivedAt);
+        await this.closeAgentRuntime(agentId);
+      }
+      this.discardRetainedAgentState(agentId);
+      if (!archived.internal) this.dispatchStoredAgentState(archived);
+      const confirmed = await registry.get(agentId);
+      return Boolean(
+        confirmed?.provider === "pi" &&
+        confirmed.workspaceId === workspaceId &&
+        confirmed.archivedAt,
+      );
+    });
+  }
+
+  /** Topology-owned placement update; cwd and provider session identity are unchanged. */
+  async relocateAgentWorkspace(agentId: string, workspaceId: string): Promise<void> {
+    await this.runLifecycleMutation(agentId, async () => {
+      const registry = this.requireRegistry();
+      const record = await registry.get(agentId);
+      if (!record || record.provider !== "pi" || record.workspaceId === workspaceId) return;
+      await registry.upsert({ ...record, workspaceId, updatedAt: new Date().toISOString() });
+      const live = this.agents.get(agentId);
+      if (live) {
+        live.workspaceId = workspaceId;
+        this.notifyAgentState(agentId);
+      }
+    });
   }
 
   async updateAgentMetadata(
@@ -3125,11 +3211,10 @@ export class AgentManager {
     }
   }
 
-  async cancelAgentRun(agentId: string): Promise<AgentRunCancellationResult> {
-    return this.runForegroundMutation(agentId, () => this.cancelAgentRunNow(agentId));
-  }
-
-  private async cancelAgentRunNow(agentId: string): Promise<AgentRunCancellationResult> {
+  async cancelAgentRun(
+    agentId: string,
+    waitForSettlement = false,
+  ): Promise<AgentRunCancellationResult> {
     const agent = this.requireSessionAgent(agentId);
     const run =
       this.runs.getRun(agentId) ??
@@ -3138,96 +3223,80 @@ export class AgentManager {
       return { status: "not_running" };
     }
 
-    const interruptAcknowledged = await this.interruptSession(agent.session, agentId);
-    const settlement = await this.waitWithTimeout({
-      operation: run.settledPromise,
-      timeoutMs: interruptAcknowledged
-        ? INTERRUPT_SESSION_TIMEOUT_MS
-        : this.rescueTimeouts.interruptSessionMs,
-    });
-
-    if (!interruptAcknowledged) {
-      return { status: settlement === "completed" ? "settled" : "refused" };
+    // Install ownership synchronously, before invoking the provider. This is
+    // idempotent per run token, including concurrent/repeated Stop requests.
+    // Do not acquire the foreground lane: replacement may already own it.
+    let interrupt = this.runInterrupts.get(run.settledPromise);
+    if (!interrupt) {
+      const request: RunInterrupt = {
+        token: run.token,
+        status: "pending",
+        promise: Promise.resolve(),
+      };
+      this.runInterrupts.set(run.settledPromise, request);
+      request.promise = Promise.resolve()
+        .then(() => {
+          // A terminal event may have won before this microtask ran. Never
+          // dispatch the old token's interrupt against a newer admitted run.
+          if (!run.settled && this.runs.getRun(agentId)?.token === request.token) {
+            return agent.session.interrupt();
+          }
+          return undefined;
+        })
+        .then(
+          () => {
+            request.status = "acknowledged";
+            return undefined;
+          },
+          (error: unknown) => {
+            request.status = "failed";
+            request.error = error;
+            // This observer remains attached after the response deadline and
+            // even after real settlement. Never drop a late provider failure.
+            this.logger.error(
+              { err: error, agentId, runToken: request.token },
+              "Session interrupt failed",
+            );
+            return undefined;
+          },
+        );
+      interrupt = request;
     }
 
-    const runTurnId = this.runs.getTurnId(agentId);
-    if (settlement === "timed_out" && runTurnId) {
-      this.logger.warn(
-        { agentId, turnId: runTurnId, kind: run.kind },
-        "cancelAgentRun: acknowledged turn still active after timeout, force-canceling",
-      );
-      await this.dispatchSessionEvent(agent, {
-        type: "turn_canceled",
-        provider: agent.provider,
-        reason: "interrupted",
-        turnId: runTurnId,
+    const request = interrupt;
+    const settlement = Promise.race([
+      run.settledPromise,
+      request.promise.then(() => (request.status === "failed" ? undefined : run.settledPromise)),
+    ]);
+    // Sending a replacement stays pending until the old run really settles.
+    // Stop and destructive lifecycle operations retain their bounded response.
+    // An interrupt failure still resolves this race and is reported below.
+    if (waitForSettlement) await settlement;
+    else
+      await this.waitWithTimeout({
+        operation: settlement,
+        timeoutMs: this.rescueTimeouts.interruptSessionMs,
       });
-      await run.settledPromise;
-    } else if (settlement === "timed_out" && run.kind === "foreground") {
-      this.logger.warn(
-        { agentId, kind: run.kind },
-        "cancelAgentRun: acknowledged pending turn still active after timeout, clearing it",
-      );
-      this.runs.settleForegroundRun(agentId, run.token);
-      if (!agent.pendingReplacement) {
-        agent.lifecycle = "idle";
-        this.touchUpdatedAt(agent);
-        this.emitState(agent);
-      }
-    } else if (settlement === "timed_out" && run.kind === "autonomous") {
-      this.logger.warn(
-        { agentId, kind: run.kind },
-        "cancelAgentRun: acknowledged turn still active after timeout, force-canceling",
-      );
-      await this.dispatchSessionEvent(agent, {
-        type: "turn_canceled",
-        provider: agent.provider,
-        reason: "interrupted",
-      });
-    }
 
-    if (agent.pendingPermissions.size > 0) {
-      this.resolvePendingPermissionsForAgent(agent, agent.provider, undefined, "Interrupted");
-      this.touchUpdatedAt(agent);
-      this.emitState(agent);
+    // RPC acknowledgement is not settlement. Only the tracked run's real
+    // terminal event/stream completion authorizes destructive follow-up work.
+    if (run.settled) {
+      return { status: "settled" };
     }
-    return { status: "settled" };
+    if (request.status === "failed") {
+      return { status: "refused", error: request.error };
+    }
+    return { status: "in_progress" };
   }
 
   private async cancelAgentRunBefore(
     agentId: string,
-    action: "reload" | "replace" | "rewind",
+    action: "reload" | "replace" | "rewind" | "archive",
   ): Promise<void> {
-    const result = await this.cancelAgentRun(agentId);
-    if (result.status === "refused") {
-      throw new AgentRunCancellationError(agentId, action);
-    }
-  }
-
-  private async interruptSession(session: AgentSession, agentId: string): Promise<boolean> {
-    try {
-      const result = await this.waitWithTimeout({
-        operation: session.interrupt(),
-        timeoutMs: this.rescueTimeouts.interruptSessionMs,
-        onLateError: (error) => {
-          this.logger.warn(
-            { err: error, agentId },
-            "Session interrupt failed after timeout during cancel",
-          );
-        },
-      });
-
-      if (result === "timed_out") {
-        this.logger.warn(
-          { agentId, timeoutMs: this.rescueTimeouts.interruptSessionMs },
-          "Timed out interrupting session during cancel",
-        );
-        return false;
-      }
-      return true;
-    } catch (error) {
-      this.logger.error({ err: error, agentId }, "Failed to interrupt session");
-      return false;
+    if (!this.hasInFlightRun(agentId)) return;
+    const result = await this.cancelAgentRun(agentId, action === "replace");
+    if (result.status !== "settled" && result.status !== "not_running") {
+      throw new AgentRunCancellationError(agentId, action, result);
     }
   }
 
@@ -5230,7 +5299,13 @@ export class AgentManager {
       // Only a session that will run in the directory needs it to still be there. Reading
       // an archived agent's history runs nothing, and must survive the worktree it ran in
       // being removed when its workspace was archived.
-      if (options.purpose !== "history") {
+      if (
+        options.purpose !== "history" &&
+        !(
+          normalized.provider === "pi" &&
+          typeof normalized.providerOptions?.independentHistoryId === "string"
+        )
+      ) {
         await assertUsableWorkingDirectory(normalized.cwd);
       }
     }

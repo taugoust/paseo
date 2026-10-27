@@ -276,6 +276,12 @@ must preserve them and update the public reference, migration guide, scaffold, a
 an author-facing import changes. The plugin compiler enforces the same runtime entry rules for
 plugin-authored code. Keep the package export map and host-provided module maps consistent.
 
+In the `pi-integration` fork, plugins may import `@getpaseo/highlight` for shared tokenization,
+cache, diff reconstruction and syntax palettes. The daemon compiler resolves its pinned copy
+and bundles the implementation and grammars into the plugin; this is not a new host SDK
+external. Existing native clients do not need an app update. Do not copy those internals into
+plugins or depend on app-private rendering contexts. See [fork maintenance](pi-integration.md).
+
 The compiler rejects imports across runtime directories or SDK entries, React dependencies in
 server code, and Node imports in client code (including bare names such as `fs`). Shared modules
 cannot import runtime-owned modules. Forbidden imports fail compilation; never replace them with

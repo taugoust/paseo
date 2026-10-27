@@ -46,9 +46,9 @@ export interface PiExtensionUiResponse {
   confirmed?: boolean;
 }
 export type PiExtensionDialogMapping =
-  | { type: "permission"; request: AgentPermissionRequest }
+  | { type: "permission"; request: AgentPermissionRequest; toolCallId?: string }
   | { type: "response"; response: PiExtensionUiResponse }
-  | { type: "deferred" };
+  | { type: "deferred"; requestId?: string; toolCallId?: string };
 
 export interface PiExtensionUiReply {
   responses: Array<{ id: string; response: PiExtensionUiResponse }>;

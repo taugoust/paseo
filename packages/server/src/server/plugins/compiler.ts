@@ -205,7 +205,11 @@ function createRuntimeBoundaryPlugin(target: PluginBuildTarget, pluginDirectory:
         kind: PluginImportKind,
         typeOnly: boolean,
       ): Promise<Set<string>> {
-        const declaration = imports.resolve(specifier, file, kind);
+        // Match the runtime alias for declarations too. Resolve from the pinned
+        // package, then inspect its transitive types through the same boundaries.
+        const declarationImporter =
+          specifier === "@getpaseo/highlight" ? nodeRequire.resolve(specifier) : file;
+        const declaration = imports.resolve(specifier, declarationImporter, kind);
         const dependencyFiles = new Set<string>();
         if (declaration && (typeOnly || /\.d\.[cm]?ts$/.test(declaration)))
           dependencyFiles.add(declaration);
@@ -310,7 +314,7 @@ function makeHermesInteropEager(code: string): string {
   // Hermes evaluates esbuild's lazy CommonJS interop getters from a string with
   // the final loop binding, so every named import can resolve to the last export.
   // Plugin bundles execute once and do not need live bindings from host modules.
-  return code.replaceAll("get: () => from[key]", "value: from[key]");
+  return code.replaceAll(/get:\s*\(\)\s*=>\s*(from\d*)\[(key\d*)\]/g, "value: $1[$2]");
 }
 
 function runtimeSpecifierError(
@@ -399,6 +403,9 @@ async function compileTarget(entryPath: string, target: PluginBuildTarget): Prom
     // `exports` would not resolve. Read the same fields as esbuild's browser platform
     // minus `browser`, since the bundle also runs in React Native.
     mainFields: target === "client" ? ["module", "main"] : undefined,
+    // Plugin authors import the fork-owned package, but the compiled plugin must
+    // carry it and its grammars rather than requiring a new host runtime module.
+    alias: { "@getpaseo/highlight": nodeRequire.resolve("@getpaseo/highlight") },
     // Metro lowers async syntax before Hermes sees app code. Plugin client bundles bypass Metro,
     // so apply the same compatibility transform before the app evaluates them from source.
     supported: target === "client" ? { "async-await": false } : undefined,
@@ -420,8 +427,23 @@ async function compileTarget(entryPath: string, target: PluginBuildTarget): Prom
     write: false,
   });
   checkSharedDependencies(result.metafile.inputs, pluginDirectory);
-  const output = result.outputFiles[0]?.text;
+  let output = result.outputFiles[0]?.text;
   if (!output) throw new Error(`Plugin ${target} compilation produced no output`);
+  // Metro normally lowers classes before Hermes sees them. Dynamically evaluated
+  // plugin bundles bypass Metro, just as they bypass its async lowering above.
+  // Reuse the pinned Babel transform; do not change grammars or the native client.
+  if (target === "client") {
+    const { transformSync } = nodeRequire("@babel/core");
+    const classes = nodeRequire("@babel/plugin-transform-classes");
+    const transformed = transformSync(makeHermesInteropEager(output), {
+      babelrc: false,
+      configFile: false,
+      sourceType: "script",
+      plugins: [classes.default ?? classes],
+    });
+    if (!transformed?.code) throw new Error("Hermes class lowering produced no output");
+    output = transformed.code;
+  }
   return wrapCommonJsBundle(makeHermesInteropEager(output));
 }
 

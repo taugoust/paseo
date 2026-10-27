@@ -48,7 +48,8 @@ export type ProviderSubagentInputEvent =
       item: AgentTimelineItem;
       timestamp?: string;
     }
-  | { type: "remove"; id: string };
+  | { type: "remove"; id: string }
+  | { type: "hide"; id: string };
 
 export type ProviderSubagentStoreEvent =
   | { type: "upsert"; subagent: ProviderSubagentDescriptor }
@@ -78,6 +79,7 @@ function stickyField<T>(next: T | undefined, previous: T | null | undefined): T 
 export class ProviderSubagentStore {
   private readonly descriptors = new Map<string, ProviderSubagentDescriptor>();
   private readonly timelines = new InMemoryAgentTimelineStore();
+  private readonly hidden = new Set<string>();
 
   apply(
     parentAgentId: string,
@@ -87,7 +89,13 @@ export class ProviderSubagentStore {
     const key = storeKey(parentAgentId, event.id);
     if (event.type === "remove") {
       this.descriptors.delete(key);
+      this.hidden.delete(key);
       this.timelines.delete(key);
+      return { type: "remove", parentAgentId, subagentId: event.id };
+    }
+
+    if (event.type === "hide") {
+      this.hidden.add(key);
       return { type: "remove", parentAgentId, subagentId: event.id };
     }
 
@@ -128,17 +136,24 @@ export class ProviderSubagentStore {
       parentSubagentId: stickyField(event.parentSubagentId, previous?.parentSubagentId),
     };
     this.descriptors.set(key, subagent);
+    if (this.hidden.has(key)) return { type: "remove", parentAgentId, subagentId: event.id };
     return { type: "upsert", subagent };
   }
 
   list(parentAgentId: string): ProviderSubagentDescriptor[] {
     return [...this.descriptors.values()]
-      .filter((subagent) => subagent.parentAgentId === parentAgentId)
+      .filter(
+        (subagent) =>
+          subagent.parentAgentId === parentAgentId &&
+          !this.hidden.has(storeKey(parentAgentId, subagent.id)),
+      )
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   }
 
   listAll(): ProviderSubagentDescriptor[] {
-    return [...this.descriptors.values()];
+    return [...this.descriptors.values()].filter(
+      (subagent) => !this.hidden.has(storeKey(subagent.parentAgentId, subagent.id)),
+    );
   }
 
   get(parentAgentId: string, subagentId: string): ProviderSubagentDescriptor | null {
@@ -155,9 +170,18 @@ export class ProviderSubagentStore {
 
   deleteParent(parentAgentId: string): ProviderSubagentStoreEvent[] {
     const events: ProviderSubagentStoreEvent[] = [];
-    for (const subagent of this.list(parentAgentId)) {
+    // Hides may arrive before any descriptor. Retain their history until the
+    // parent is deleted, then clear tombstones as well as descriptor-owned keys.
+    for (const key of this.hidden) {
+      if (!key.startsWith(storeKey(parentAgentId, ""))) continue;
+      this.hidden.delete(key);
+      this.timelines.delete(key);
+    }
+    for (const subagent of this.descriptors.values()) {
+      if (subagent.parentAgentId !== parentAgentId) continue;
       const key = storeKey(parentAgentId, subagent.id);
       this.descriptors.delete(key);
+      this.hidden.delete(key);
       this.timelines.delete(key);
       events.push({ type: "remove", parentAgentId, subagentId: subagent.id });
     }

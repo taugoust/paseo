@@ -1,3 +1,4 @@
+import { getTmuxTopology } from "../server/tmux-topology.js";
 import type pino from "pino";
 import type {
   OwnedSubscription,
@@ -483,6 +484,7 @@ export class TerminalSessionController {
     }
 
     const terminals = await this.terminalManager.getTerminals(cwd, { workspaceId });
+    if (workspaceId && getTmuxTopology()?.placements.has(workspaceId)) return terminals;
     const workspaceRoots = await this.listTerminalWorkspaceRoots();
     if (workspaceRoots.length === 0) {
       return terminals;
@@ -770,7 +772,18 @@ export class TerminalSessionController {
   }
 
   private async handleKillTerminalRequest(msg: KillTerminalRequest): Promise<void> {
-    let success = false;
+    let closedTmux = false;
+    try {
+      closedTmux = (await getTmuxTopology()?.closeTerminal(msg.terminalId)) ?? false;
+    } catch (error) {
+      this.sessionLogger.warn({ err: error }, "Could not close tmux pane");
+      this.emit({
+        type: "kill_terminal_response",
+        payload: { terminalId: msg.terminalId, success: false, requestId: msg.requestId },
+      });
+      return;
+    }
+    let success = closedTmux;
     if (this.terminalManager) {
       try {
         this.detachStream(msg.terminalId, { emitExit: true });

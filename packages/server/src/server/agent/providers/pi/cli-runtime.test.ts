@@ -376,6 +376,85 @@ describe("PiCliRuntime", () => {
     await rejection;
   });
 
+  for (const type of ["prompt", "steer"] as const) {
+    test(`${type} command waits for human input beyond the control-plane deadline`, async () => {
+      vi.useFakeTimers();
+      const child = createPiChild();
+      const command = capturePendingCommand(child, type);
+      const session = await createRuntime(child, [], { requestTimeoutMs: 100 }).startSession({
+        cwd: "/workspace/project",
+      });
+      try {
+        let settled = false;
+        const pending =
+          type === "prompt" ? session.prompt("/fixture-dialog") : session.steer("/fixture-dialog");
+        const outcome = pending.then(
+          (value) => {
+            settled = true;
+            return { value };
+          },
+          (error) => {
+            settled = true;
+            return { error };
+          },
+        );
+        const frame = await command;
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(settled).toBe(false);
+        writePiResponse(child, frame, { agentInvoked: false });
+        expect(await outcome).not.toHaveProperty("error");
+      } finally {
+        vi.useRealTimers();
+        await session.close();
+      }
+    });
+
+    test(`${type} pending human command rejects when its session closes`, async () => {
+      const child = createPiChild();
+      const command = capturePendingCommand(child, type);
+      const session = await createRuntime(child).startSession({ cwd: "/workspace/project" });
+      const pending =
+        type === "prompt" ? session.prompt("/fixture-dialog") : session.steer("/fixture-dialog");
+      const rejection = expect(pending).rejects.toThrow("Pi RPC session is closed");
+      await command;
+      await session.close();
+      await rejection;
+    });
+  }
+
+  for (const disposition of ["handled", "queued", "started"] as const) {
+    test(`maps Pi 1.4 prompt admission ${disposition} to the native prompt receipt`, async () => {
+      const child = createPiChild();
+      const frame = capturePendingCommand(child, "prompt");
+      const session = await createRuntime(child).startSession({ cwd: "/workspace/project" });
+      try {
+        const receipt = session.prompt("offline input");
+        const command = await frame;
+        writePiResponse(child, command, { disposition });
+        expect(await receipt).toEqual({
+          requestId: command.id,
+          agentInvoked: disposition !== "handled",
+        });
+      } finally {
+        await session.close();
+      }
+    });
+  }
+
+  test("does not invent agent invocation from an unknown admission disposition", async () => {
+    const child = createPiChild();
+    const frame = capturePendingCommand(child, "prompt");
+    const session = await createRuntime(child).startSession({ cwd: "/workspace/project" });
+    try {
+      const receipt = session.prompt("offline input");
+      const command = await frame;
+      writePiResponse(child, command, { disposition: "unknown-future-state" });
+      expect(await receipt).toEqual({ requestId: command.id });
+    } finally {
+      await session.close();
+    }
+  });
+
   test("disposes the Pi process", async () => {
     const child = createPiChild();
     const session = await createRuntime(child).startSession({ cwd: "/workspace/project" });

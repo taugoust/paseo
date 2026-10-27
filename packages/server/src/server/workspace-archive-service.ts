@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { getTmuxTopology } from "./tmux-topology.js";
 
 import type { Logger } from "pino";
 
@@ -124,6 +125,17 @@ export async function archiveByScope(
   dependencies: ArchiveDependencies,
   request: ArchiveByScopeRequest,
 ): Promise<ArchiveResult> {
+  if (
+    request.scope.kind === "workspace" &&
+    (await getTmuxTopology()?.closeWorkspace(request.scope.workspaceId))
+  ) {
+    const workspaceId = request.scope.workspaceId;
+    // tmux owns the entire window. Do not recursively archive agent descendants
+    // outside it, run worktree teardown, or delete the working directory.
+    await dependencies.archiveWorkspaceRecord(workspaceId);
+    await dependencies.emitWorkspaceUpdatesForWorkspaceIds([workspaceId]);
+    return { archivedAgentIds: [], archivedWorkspaceIds: [workspaceId], removedDirectory: false };
+  }
   return runWithGitCommandPriority("high", () => archiveByScopeWithPriority(dependencies, request));
 }
 

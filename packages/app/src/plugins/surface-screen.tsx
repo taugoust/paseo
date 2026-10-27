@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import type { PluginScreenParams, PluginScreenProps } from "@getpaseo/plugin/client";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { X } from "lucide-react-native";
+import { useIsFocused } from "@react-navigation/native";
 import { useCallback, useMemo, type ComponentType } from "react";
 import { Text, View } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
@@ -75,9 +76,10 @@ function SurfaceRenderer({
   theme: PluginTheme;
 }) {
   const navigation = usePluginHostNavigation(host.id);
+  const isFocused = useIsFocused();
   return (
     <PluginInstallationProvider plugin={plugin}>
-      <Surface theme={theme} host={host} layout={layout} navigation={navigation} params={params} />
+      <Surface {...{ theme, host, layout, navigation, params, isFocused }} />
     </PluginInstallationProvider>
   );
 }

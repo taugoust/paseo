@@ -60,6 +60,8 @@ export interface UsageAccount {
   label?: string;
   /** Harness owning this login, e.g. Codex, OpenCode, Pi or OMP. */
   harness?: string;
+  /** Keep this session-scoped account out of the global account list. */
+  sessionOnly?: boolean;
   /** Store locator, opaque to the daemon. */
   input: JsonValue;
 }

@@ -1,3 +1,5 @@
+import { startTmuxTopology } from "./tmux-topology.js";
+import { isManagedPiChild } from "./pi-child-notifications.js";
 import type { PluginRegistries } from "@getpaseo/protocol/plugin-registry";
 import { describeHookWorkspace } from "./plugins/lifecycle/index.js";
 import express from "express";
@@ -984,6 +986,21 @@ export async function createPaseoDaemon(
     workspaceGitService,
     logger,
   });
+  const tmuxTopology = await startTmuxTopology({
+    projectRegistry,
+    workspaceRegistry,
+    terminalManager,
+    paseoHome: config.paseoHome,
+    logger,
+    associateAgent: (agentId, workspaceId) =>
+      agentManager.relocateAgentWorkspace(agentId, workspaceId),
+    isBackgroundAgent: async (agentId) => {
+      const record = await agentStorage.get(agentId);
+      return record ? isManagedPiChild(record) : false;
+    },
+    archiveAgent: (agentId, workspaceId) =>
+      agentManager.archiveMissingTmuxAgent(agentId, workspaceId),
+  });
   await workspaceLabelService.initialize();
   logger.info({ elapsed: elapsed() }, "Workspace registries bootstrapped");
   const teardownArchivedWorkspaceRuntime = (workspaceId: string): void => {
@@ -1834,6 +1851,7 @@ export async function createPaseoDaemon(
     await agentStorage.flush().catch(() => undefined);
     await agentProviderRuntime.shutdown();
     await pluginRuntime.stopAllPlugins();
+    tmuxTopology?.stop();
     terminalManager.killAll();
     await speechService.stop();
     await scheduleService.stop().catch(() => undefined);

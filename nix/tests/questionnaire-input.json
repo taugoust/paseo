@@ -1,0 +1,24 @@
+{
+  "source": "questionnaire/paseo.test.mjs custom and selected answers retain multi-question order",
+  "args": {
+    "questions": [
+      {
+        "id": "scope",
+        "label": "Scope",
+        "prompt": "Which scope?",
+        "options": [
+          { "value": "first", "label": "Shared", "description": "First meaning" },
+          { "value": "second", "label": "Shared", "description": "Second meaning" }
+        ],
+        "allowOther": true
+      },
+      {
+        "id": "mode",
+        "label": "Mode",
+        "prompt": "Which mode?",
+        "options": [{ "value": "fast", "label": "Fast", "description": "Quick" }],
+        "allowOther": true
+      }
+    ]
+  }
+}

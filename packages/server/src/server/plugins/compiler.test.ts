@@ -1,4 +1,5 @@
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -157,6 +158,39 @@ describe("plugin runtime entries", () => {
     expect(result.serverBundle).toContain("Server contribution");
     expect(result.clientBundle).not.toContain("@getpaseo/protocol");
     expect(result.serverBundle).not.toContain("@getpaseo/protocol");
+  });
+
+  it("bundles fork highlighting helpers into external plugins without host runtime imports", async () => {
+    const entries = await createSplitPlugin();
+    expect(existsSync(path.join(entries.directory, "node_modules"))).toBe(false);
+    await writeFile(
+      entries.client,
+      `import { highlightToKeyedLines, highlightDiffLines } from "@getpaseo/highlight";
+import type { HighlightDiffLine } from "@getpaseo/highlight";
+export default function contribute() {
+  const source = highlightToKeyedLines("const value = 1;", "ts");
+  const input: HighlightDiffLine[] = [{ type: "add", content: "+const value = 1;" }];
+  const diff = highlightDiffLines(input, "example.ts");
+  return {
+    sourceKeyword: source?.[0].tokens.some(({ token }) => token.style === "keyword") ?? false,
+    diffKeyword: diff[0].tokens?.some((token) => token.style === "keyword") ?? false,
+  };
+}`,
+    );
+
+    const { clientBundle } = await compilePlugin({ client: entries.client, server: null });
+    expect(clientBundle).not.toBeNull();
+    const externalModules: string[] = [];
+    const bundle = runInNewContext(clientBundle!) as (
+      requireModule: (specifier: string) => never,
+    ) => { default: () => { sourceKeyword: boolean; diffKeyword: boolean } };
+    const compiledPlugin = bundle((specifier) => {
+      externalModules.push(specifier);
+      throw new Error(`Unexpected host runtime import: ${specifier}`);
+    });
+
+    expect(compiledPlugin.default()).toEqual({ sourceKeyword: true, diffKeyword: true });
+    expect(externalModules).toEqual([]);
   });
 
   it("still requires local dependencies for protocol runtime imports", async () => {

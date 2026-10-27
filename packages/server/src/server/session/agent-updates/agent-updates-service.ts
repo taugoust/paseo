@@ -1,3 +1,4 @@
+import { isManagedPiChild } from "../../pi-child-notifications.js";
 import type pino from "pino";
 import type {
   AgentSnapshotPayload,
@@ -292,6 +293,13 @@ export function createAgentUpdatesService(deps: AgentUpdatesServiceDeps): AgentU
 
   async function emitStoredRecord(record: StoredAgentRecord): Promise<AgentSnapshotPayload> {
     const payload = deps.buildStoredAgentPayload(record);
+    if (await isManagedPiChild(payload)) {
+      // Persisted updates can arrive after the initial snapshot; keep their
+      // attention projection consistent without changing authoritative state.
+      payload.requiresAttention = false;
+      payload.attentionReason = null;
+      payload.attentionTimestamp = null;
+    }
     await publishPayload(payload);
     return payload;
   }

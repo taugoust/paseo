@@ -40,6 +40,10 @@ const sherpaEnvModule =
 // paths. Analyze them at their real importer so nft retains the package exports,
 // manifests and workspace symlinks used by Node's resolution.
 const runtimeDependencies = new Map([
+  [
+    "packages/server/dist/server/server/plugins/compiler.js",
+    ["@babel/core", "@babel/plugin-transform-classes", "@getpaseo/highlight"],
+  ],
   ["packages/cli/dist/commands/daemon/local-daemon.js", ["@getpaseo/server"]],
   [terminalModule, ["@getpaseo/cli/bin/paseo", "node-pty/package.json"]],
   [sherpaModule, ["sherpa-onnx-node"]],
@@ -78,6 +82,9 @@ const ptyNativeFiles = (await readdir(ptyNativeRoot, { withFileTypes: true }))
 // process and preloads as well.
 const entries = [
   "packages/cli/dist/index.js",
+  // `daemon run` dynamically imports this package export. Trace its complete
+  // dependency graph as well as the supervisor entrypoint.
+  "packages/server/dist/server/server/exports.js",
   "packages/server/dist/scripts/supervisor-entrypoint.js",
   "packages/server/dist/server/terminal/terminal-worker-process.js",
   "packages/server/dist/server/server/speech/providers/local/worker-process.js",

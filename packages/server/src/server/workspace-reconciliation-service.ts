@@ -351,6 +351,7 @@ export class WorkspaceReconciliationService {
   }
 
   private async reconcileProject(input: ProjectReconciliationInput): Promise<void> {
+    if (input.project.projectId.startsWith("prj_tmux_")) return;
     const { project, siblings, currentGit, readCheckout, changes } = input;
     const workspaceCheckouts = await Promise.all(
       siblings.map(async (workspace) => ({

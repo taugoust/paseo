@@ -66,6 +66,7 @@ export class PiUsagePoller {
   private active = false;
   private closed = false;
   private generation = 0;
+  private idleRefreshGeneration = 0;
   private cancelScheduledPoll: (() => void) | null = null;
   private lastUsage: AgentUsage | null = null;
 
@@ -78,13 +79,38 @@ export class PiUsagePoller {
       return;
     }
     this.active = true;
+    this.idleRefreshGeneration += 1;
     this.generation += 1;
     this.schedule(this.generation);
   }
 
   stopTurn(): void {
     this.active = false;
+    this.idleRefreshGeneration += 1;
     this.invalidatePendingWork();
+  }
+
+  /** Refresh a quiescent session without starting or disturbing turn polling. */
+  async refreshIdle(): Promise<void> {
+    if (this.closed || this.active) return;
+    const idleRefreshGeneration = ++this.idleRefreshGeneration;
+    // Starting an idle snapshot invalidates any older final/poll read as well;
+    // the replacement read includes the provider's cumulative accounting totals.
+    const refreshGeneration = this.invalidatePendingWork();
+    let usage: AgentUsage | undefined;
+    try {
+      usage = toAgentUsage(await this.options.readStats());
+    } catch {
+      return;
+    }
+    if (
+      this.closed ||
+      this.active ||
+      this.generation !== refreshGeneration ||
+      this.idleRefreshGeneration !== idleRefreshGeneration
+    )
+      return;
+    this.publishUsage(usage);
   }
 
   async completeTurn(turnId?: string): Promise<void> {
@@ -108,6 +134,7 @@ export class PiUsagePoller {
   close(): void {
     this.closed = true;
     this.active = false;
+    this.idleRefreshGeneration += 1;
     this.invalidatePendingWork();
   }
 

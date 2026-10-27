@@ -1,4 +1,6 @@
 import { mapCustomMessageToToolCall } from "../custom-message.js";
+import { nativeToolErrorText } from "./native-tool-error.js";
+import { mapPiToolResultImages } from "./tool-result-images.js";
 import type { AgentStreamEvent, AgentTimelineItem, ToolCallDetail } from "../../agent-sdk-types.js";
 import {
   createPiExtensionHost,
@@ -7,7 +9,6 @@ import {
 } from "./extensions/index.js";
 import type { PiAgentMessage, PiImageContent, PiTextContent } from "./rpc-types.js";
 import {
-  extractTextFromToolResult,
   mapToolDetail,
   parseToolArgs,
   parseToolResult,
@@ -168,11 +169,22 @@ export class PiHistoryMapper {
         continue;
       }
       if (content.type === "thinking" && content.thinking) {
-        events.push({
-          type: "timeline",
-          provider: this.provider,
-          item: { type: "reasoning", text: content.thinking },
-        });
+        const text = content.thinking
+          .replace(/\*\*/g, "")
+          .replace(/\r?\n[ \t]*\r?\n+/g, "\n")
+          .replace(/\r?\n$/, "");
+        if (text) {
+          const previous = events.at(-1);
+          if (previous?.type === "timeline" && previous.item.type === "reasoning") {
+            previous.item.text = `${previous.item.text}\n${text}`;
+          } else {
+            events.push({
+              type: "timeline",
+              provider: this.provider,
+              item: { type: "reasoning", text },
+            });
+          }
+        }
         continue;
       }
       if (content.type === "toolCall") {
@@ -234,9 +246,16 @@ export class PiHistoryMapper {
           name: mapping?.name ?? tracked.toolName,
           isError: Boolean(message.isError),
           detail,
-          errorText: extractTextFromToolResult(result) ?? "Tool call failed",
+          errorText: nativeToolErrorText(result, tracked.toolName),
         }),
       },
+      ...mapPiToolResultImages(result, this.resolveToolCallId(message.toolCallId, tracked)).map(
+        (item) => ({
+          type: "timeline" as const,
+          provider: this.provider,
+          item,
+        }),
+      ),
       ...this.extensionEvents(mapping),
     ];
   }

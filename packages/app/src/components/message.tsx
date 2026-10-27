@@ -1474,6 +1474,16 @@ export const TodoListCard = memo(function TodoListCard({
   }, []);
 
   const renderDetails = useCallback(() => {
+    // Added is a historical activity, not a view of the live checklist. Its
+    // task string was captured by deriveTaskActivities at this tool call.
+    if (activity.type === "added") {
+      return (
+        <View style={todoListCardStylesheet.detailsWrapper}>
+          <Text style={todoListCardStylesheet.emptyText}>{activity.task}</Text>
+        </View>
+      );
+    }
+
     return (
       <View style={todoListCardStylesheet.detailsWrapper}>
         <View style={todoListCardStylesheet.list}>
@@ -1485,7 +1495,7 @@ export const TodoListCard = memo(function TodoListCard({
         </View>
       </View>
     );
-  }, [items, t]);
+  }, [activity, items, t]);
 
   return (
     <ExpandableBadge

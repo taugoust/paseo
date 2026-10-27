@@ -1,3 +1,4 @@
+import { isManagedPiChild } from "./pi-child-notifications.js";
 import { stat } from "node:fs/promises";
 import type { CreationSnapshot } from "@getpaseo/protocol/messages";
 import { CreationService } from "./creation/index.js";
@@ -2616,6 +2617,7 @@ export class VoiceAssistantWebSocketServer {
       permissionRequest: findLatestPermissionRequest(agent.pendingPermissions),
     });
 
+    const suppressUserNotification = await isManagedPiChild(agent);
     const plan = computeNotificationPlan({
       allStates,
       focusTarget: { kind: "agent", id: params.agentId },
@@ -2623,7 +2625,7 @@ export class VoiceAssistantWebSocketServer {
       nowMs,
     });
 
-    if (plan.shouldPush) {
+    if (plan.shouldPush && !suppressUserNotification) {
       void this.pushNotificationSender.send(notification).catch((err) => {
         this.logger.warn({ err, agentId: params.agentId }, "Failed to send push notification");
       });
@@ -2631,6 +2633,7 @@ export class VoiceAssistantWebSocketServer {
 
     for (const { ws } of clientEntries) {
       const shouldNotify =
+        !suppressUserNotification &&
         plan.inAppRecipientIndex !== null &&
         notificationEntries[plan.inAppRecipientIndex]?.ws === ws;
       const timestamp = new Date().toISOString();
