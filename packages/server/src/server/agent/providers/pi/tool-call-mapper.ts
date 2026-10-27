@@ -5,7 +5,8 @@ import {
 } from "@getpaseo/protocol/generic-tool-presentation";
 import { isPaseoToolName } from "@getpaseo/protocol/tool-name-normalization";
 
-import type { ToolCallDetail } from "../../agent-sdk-types.js";
+// Keep this pure presentation entry's declaration closure on public wire types.
+import type { ToolCallDetail } from "@getpaseo/protocol/agent-types";
 
 interface BashToolInput {
   command: string;

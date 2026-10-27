@@ -204,6 +204,12 @@ buildNpmPackage rec {
     # NFT traces runtime files, not type-only imports of bundled shared helpers.
     mkdir -p "$out/lib/paseo/packages/plugin/dist/shared"
     cp packages/plugin/dist/shared/*.d.ts "$out/lib/paseo/packages/plugin/dist/shared/"
+    mkdir -p "$out/lib/paseo/packages/server/dist/server/server/agent/providers/pi"
+    cp packages/server/dist/server/server/agent/providers/pi/{tool-presentation,tool-call-mapper,native-tool-error}.d.ts \
+      "$out/lib/paseo/packages/server/dist/server/server/agent/providers/pi/"
+    mkdir -p "$out/lib/paseo/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents"
+    cp packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/presentation.d.ts \
+      "$out/lib/paseo/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/"
     mkdir -p "$out/lib/paseo/packages/app/src/components"
     cp packages/app/src/components/tool-call-details.tsx \
       "$out/lib/paseo/packages/app/src/components/tool-call-details.tsx"
@@ -215,6 +221,11 @@ buildNpmPackage rec {
 
     node nix/tests/plugin-hermes-classes.test.mjs \
       "$out/lib/paseo/packages/server/dist/server/server/plugins/compiler.js"
+    ${lib.optionalString (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isx86_64) ''
+      export HERMESC="$PWD/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc"
+    ''}
+    PASEO_INSTALL="$out/lib/paseo" \
+      node --test nix/tests/plugin-bundled-tool-presentation.test.mjs
 
     runHook postInstall
   '';

@@ -1,18 +1,11 @@
 import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { extractTextFromToolResult, mapToolDetail, parseToolArgs } from "../../tool-call-mapper.js";
+import { extractTextFromToolResult } from "../../tool-call-mapper.js";
+import { projectSubagentToolPresentation } from "./presentation.js";
 import type { PiExtension, PiExtensionToolCall, PiExtensionToolMapping } from "../contract.js";
 import { createNativeSubagentMapper } from "./native-subagent-links.js";
 
-const Args = z
-  .object({
-    agent: z.string().trim().min(1).optional(),
-    task: z.string().trim().min(1).optional(),
-    async: z.boolean().optional(),
-    action: z.unknown().optional(),
-  })
-  .passthrough();
 const Row = z
   .object({
     index: z.number().int().nonnegative().optional(),
@@ -126,15 +119,10 @@ export const piSubagents: PiExtension = {
       return subagents.length ? { subagents, childSessions } : undefined;
     };
     const mapSpawn = (call: PiExtensionToolCall) => {
-      const args = Args.safeParse(call.args);
-      if (!args.success || args.data.action !== undefined || !args.data.agent || !args.data.task)
-        return undefined;
-      const detail = {
-        type: "sub_agent" as const,
-        subAgentType: args.data.agent,
-        description: args.data.task,
-        log: extractTextFromToolResult(call.result)?.trim() ?? "",
-      };
+      const projected = projectSubagentToolPresentation(call);
+      if (!projected || projected.managed) return undefined;
+      const args = { data: projected.args };
+      const detail = projected.detail;
       const base = {
         type: "upsert" as const,
         id: call.callId,
@@ -178,18 +166,10 @@ export const piSubagents: PiExtension = {
       mapToolCall(call) {
         // Work Agents owns bridge workers; keep the normal tool timeline mapper.
         // The legacy synthetic ID also covers history from pre-opt-out bridges.
-        if (
-          call.toolName === "subagent" &&
-          (/::paseo-child::\d+$/.test(call.callId) ||
-            (typeof call.args === "object" &&
-              call.args !== null &&
-              "_paseoWorkAgent" in call.args &&
-              call.args._paseoWorkAgent === true) ||
-            (typeof call.result === "object" && call.result?.details?.tui_subagent === true))
-        ) {
-          const { _paseoWorkAgent: _, ...args } = (call.args ?? {}) as Record<string, unknown>;
+        const projected = projectSubagentToolPresentation(call);
+        if (projected?.managed) {
           return {
-            detail: mapToolDetail(parseToolArgs(call.toolName, args), call.result),
+            detail: projected.detail,
             subagents: [{ type: "hide" as const, id: call.callId }],
           };
         }

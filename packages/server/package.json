@@ -18,6 +18,11 @@
       "source": "./src/server/exports.ts",
       "default": "./dist/server/server/exports.js"
     },
+    "./pi-tool-presentation": {
+      "types": "./dist/server/server/agent/providers/pi/tool-presentation.d.ts",
+      "source": "./src/server/agent/providers/pi/tool-presentation.ts",
+      "default": "./dist/server/server/agent/providers/pi/tool-presentation.js"
+    },
     "./utils/tool-call-parsers": {
       "types": "./dist/server/utils/tool-call-parsers.d.ts",
       "source": "./src/utils/tool-call-parsers.ts",

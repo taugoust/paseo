@@ -16,7 +16,37 @@ const ESBUILD_BINARY_PATH = "ESBUILD_BINARY_PATH";
 const BUNDLED_SHARED_MODULES: readonly string[] = [
   "@getpaseo/highlight",
   "@getpaseo/plugin/shared",
+  // Public, dependency-free presentation used by native tool details too.
+  // Bundle the pinned implementations; installed apps need no new SDK module.
+  "@getpaseo/protocol/generic-tool-presentation",
+  "@getpaseo/protocol/paseo-tool-presentation/index",
+  "@getpaseo/protocol/tool-call-display",
+  "@getpaseo/server/pi-tool-presentation",
 ];
+// The existing Pi mapper is pure today. A new runtime dependency must fail closed
+// pending explicit review, not silently import daemon transport/credentials.
+const PI_PRESENTATION_MODULE = "@getpaseo/server/pi-tool-presentation";
+const PI_PRESENTATION_RUNTIME_IMPORTS = new Set([
+  "zod",
+  "@getpaseo/protocol/generic-tool-presentation",
+  "@getpaseo/protocol/tool-name-normalization",
+]);
+
+/** Fail closed if a bundled presentation module grows ambient I/O or dynamic loading. */
+export function piPresentationPurityError(source: string): string | null {
+  const ts = nodeRequire("typescript") as typeof import("typescript");
+  const file = ts.createSourceFile("pi-tool-presentation.ts", source, ts.ScriptTarget.Latest, true);
+  const forbidden = new Set(["process", "global", "globalThis", "require", "module", "exports", "Buffer", "fetch", "WebSocket", "XMLHttpRequest", "Deno", "Bun", "eval", "Function"]);
+  let error: string | null = null;
+  function visit(node: import("typescript").Node): void {
+    if (error) return;
+    if (ts.isIdentifier(node) && forbidden.has(node.text)) error = `Ambient I/O in bundled presentation: ${node.text}`;
+    else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) error = "Dynamic loading in bundled presentation";
+    else ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return error;
+}
 
 // esbuild resolves its own platform binary via require.resolve() the first time its
 // module is evaluated. Inside the packaged desktop app that resolves to a path under
@@ -174,6 +204,22 @@ function lexicalBoundaryError(
 function createRuntimeBoundaryPlugin(target: PluginBuildTarget, pluginDirectory: string): Plugin {
   const boundaryResolution = {};
   const linkedDependencyRoots = new Set<string>();
+  const pinned = (specifier: string) => realpathSync.native(nodeRequire.resolve(specifier));
+  const paseoIndex = pinned("@getpaseo/protocol/paseo-tool-presentation/index");
+  const piPresentation = pinned(PI_PRESENTATION_MODULE);
+  const pureRuntimeContracts = new Map<string, ReadonlySet<string>>([
+    [piPresentation, new Set(["./tool-call-mapper.js", "./native-tool-error.js", "./extensions/pi-subagents/presentation.js"])],
+    [realpathSync.native(path.join(path.dirname(piPresentation), "extensions/pi-subagents/presentation.js")), new Set(["zod", "../../tool-call-mapper.js"])],
+    [realpathSync.native(path.join(path.dirname(piPresentation), "tool-call-mapper.js")), PI_PRESENTATION_RUNTIME_IMPORTS],
+    [realpathSync.native(path.join(path.dirname(piPresentation), "native-tool-error.js")), new Set(["@getpaseo/protocol/tool-call-display"])],
+    [pinned("@getpaseo/protocol/generic-tool-presentation"), new Set(["./subagent-task-summary.js"])],
+    [path.resolve(path.dirname(paseoIndex), "../subagent-task-summary.js"), new Set<string>()],
+    [pinned("@getpaseo/protocol/tool-call-display"), new Set(["./paseo-tool-presentation/index.js", "./path-utils.js", "./generic-tool-presentation.js"])],
+    [paseoIndex, new Set(["../tool-name-normalization.js", "./catalog.js", "./summary-text.js", "./agent-message.js", "./detail-sections.js"])],
+    [realpathSync.native(path.join(path.dirname(paseoIndex), "agent-message.js")), new Set(["./summary-text.js"])],
+    [realpathSync.native(path.join(path.dirname(paseoIndex), "detail-sections.js")), new Set(["../tool-name-normalization.js", "../generic-tool-presentation.js", "./catalog.js"])],
+    ...["catalog.js", "summary-text.js", "../tool-name-normalization.js", "../path-utils.js"].map((file): [string, ReadonlySet<string>] => [realpathSync.native(path.join(path.dirname(paseoIndex), file)), new Set<string>()]),
+  ]);
   return {
     name: `paseo-plugin-${target}-runtime-boundary`,
     setup(buildContext) {
@@ -245,7 +291,15 @@ function createRuntimeBoundaryPlugin(target: PluginBuildTarget, pluginDirectory:
         const key = `${owner}:${file}`;
         if (checked.has(key) || !/\.[cm]?[jt]sx?$/.test(file)) return null;
         checked.add(key);
+        const pureContract = pureRuntimeContracts.get(file);
+        if (pureContract) {
+          const error = piPresentationPurityError(readFileSync(file, "utf8"));
+          if (error) return { errors: [{ text: error }] };
+        }
         for (const { specifier, kind, typeOnly } of imports.read(file)) {
+          if (!typeOnly && pureContract && !pureContract.has(specifier)) {
+            return { errors: [{ text: `Unreviewed bundled presentation runtime dependency: ${specifier}` }] };
+          }
           const packageSpecifier =
             kind === "type-reference"
               ? `@types/${specifier.replace(/^@/, "").replace("/", "__")}`
@@ -330,6 +384,10 @@ function runtimeSpecifierError(
 ): OnResolveResult | null {
   let kind: string | null = null;
   if (specifier === "@getpaseo/plugin/client/host") kind = "host-private";
+  // esbuild aliases also match descendants; do not let an exact public helper
+  // alias become a path-traversal entry into the daemon's package installation.
+  else if (BUNDLED_SHARED_MODULES.some((module) => specifier.startsWith(`${module}/`)))
+    kind = specifier.startsWith("@getpaseo/plugin/") ? "Unknown SDK" : "Unknown bundled helper";
   else if (
     (specifier === "@getpaseo/plugin" ||
       specifier.startsWith("@getpaseo/plugin/") ||
@@ -342,6 +400,8 @@ function runtimeSpecifierError(
   else if (target !== "server" && (isBuiltin(specifier) || specifier === "@types/node"))
     kind = "Node";
   else if (target !== "server" && isPluginServerOnlySdkSpecifier(specifier)) kind = "server-only";
+  else if (target !== "server" && /^@(?:getpaseo|paseo)\/server(?:\/|$)/.test(specifier) &&
+           !BUNDLED_SHARED_MODULES.includes(specifier)) kind = "server-private";
   else if (
     target !== "client" &&
     (isPluginClientOnlySdkSpecifier(specifier) ||
