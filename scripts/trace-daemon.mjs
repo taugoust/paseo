@@ -130,9 +130,12 @@ const additionalInputs = [
     : []),
 ];
 
-// Fail at build time if a required runtime edge cannot resolve.
+// Trace resolved runtime edges as roots too: computed imports and compiler
+// aliases are not reliably discovered from synthetic requires alone.
 for (const [importer, specifiers] of runtimeDependencies) {
-  for (const specifier of specifiers) requireFrom(importer).resolve(specifier);
+  for (const specifier of specifiers) {
+    entries.push(requireFrom(importer).resolve(specifier));
+  }
 }
 
 // Trace.
