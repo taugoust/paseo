@@ -4,7 +4,6 @@
   buildNpmPackage,
   nodejs_22,
   python3,
-  tmux,
   makeWrapper,
   autoPatchelfHook,
   # node-pty needs libuv headers on Linux
@@ -94,7 +93,8 @@ buildNpmPackage rec {
   # fork-owned behavioral checks after building the daemon workspaces.
   dontNpmBuild = true;
   doCheck = true;
-  nativeCheckInputs = [ tmux ];
+  # Live tmux integration belongs to the downstream bridge/topology check,
+  # not the standalone Paseo package's build or test dependencies.
 
   checkPhase = ''
     runHook preCheck
@@ -107,9 +107,8 @@ buildNpmPackage rec {
     export TYPESCRIPT_PATH="$PWD/node_modules/typescript"
     mkdir -p "$TMPDIR/paseo-tests"
     cp -r nix/tests/. "$TMPDIR/paseo-tests/"
-    cp packages/server/src/server/tmux-topology.ts "$TMPDIR/paseo-tests/tmux-topology.ts"
     cd "$TMPDIR/paseo-tests"
-    node --experimental-test-module-mocks --test --test-concurrency=1 cli-workspace-ids.test.mjs pi-reaped-subagents.test.mjs pi-child-notifications.test.mjs pi-import-selection.test.mjs pi-progress.test.mjs quiet-harness-messages.test.mjs tmux-topology.test.mjs tmux-topology-trust.test.mjs tmux-topology-hooks.test.mjs tmux-close-live.test.mjs generic-tool-presentation.test.mjs pi-added-task-detail.test.mjs
+    node --experimental-test-module-mocks --test --test-concurrency=1 cli-workspace-ids.test.mjs pi-reaped-subagents.test.mjs pi-child-notifications.test.mjs pi-import-selection.test.mjs pi-progress.test.mjs quiet-harness-messages.test.mjs generic-tool-presentation.test.mjs pi-added-task-detail.test.mjs
     node --experimental-vm-modules --test --test-concurrency=1 generic-tool-components.test.mjs
     node native-tool-error.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/native-tool-error.js"
     node native-subagent-links.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/native-subagent-links.js"
