@@ -1,5 +1,12 @@
 import type { ToolCallDetail } from "./agent-types.js";
+import { subagentTaskOverviewText, type SubagentTaskAttempt } from "./subagent-task-summary.js";
 import type { PaseoToolDetailSection } from "./paseo-tool-presentation/detail-sections.js";
+export {
+  resolveSubagentTaskStatus,
+  summarizeSubagentTasks,
+  subagentTaskOverviewText,
+} from "./subagent-task-summary.js";
+export type { SubagentTaskAttempt, SubagentTaskSummary } from "./subagent-task-summary.js";
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -636,8 +643,11 @@ function subagentGroupText(
   if (!validSubagentGroups(groups)) return text;
   const summaries = subagentGroupSummaries(groups);
   const isReportAction =
-    action === "output" || action === "prompt" || action === "resume" || nativeGroupReport;
-  if (!isReportAction) return legacySubagentGroupText(details, summaries, text);
+    action === "output" ||
+    action === "prompt" ||
+    action === "resume" ||
+    (nativeGroupReport && action !== "list" && action !== "tasks");
+  if (!isReportAction) return legacySubagentGroupText(groups, details, summaries, text);
   const group = groups.length === 1 && record(groups[0]) ? groups[0] : undefined;
   if (!group) return text;
   const ordinary = stripNativeChildRows(text, group, summaries);
@@ -647,10 +657,24 @@ function subagentGroupText(
 }
 
 function legacySubagentGroupText(
+  groups: unknown[],
   details: Record<string, unknown>,
   summaries: string[],
   text: string,
 ): string {
+  const children = groups.filter(record).flatMap((group) =>
+    Array.isArray(group.children)
+      ? group.children.filter(record).map((child) =>
+          Object.assign({}, child, {
+            parentSessionId: subagentParentSession(child) ?? subagentParentSession(group),
+          }),
+        )
+      : [],
+  );
+  const retained = [details.tasks, details.foreground_tasks].flatMap((tasks) =>
+    Array.isArray(tasks) ? tasks.filter(record) : [],
+  );
+  if (children.length || retained.length) return subagentOverview([...children, ...retained]);
   const diagnosticAt = details.background_subagent === true ? text.indexOf("\nerror: ") : -1;
   return [
     ...summaries,
@@ -661,21 +685,60 @@ function legacySubagentGroupText(
     .join("\n\n");
 }
 
-function subagentTaskListText(details: Record<string, unknown>): string {
+function subagentParentSession(task: Record<string, unknown>): string | undefined {
+  return [
+    task.parentSessionId,
+    task.ownerSessionId,
+    task.parent_session_id,
+    task.owner_session_id,
+  ].find((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+function subagentOverview(tasks: Record<string, unknown>[]): string {
+  return subagentTaskOverviewText(
+    tasks.map((task, index): SubagentTaskAttempt => {
+      const outcome = record(task.task_outcome) ? task.task_outcome.state : task.outcome;
+      return {
+        taskId: [task.task_id, task.taskId].find(
+          (value): value is string => typeof value === "string",
+        ),
+        // Native list/tasks producers filter groups/tasks/foreground_tasks by the requesting
+        // owner session; descendants are intentionally not included. This fallback is local
+        // to this single tool result (the resolver retains no cross-result state). Explicit
+        // parent identities, including group-level identities, always remain separate.
+        parentSessionId: JSON.stringify(
+          subagentParentSession(task) === undefined
+            ? ["producer-scoped-parent"]
+            : ["explicit-parent", subagentParentSession(task)],
+        ),
+        attempt: typeof task.attempt === "number" ? task.attempt : undefined,
+        title:
+          [task.displayName, task.title, task.name, task.label].find(
+            (value): value is string => typeof value === "string" && !!value.trim(),
+          ) ?? `Worker ${index + 1}`,
+        execution: [task.execution, task.status, task.state].find(
+          (value): value is string => typeof value === "string",
+        ),
+        outcome: typeof outcome === "string" ? outcome : undefined,
+        // accepted_delivery alone also means no verification was configured.
+        verified:
+          task.accepted_delivery === true &&
+          record(task.verification) &&
+          task.verification.status === "passed",
+      };
+    }),
+  );
+}
+
+function subagentTaskListText(details: Record<string, unknown>, fallback: string): string {
+  const arrays = [details.tasks, details.foreground_tasks].filter(Array.isArray);
+  if (!arrays.every((tasks) => tasks.every(record))) return fallback;
   return (
-    (details.tasks as unknown[])
-      .filter(record)
-      .map((task, index) => {
-        let title = `Task ${index + 1}`;
-        if (typeof task.title === "string") title = task.title;
-        let status = readableLabel(String(task.execution ?? task.state ?? "Status unavailable"));
-        if (task.state === "running") status = "Working";
-        else status = TASK_STATES[String(task.outcome)] ?? status;
-        return [title, status, task.next_action ? `Next: ${task.next_action}` : ""]
-          .filter(Boolean)
-          .join("\n");
-      })
-      .join("\n\n") || "No retained tasks in this session yet."
+    subagentOverview(
+      [details.tasks, details.foreground_tasks].flatMap((tasks) =>
+        Array.isArray(tasks) ? tasks.filter(record) : [],
+      ),
+    ) || "No retained tasks in this session yet."
   );
 }
 
@@ -717,7 +780,8 @@ function subagentText(input: unknown, output: unknown): string {
     return "Removed retained records and reports only. No processes or panes were touched.";
   const groups = subagentGroups(details);
   if (groups.length) return subagentGroupText(groups, details, action, nativeGroupReport, text);
-  if (Array.isArray(details.tasks)) return subagentTaskListText(details);
+  if ([details.tasks, details.foreground_tasks].some(Array.isArray))
+    return subagentTaskListText(details, text);
   return text;
 }
 

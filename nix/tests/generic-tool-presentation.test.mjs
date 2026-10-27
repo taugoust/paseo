@@ -298,15 +298,18 @@ test("subagent control families use structured group states, never delegated pro
       : { operation, group };
     const output = result("generated control report includes internal IDs", details);
     const before = structuredClone(output);
-    assert.equal(genericToolText("subagent", { operation }, output), "Worker 1 · Running");
-    assert.equal(map("subagent", { operation }, output).text, "Worker 1 · Running");
+    assert.equal(
+      genericToolText("subagent", { operation }, output),
+      "Running\n• Worker 1 · Running",
+    );
+    assert.equal(map("subagent", { operation }, output).text, "Running\n• Worker 1 · Running");
     assert.deepEqual(output, before);
   }
   group.children[0].status = "failed";
   group.children[0].error = "Worker command authority unavailable";
   assert.equal(
     genericToolText("subagent", { operation: "wait" }, result("raw", { group })),
-    "Worker 1 · Failed · Worker command authority unavailable",
+    "Needs attention\n• Worker 1 · Failed",
   );
   assert.equal(
     genericToolText(
@@ -341,10 +344,105 @@ test("subagent reap prefers canonical displayName and retains status and outcome
     Object.assign(child, names);
     const output = result("Group reaped", { operation: "reap", group });
     const before = structuredClone(output);
-    const text = `${expected} · Completed · Reported delivered`;
+    const text = `Finished\n• ${expected} · Reported complete`;
     assert.equal(genericToolText("subagent", { operation: "reap" }, output), text);
     assert.equal(map("subagent", { operation: "reap" }, output).text, text);
     assert.deepEqual(output, before);
+  }
+});
+
+test("subagent list and tasks share the latest-attempt overview across backend envelopes", () => {
+  const children = [
+    {
+      task_id: "a",
+      attempt: 1,
+      displayName: "Review",
+      status: "failed",
+      error: "Historical diagnostic",
+    },
+    {
+      task_id: "a",
+      attempt: 2,
+      displayName: "Review",
+      status: "completed",
+      task_outcome: { state: "delivered" },
+    },
+    { task_id: "b", attempt: 1, displayName: "Review", status: "running" },
+    {
+      task_id: "c",
+      attempt: 1,
+      displayName: "Checks",
+      status: "completed",
+      task_outcome: { state: "partial" },
+    },
+  ];
+  const expected =
+    "Running\n• Review · Running\n\nNeeds attention\n• Checks · Needs follow-up\n\nFinished\n• Review · Reported complete";
+  for (const operation of ["list", "tasks"]) {
+    for (const envelope of [
+      { groups: children.map((child) => ({ status: child.status, children: [child] })) },
+      { jobs: [{ status: "completed", children }] },
+      { children, status: "completed" },
+      { tasks: children.map((child) => ({ ...child, execution: child.status })) },
+    ]) {
+      const output = result("Old generated dump", { operation, ...envelope });
+      const before = structuredClone(output);
+      assert.equal(map("subagent", { operation }, output).text, expected);
+      assert.deepEqual(output, before);
+    }
+  }
+  const foreground = { taskId: "f", attempt: 1, title: "Foreground", status: "running" };
+  assert.match(
+    map(
+      "subagent",
+      { operation: "tasks" },
+      result("raw", {
+        operation: "tasks",
+        groups: [{ status: "completed", children }],
+        foreground_tasks: [foreground],
+      }),
+    ).text,
+    /• Foreground · Running/,
+  );
+});
+
+test("subagent unknown execution stays unavailable and explicit parent sessions never collapse", () => {
+  for (const operation of ["list", "tasks"]) {
+    const rows = [undefined, "unavailable", "future-status", "completed"].map((status, index) => ({
+      task_id: `unknown-${index}`,
+      attempt: 1,
+      displayName: `Worker ${index}`,
+      status,
+    }));
+    const detail = map("subagent", { operation }, result("original", { operation, tasks: rows }));
+    assert.equal(
+      detail.text,
+      "Needs attention\n• Worker 0 · Status unavailable\n• Worker 1 · Status unavailable\n• Worker 2 · Status unavailable\n\nFinished\n• Worker 3 · Finished — outcome unknown",
+    );
+    const child = { task_id: "same-id", attempt: 1, displayName: "Same title", status: "running" };
+    const mixed = map(
+      "subagent",
+      { operation },
+      result("original", {
+        operation,
+        groups: [{ ownerSessionId: "parent-a", status: "running", children: [child] }],
+        tasks: [{ ...child, ownerSessionId: "parent-b", attempt: 2, status: "completed" }],
+      }),
+    );
+    assert.equal(
+      mixed.text,
+      "Running\n• Same title · Running\n\nFinished\n• Same title · Finished — outcome unknown",
+    );
+    const scoped = map(
+      "subagent",
+      { operation },
+      result("original", {
+        operation,
+        groups: [{ status: "running", children: [child] }],
+        tasks: [{ ...child, attempt: 2, status: "completed" }],
+      }),
+    );
+    assert.equal(scoped.text, "Finished\n• Same title · Finished — outcome unknown");
   }
 });
 

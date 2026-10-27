@@ -108,7 +108,7 @@ buildNpmPackage rec {
     mkdir -p "$TMPDIR/paseo-tests"
     cp -r nix/tests/. "$TMPDIR/paseo-tests/"
     cd "$TMPDIR/paseo-tests"
-    node --experimental-test-module-mocks --test --test-concurrency=1 cli-workspace-ids.test.mjs pi-reaped-subagents.test.mjs pi-child-notifications.test.mjs pi-import-selection.test.mjs pi-progress.test.mjs quiet-harness-messages.test.mjs generic-tool-presentation.test.mjs pi-added-task-detail.test.mjs
+    node --experimental-test-module-mocks --test --test-concurrency=1 cli-workspace-ids.test.mjs pi-reaped-subagents.test.mjs pi-child-notifications.test.mjs pi-import-selection.test.mjs pi-progress.test.mjs quiet-harness-messages.test.mjs generic-tool-presentation.test.mjs subagent-task-summary.test.mjs pi-added-task-detail.test.mjs
     node --experimental-vm-modules --test --test-concurrency=1 generic-tool-components.test.mjs
     node native-tool-error.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/native-tool-error.js"
     node native-subagent-links.test.mjs "$PASEO_INSTALL/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/native-subagent-links.js"
