@@ -1470,37 +1470,53 @@ export class PiRpcAgentSession implements AgentSession {
       return { status: "unavailable" };
     }
 
+    // Pi can publish the submitted entry before acknowledging the RPC. Register
+    // correlation before dispatch so that entry retains this send's identity.
+    const submission: PiPendingSteerSubmission = {
+      text: payload.text,
+      clientMessageId: options.clientMessageId ?? null,
+    };
+    const pendingPermissions = options.clearPendingPermissions
+      ? Array.from(this.pendingExtensionUiRequests.entries())
+      : [];
+    this.pendingSteerSubmissions.push(submission);
     try {
       await this.runtimeSession.steer(payload.text, payload.images);
     } catch (error) {
+      const index = this.pendingSteerSubmissions.indexOf(submission);
+      if (index >= 0) this.pendingSteerSubmissions.splice(index, 1);
       if (isPiDefinitiveSteerRejection(error)) {
         return { status: "unavailable" };
       }
       throw error;
     }
-    // The steer is already queued inside pi; if the turn moved on meanwhile its fate
-    // is ambiguous, so surface it instead of replacing the wrong turn.
-    if (this.closed || this.activeTurnId !== options.expectedTurnId) {
-      return { status: "unavailable" };
-    }
-    this.pendingSteerSubmissions.push({
-      text: payload.text,
-      clientMessageId: options.clientMessageId ?? null,
-    });
-    if (options.clearPendingPermissions) {
-      await this.clearPendingPermissionsForSteer();
-    }
+    // A successful RPC confirms admission even if Pi completed the turn before
+    // its response arrived. Returning unavailable here would invite a duplicate
+    // replacement or report a failed send after delivery.
+    await this.clearPendingPermissionsForSteer(options.expectedTurnId, pendingPermissions);
     return { status: "accepted" };
   }
 
-  private async clearPendingPermissionsForSteer(): Promise<void> {
-    const requestIds = Array.from(this.pendingExtensionUiRequests.keys());
-    for (const requestId of requestIds) {
-      if (!this.pendingExtensionUiRequests.has(requestId)) continue;
-      await this.respondToPermission(requestId, {
-        behavior: "deny",
-        message: "The user answered with a message instead of approving. Their message follows.",
-      });
+  private async clearPendingPermissionsForSteer(
+    expectedTurnId: string,
+    requests: Array<[string, AgentPermissionRequest]>,
+  ): Promise<void> {
+    for (const [requestId, request] of requests) {
+      if (this.closed || this.activeTurnId !== expectedTurnId) return;
+      if (this.pendingExtensionUiRequests.get(requestId) !== request) continue;
+      try {
+        await this.respondToPermission(requestId, {
+          behavior: "deny",
+          message: "The user answered with a message instead of approving. Their message follows.",
+        });
+      } catch (error) {
+        // Admission is already confirmed. Report cleanup independently rather
+        // than turning a delivered message into a failed, retryable send.
+        this.logger.warn(
+          { err: error, requestId, turnId: expectedTurnId },
+          "Pi accepted-steer permission cleanup failed",
+        );
+      }
     }
   }
 

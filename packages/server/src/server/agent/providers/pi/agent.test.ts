@@ -14,7 +14,7 @@ import path from "node:path";
 import pino from "pino";
 import { setImmediate as waitForImmediate } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
-import { describe, expect, onTestFinished, test } from "vitest";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import type { AgentSession, AgentSessionConfig, AgentStreamEvent } from "../../agent-sdk-types.js";
 import {
@@ -2818,6 +2818,39 @@ describe("PiRpcAgentSession steering", () => {
     ]);
   });
 
+  test("acknowledges a delivered steer when the turn ends before the RPC response", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("work", { clientMessageId: "original-client" });
+    const originalSteer = fakeSession.steer.bind(fakeSession);
+    fakeSession.steer = async (message, images) => {
+      await originalSteer(message, images);
+      fakeSession.finishSubmittedUserMessage({
+        id: "delivered-entry",
+        parentId: null,
+        text: message,
+      });
+      fakeSession.finishTurn();
+      await flushTurnScheduling();
+    };
+
+    await expect(
+      session.steerActiveTurn("delivered steer", {
+        expectedTurnId: turnId,
+        clientMessageId: "steer-client",
+      }),
+    ).resolves.toEqual({ status: "accepted" });
+    expect(fakeSession.steerCalls).toEqual([{ message: "delivered steer", imageCount: 0 }]);
+    expect(events.timelineItems().filter((item) => item.type === "user_message")).toEqual([
+      {
+        type: "user_message",
+        text: "delivered steer",
+        messageId: "delivered-entry",
+        clientMessageId: "steer-client",
+      },
+    ]);
+  });
+
   test("does not reuse the foreground client ID for a steer without one", async () => {
     const { pi, session, events } = await createSession();
     const fakeSession = pi.latestSession();
@@ -2911,6 +2944,34 @@ describe("PiRpcAgentSession steering", () => {
     expect(fakeSession.steerCalls).toEqual([{ message: "steer", imageCount: 0 }]);
   });
 
+  test("removes rejected steer correlation before a later submission of the same text", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("work");
+    fakeSession.steerError = new Error("Unknown command: steer");
+    await expect(
+      session.steerActiveTurn("same text", { expectedTurnId: turnId, clientMessageId: "rejected" }),
+    ).resolves.toEqual({ status: "unavailable" });
+    fakeSession.steerError = null;
+    await session.steerActiveTurn("same text", {
+      expectedTurnId: turnId,
+      clientMessageId: "accepted",
+    });
+    fakeSession.finishSubmittedUserMessage({
+      id: "accepted-entry",
+      parentId: null,
+      text: "same text",
+    });
+    expect(events.timelineItems().filter((item) => item.type === "user_message")).toEqual([
+      {
+        type: "user_message",
+        text: "same text",
+        messageId: "accepted-entry",
+        clientMessageId: "accepted",
+      },
+    ]);
+  });
+
   test("surfaces an ambiguous steer failure without interrupting", async () => {
     const { pi, session } = await createSession();
     const fakeSession = pi.latestSession();
@@ -2945,6 +3006,134 @@ describe("PiRpcAgentSession steering", () => {
       { id: "perm-1", response: { cancelled: true } },
     ]);
     expect(session.getPendingPermissions()).toEqual([]);
+  });
+
+  test("does not deny a newer turn's permission after confirmed steer admission", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("turn A");
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "reused-permission",
+      method: "confirm",
+      title: "Turn A permission",
+    });
+    await events.nextPermissionRequest();
+    const originalSteer = fakeSession.steer.bind(fakeSession);
+    fakeSession.steer = async (message, images) => {
+      await originalSteer(message, images);
+      fakeSession.finishTurn();
+      await flushTurnScheduling();
+      await session.startTurn("turn B");
+      fakeSession.emit({
+        type: "extension_ui_request",
+        id: "reused-permission",
+        method: "confirm",
+        title: "Turn B permission",
+      });
+      await events.nextPermissionRequest();
+    };
+
+    await expect(
+      session.steerActiveTurn("accepted answer", {
+        expectedTurnId: turnId,
+        clearPendingPermissions: true,
+      }),
+    ).resolves.toEqual({ status: "accepted" });
+    expect(fakeSession.extensionUiResponses).toEqual([]);
+    expect(session.getPendingPermissions()).toMatchObject([
+      { id: "reused-permission", title: "Turn B permission" },
+    ]);
+  });
+
+  test("does not deny a superseding permission with the same ID during steer admission", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("work");
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "perm-1",
+      method: "confirm",
+      title: "Original",
+    });
+    await events.nextPermissionRequest();
+    const originalSteer = fakeSession.steer.bind(fakeSession);
+    fakeSession.steer = async (message, images) => {
+      await originalSteer(message, images);
+      fakeSession.emit({
+        type: "extension_ui_request",
+        id: "perm-1",
+        method: "confirm",
+        title: "Superseding",
+      });
+      await events.nextPermissionRequest();
+    };
+
+    await expect(
+      session.steerActiveTurn("answer", { expectedTurnId: turnId, clearPendingPermissions: true }),
+    ).resolves.toEqual({ status: "accepted" });
+    expect(fakeSession.extensionUiResponses).toEqual([]);
+    expect(session.getPendingPermissions()).toMatchObject([{ id: "perm-1", title: "Superseding" }]);
+  });
+
+  test("reports permission cleanup failure separately from confirmed steer admission", async () => {
+    const pi = new FakePi();
+    const logger = pino({ level: "silent" });
+    const warning = vi.spyOn(logger, "warn");
+    const client = new PiRpcAgentClient({ runtime: pi, logger });
+    const session = (await client.createSession(createConfig())) as PiRpcAgentSession;
+    const events = new SessionEvents(session);
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("work");
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "perm-1",
+      method: "confirm",
+      title: "Allow?",
+    });
+    await events.nextPermissionRequest();
+    const cleanupError = new Error("cleanup transport failed");
+    const cleanup = vi.spyOn(session, "respondToPermission").mockRejectedValue(cleanupError);
+
+    await expect(
+      session.steerActiveTurn("accepted answer", {
+        expectedTurnId: turnId,
+        clearPendingPermissions: true,
+      }),
+    ).resolves.toEqual({ status: "accepted" });
+    expect(warning).toHaveBeenCalledExactlyOnceWith(
+      { err: cleanupError, requestId: "perm-1", turnId },
+      "Pi accepted-steer permission cleanup failed",
+    );
+    expect(cleanup).toHaveBeenCalledExactlyOnceWith("perm-1", {
+      behavior: "deny",
+      message: "The user answered with a message instead of approving. Their message follows.",
+    });
+    expect(fakeSession.steerCalls).toEqual([{ message: "accepted answer", imageCount: 0 }]);
+    expect(session.getPendingPermissions()).toHaveLength(1);
+  });
+
+  test("does not clear permissions or mask an initial steer rejection", async () => {
+    const { pi, session, events } = await createSession();
+    const fakeSession = pi.latestSession();
+    const { turnId } = await session.startTurn("work");
+    fakeSession.emit({
+      type: "extension_ui_request",
+      id: "perm-1",
+      method: "confirm",
+      title: "Allow?",
+    });
+    await events.nextPermissionRequest();
+    fakeSession.steerError = new Error("steer admission failed");
+
+    await expect(
+      session.steerActiveTurn("not delivered", {
+        expectedTurnId: turnId,
+        clearPendingPermissions: true,
+      }),
+    ).rejects.toThrow("steer admission failed");
+    expect(fakeSession.extensionUiResponses).toEqual([]);
+    expect(session.getPendingPermissions()).toHaveLength(1);
   });
 
   test("leaves permissions open for a steer without the clearing flag", async () => {
