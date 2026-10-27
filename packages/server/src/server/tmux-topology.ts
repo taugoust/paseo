@@ -355,10 +355,22 @@ export async function readSnapshot(
           { command: f[5]!, pid: f[8], agentId: f[9], startToken: f[10] },
           cachedOwner,
         );
-        const backgroundJob = await classifyBackgroundJobPane(
-          { jobId: f[11], pid: f[14], startToken: f[15], dead: f[16] === "1" },
-          cachedOwner,
-        );
+        const backgroundJob =
+          (await classifyBackgroundJobLaunch(
+            {
+              startCommand: f[17]!,
+              socket,
+              serverId,
+              paneId: f[3]!,
+              panePid: f[14]!,
+              dead: f[16] === "1",
+            },
+            cachedOwner,
+          )) ||
+          (await classifyBackgroundJobPane(
+            { jobId: f[11], pid: f[14], startToken: f[15], dead: f[16] === "1" },
+            cachedOwner,
+          ));
         const launch = await classifyManagedLaunch(
           {
             startCommand: f[17]!,
@@ -552,6 +564,59 @@ export async function classifyManagedLaunch(
       : undefined;
   } catch {
     return undefined;
+  }
+}
+/** Creation-time presentation evidence. Adopted panes have no launch intent and
+ * continue to require the established job flag plus process identity. */
+export async function classifyBackgroundJobLaunch(
+  pane: {
+    startCommand: string;
+    socket: string;
+    serverId: string;
+    paneId: string;
+    panePid: string;
+    dead: boolean;
+  },
+  readOwner: ReadPiOwner = readPiProcessIdentity,
+): Promise<boolean> {
+  const match = /^"?PASEO_BACKGROUND_JOB_LAUNCH=([A-Za-z0-9_-]+)\.([a-f0-9]{64}) /.exec(
+    pane.startCommand,
+  );
+  if (!match) return false;
+  try {
+    const file = Buffer.from(match[1]!, "base64url").toString("utf8");
+    if (!path.isAbsolute(file) || path.basename(file) !== "launch-intent.json") return false;
+    const intent = await readManagedLaunchRecord(file);
+    if (
+      intent.schemaVersion !== 1 ||
+      intent.nonce !== match[2] ||
+      !/^job-[0-9a-f]{24}$/.test(intent.jobId ?? "") ||
+      typeof intent.command !== "string" ||
+      decodeTmuxLaunchCommand(pane.startCommand) !== intent.command ||
+      (await fs.realpath(intent.socketPath)) !== pane.socket ||
+      intent.serverEpoch !== pane.serverId.split(":").slice(0, 2).join(":")
+    )
+      return false;
+    if (intent.paneId !== undefined) {
+      return (
+        intent.paneId === pane.paneId &&
+        String(intent.panePid) === pane.panePid &&
+        (await classifyBackgroundJobPane(
+          {
+            jobId: intent.jobId,
+            pid: pane.panePid,
+            startToken: intent.paneStartToken,
+            dead: pane.dead,
+          },
+          readOwner,
+        ))
+      );
+    }
+    return (
+      !pane.dead && (await isLiveLaunchOwner(String(intent.ownerPid), intent.ownerToken, readOwner))
+    );
+  } catch {
+    return false;
   }
 }
 type ProjectedWindow = ReturnType<typeof projectSnapshot>["windows"][number];
@@ -882,7 +947,7 @@ export class TmuxTopology {
       }),
     );
     const background =
-      managed.some(Boolean) &&
+      panes.length > 0 &&
       panes.every((pane, index) => managed[index] || (!pane.agent && pane.backgroundJob === true));
     // Publish fork-PR trust metadata with the first record, before automation observers run.
     const trust = pending.find((entry) => entry.workspaceId === window.workspaceId);

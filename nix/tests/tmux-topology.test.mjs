@@ -31,6 +31,7 @@ const {
   tmuxSocketRoots,
   classifyPaneOwner,
   classifyBackgroundJobPane,
+  classifyBackgroundJobLaunch,
   classifyManagedLaunch,
   decodeTmuxLaunchCommand,
   readPiProcessIdentity,
@@ -1272,12 +1273,69 @@ for (const mixed of [false, true]) {
   });
 }
 
-test("job-only windows are not mistaken for managed-child workspaces", async (t) => {
-  const f = await fixture(t);
-  f.options.isBackgroundAgent = async () => assert.fail("no agent to classify");
-  f.current.panes = [{ ...f.current.panes[0], agent: false, backgroundJob: true }];
-  await f.topology.start();
-  assert.equal([...f.workspaces.records.values()][0].background, false);
+for (const mixed of [false, true]) {
+  test(`job-only initial publication preserves mixed=${mixed} visibility`, async (t) => {
+    const f = await fixture(t);
+    f.options.isBackgroundAgent = async () => assert.fail("no agent to classify");
+    f.current.panes = [{ ...f.current.panes[0], agent: false, backgroundJob: true }];
+    if (mixed) f.current.panes.push({ ...f.current.panes[0], id: "%20", backgroundJob: false });
+    await f.topology.start();
+    assert.equal([...f.workspaces.records.values()][0].background, !mixed);
+    assert.deepEqual(f.calls, [], "classification cannot mutate panes");
+  });
+}
+
+test("job launch evidence validates creation, commit, completion and rejects stale or forged evidence", async (t) => {
+  const directory = await fs.mkdtemp(path.join(tmpdir(), "paseo-job-launch-"));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const socket = path.join(directory, "socket");
+  await fs.writeFile(socket, "");
+  const file = path.join(directory, "launch-intent.json");
+  const nonce = "a".repeat(64);
+  const command = `PASEO_BACKGROUND_JOB_LAUNCH=${Buffer.from(file).toString("base64url")}.${nonce} runner`;
+  const intent = {
+    schemaVersion: 1,
+    nonce,
+    command,
+    jobId: `job-${"b".repeat(24)}`,
+    socketPath: socket,
+    serverEpoch: "1:2",
+    ownerPid: 10,
+    ownerToken: "10:20",
+  };
+  const pane = {
+    startCommand: `"${command}"`,
+    socket,
+    serverId: "1:2:3",
+    paneId: "%4",
+    panePid: "30",
+    dead: false,
+  };
+  const owner = async (pid) => ({ startToken: `boot:${pid === "10" ? "20" : "40"}`, state: "S" });
+  const save = (record) => fs.writeFile(file, JSON.stringify(record), { mode: 0o600 });
+  await save(intent);
+  assert.equal(await classifyBackgroundJobLaunch(pane, owner), true);
+  assert.equal(await classifyBackgroundJobLaunch({ ...pane, dead: true }, owner), false);
+  assert.equal(await classifyBackgroundJobLaunch(pane, async () => undefined), false);
+  const committed = { ...intent, paneId: "%4", panePid: 30, paneStartToken: "linux-proc:40" };
+  await save(committed);
+  assert.equal(await classifyBackgroundJobLaunch(pane, owner), true);
+  assert.equal(
+    await classifyBackgroundJobLaunch({ ...pane, dead: true }, async () => undefined),
+    true,
+  );
+  assert.equal(await classifyBackgroundJobLaunch({ ...pane, paneId: "%5" }, owner), false);
+  assert.equal(await classifyBackgroundJobLaunch({ ...pane, serverId: "1:9:3" }, owner), false);
+  assert.equal(
+    await classifyBackgroundJobLaunch({ ...pane, startCommand: `"${command}; extra"` }, owner),
+    false,
+  );
+  assert.equal(
+    await classifyBackgroundJobLaunch(pane, async () => ({ startToken: "boot:99", state: "S" })),
+    false,
+  );
+  await fs.chmod(file, 0o644);
+  assert.equal(await classifyBackgroundJobLaunch(pane, owner), false);
 });
 
 test("snapshot reader parses immutable IDs and infrastructure tags without live tmux", async (t) => {
