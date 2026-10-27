@@ -318,16 +318,43 @@ test("subagent control families use structured group states, never delegated pro
   );
 });
 
-test("subagent prompts show exact instruction, delivery mode, and accepted rather than completed semantics", () => {
+test("subagent reap prefers canonical displayName and retains status and outcome", () => {
   const group = structuredClone(
     showcase.find((f) => f.case === "Subagent native wait").before.details.group,
   );
-  const message = "Run the requested checks.\nKeep the worker running until the report is ready.";
-  for (const [mode, label] of [
-    ["steer", "Steer"],
-    ["follow_up", "Follow-up"],
-    ["interrupt", "Interrupt"],
+  const child = group.children[0];
+  child.status = "completed";
+  child.task_outcome = { state: "delivered" };
+  for (const [names, expected] of [
+    [
+      { displayName: "Renderer Review", name: "legacy-name", label: "Old label" },
+      "Renderer Review",
+    ],
+    [{ displayName: "", name: "legacy-name", label: "Old label" }, "legacy-name"],
+    [{ displayName: "   ", name: "legacy-name", label: "Old label" }, "legacy-name"],
+    [{ displayName: "", label: "Old label" }, "Old label"],
+    [{ displayName: "" }, "Worker 1"],
   ]) {
+    delete child.displayName;
+    delete child.name;
+    delete child.label;
+    Object.assign(child, names);
+    const output = result("Group reaped", { operation: "reap", group });
+    const before = structuredClone(output);
+    const text = `${expected} · Completed · Reported delivered`;
+    assert.equal(genericToolText("subagent", { operation: "reap" }, output), text);
+    assert.equal(map("subagent", { operation: "reap" }, output).text, text);
+    assert.deepEqual(output, before);
+  }
+});
+
+test("subagent prompts show verbatim instructions without generated delivery headings", () => {
+  const group = structuredClone(
+    showcase.find((f) => f.case === "Subagent native wait").before.details.group,
+  );
+  const message =
+    "  Run the requested checks.\n\nSteer · Instruction sent\nKeep this user heading.\n";
+  for (const mode of ["steer", "follow_up", "interrupt"]) {
     const input = {
       operation: "prompt",
       child_id: group.children[0].child_id,
@@ -336,11 +363,28 @@ test("subagent prompts show exact instruction, delivery mode, and accepted rathe
       message,
     };
     const output = result("Accepted by child", { operation: "prompt", group, receipt: "accepted" });
-    const expected = `Verifier · ${label} · Instruction accepted\n\n${message}`;
-    assert.equal(genericToolText("subagent", input, output), expected);
-    assert.equal(map("subagent", input, output).text, expected);
-    assert.match(expected, /Instruction accepted/);
-    assert.doesNotMatch(expected, /Completed|Running|job_id|child_id|task_id/);
+    const before = structuredClone(output);
+    assert.equal(genericToolText("subagent", input, output), message);
+    assert.equal(map("subagent", input, output).text, message);
+    assert.deepEqual(output, before);
+    const failed = {
+      ...output,
+      isError: true,
+      content: [{ type: "text", text: "Permission denied\nOriginal diagnostic" }],
+    };
+    assert.equal(
+      genericToolText("subagent", input, failed),
+      "Permission denied\nOriginal diagnostic",
+    );
+    assert.equal(map("subagent", input, failed).text, "Permission denied\nOriginal diagnostic");
+    assert.equal(
+      genericToolText(
+        "subagent",
+        { ...input, name: undefined, label: "Reviewer", mode, control_mode: undefined },
+        result("Instruction sent"),
+      ),
+      message,
+    );
   }
   const responseInput = {
     operation: "prompt",
@@ -355,7 +399,7 @@ test("subagent prompts show exact instruction, delivery mode, and accepted rathe
   });
   assert.equal(
     genericToolText("subagent", responseInput, responseOutput),
-    "Steer · Instruction sent\n\nPlease summarize now.\n\nResponse\nChecks passed.",
+    "Please summarize now.\n\nResponse\nChecks passed.",
   );
 });
 

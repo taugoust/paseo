@@ -417,7 +417,8 @@ function taskOutcomeText(value: Record<string, unknown>): string {
 function childSummary(child: Record<string, unknown>, index: number): string {
   const outcome = record(child.task_outcome) ? child.task_outcome : undefined;
   let name: string;
-  if (typeof child.name === "string") name = child.name;
+  if (typeof child.displayName === "string" && child.displayName.trim()) name = child.displayName;
+  else if (typeof child.name === "string") name = child.name;
   else if (typeof child.label === "string") name = child.label;
   else name = `Worker ${index + 1}`;
   return [
@@ -481,24 +482,9 @@ function subagentPresentationText(value: unknown): string | undefined {
 
 function subagentPromptText(input: unknown, output: unknown, action: unknown): string | undefined {
   if (action !== "prompt" || !record(input) || typeof input.message !== "string") return undefined;
-  let mode = "steer";
-  if (typeof input.control_mode === "string") mode = input.control_mode;
-  else if (typeof input.mode === "string") mode = input.mode;
-  const modeLabel = mode === "follow_up" ? "Follow-up" : readableLabel(mode);
-  let recipient: string | undefined;
-  if (typeof input.name === "string") recipient = input.name;
-  else if (typeof input.label === "string") recipient = input.label;
   const outputDetails = record(output) && record(output.details) ? output.details : {};
-  const disposition =
-    outputDetails.receipt === "accepted" ? "Instruction accepted" : "Instruction sent";
   const response = typeof outputDetails.response === "string" ? outputDetails.response : undefined;
-  return [
-    `${recipient ? `${recipient} · ` : ""}${modeLabel} · ${disposition}`,
-    input.message,
-    response ? `Response\n${response}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  return [input.message, response ? `Response\n${response}` : ""].filter(Boolean).join("\n\n");
 }
 
 function subagentResultText(
