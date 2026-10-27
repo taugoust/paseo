@@ -31,6 +31,8 @@ const {
   tmuxSocketRoots,
   classifyPaneOwner,
   classifyBackgroundJobPane,
+  classifyManagedLaunch,
+  decodeTmuxLaunchCommand,
   readPiProcessIdentity,
   claimAgentArchive,
 } = await import(
@@ -38,6 +40,100 @@ const {
     ? pathToFileURL(path.join(install, "packages/server/dist/server/server/tmux-topology.js")).href
     : `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
 );
+
+test("managed launch evidence classifies the gate before import and validates committed incarnation", async (t) => {
+  const directory = await fs.mkdtemp(path.join(tmpdir(), "paseo-launch-test-"));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const socket = path.join(directory, "socket");
+  await fs.writeFile(socket, "");
+  const file = path.join(directory, "launch-intent.json");
+  const nonce = "a".repeat(64);
+  const command = `PASEO_MANAGED_LAUNCH=${Buffer.from(file).toString("base64url")}.${nonce}; gate shell`;
+  const intent = {
+    schemaVersion: 1,
+    command,
+    nonce,
+    socketPath: socket,
+    serverEpoch: "1:2",
+    ownerPid: 10,
+    ownerToken: "10:20",
+    runtimeId: "runtime",
+    childId: "child",
+    presentation: "background",
+  };
+  await fs.writeFile(file, JSON.stringify(intent), { mode: 0o600 });
+  const pane = {
+    startCommand: `"${command}"`,
+    socket,
+    serverId: "1:2:3",
+    paneId: "%4",
+    panePid: "30",
+    dead: false,
+  };
+  const owner = async (pid) => ({ startToken: `boot:${pid === "10" ? "20" : "40"}`, state: "S" });
+  assert.equal(await classifyManagedLaunch(pane, owner), "background");
+  assert.equal(
+    await classifyManagedLaunch(
+      { ...pane, startCommand: `"${command}; arbitrary command"` },
+      owner,
+    ),
+    undefined,
+  );
+  assert.equal(await classifyManagedLaunch({ ...pane, serverId: "1:3:3" }, owner), undefined);
+  await fs.writeFile(file, JSON.stringify({ ...intent, command: undefined }));
+  assert.equal(await classifyManagedLaunch(pane, owner), undefined);
+  await fs.writeFile(file, JSON.stringify(intent));
+  await fs.chmod(file, 0o644);
+  assert.equal(await classifyManagedLaunch(pane, owner), undefined);
+  await fs.chmod(file, 0o600);
+  await fs.chmod(directory, 0o755);
+  assert.equal(await classifyManagedLaunch(pane, owner), undefined);
+  await fs.chmod(directory, 0o700);
+  await fs.rename(file, `${file}.real`);
+  await fs.symlink(`${file}.real`, file);
+  assert.equal(await classifyManagedLaunch(pane, owner), undefined);
+  await fs.unlink(file);
+  await fs.rename(`${file}.real`, file);
+  assert.equal(
+    await classifyManagedLaunch({ ...pane, startCommand: "ordinary shell" }, owner),
+    undefined,
+  );
+  assert.equal(await classifyManagedLaunch(pane, async () => undefined), undefined);
+  await fs.writeFile(file, JSON.stringify({ ...intent, presentation: "foreground-staged" }));
+  assert.equal(await classifyManagedLaunch(pane, owner), "foreground-staged");
+  const manifest = {
+    runtimeId: "runtime",
+    childId: "child",
+    panePid: 30,
+    paneProcessToken: "30:40",
+    placement: { ownershipNonce: nonce, paneId: "%4" },
+    presentation: "background",
+  };
+  await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify(manifest), {
+    mode: 0o600,
+  });
+  assert.equal(await classifyManagedLaunch(pane, owner), "background");
+  assert.equal(
+    await classifyManagedLaunch(pane, async () => ({ startToken: "boot:41", state: "S" })),
+    undefined,
+  );
+  assert.equal(
+    await classifyManagedLaunch({ ...pane, dead: true }, async () => undefined),
+    "background",
+  );
+  assert.equal(await classifyManagedLaunch({ ...pane, paneId: "%5" }, owner), undefined);
+});
+
+test("tmux launch command decoding never evaluates or accepts unknown shell escapes", () => {
+  assert.equal(
+    decodeTmuxLaunchCommand('"test \\$name \\"quoted\\" \\\\ path\\n\\t\\037"'),
+    'test $name "quoted" \\ path\n\t\x1f',
+  );
+  assert.equal(decodeTmuxLaunchCommand('"bad\\q"'), undefined);
+  assert.equal(decodeTmuxLaunchCommand('"bad" suffix"'), undefined);
+  assert.equal(decodeTmuxLaunchCommand('"bad\\"'), undefined);
+  assert.equal(decodeTmuxLaunchCommand("unquoted"), undefined);
+});
 
 test("Linux new-session uses configured immutable systemd-run scope with exact argv", () => {
   const command = "/nix/store/test-systemd/bin/systemd-run";
@@ -1164,6 +1260,18 @@ for (const companion of [
   });
 }
 
+for (const mixed of [false, true]) {
+  test(`initial managed gate publication preserves mixed=${mixed} visibility`, async (t) => {
+    const f = await fixture(t);
+    f.options.isBackgroundAgent = async () => assert.fail("gate has no imported agent");
+    f.current.panes = [{ ...f.current.panes[0], command: "sh", agent: false, managedLaunch: true }];
+    if (mixed) f.current.panes.push({ ...f.current.panes[0], id: "%20", managedLaunch: false });
+    await f.topology.start();
+    assert.equal([...f.workspaces.records.values()][0].background, !mixed);
+    assert.deepEqual(f.calls, [], "launch classification cannot mutate panes");
+  });
+}
+
 test("job-only windows are not mistaken for managed-child workspaces", async (t) => {
   const f = await fixture(t);
   f.options.isBackgroundAgent = async () => assert.fail("no agent to classify");
@@ -1209,6 +1317,7 @@ test("snapshot reader parses immutable IDs and infrastructure tags without live 
       jobPane ? "123" : "",
       jobPane ? "linux-proc:1234" : "",
       "0",
+      "",
     ].join(sep);
   };
   const s = await readSnapshot(socket, run, async () => ({ startToken: "abcd:1234", state: "S" }));

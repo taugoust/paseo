@@ -12,6 +12,14 @@ Expose reusable implementation through bundled libraries when installed clients 
 
 Pi-specific transcript and account adapters remain in the plugins. They must not copy native application internals or import app-private contexts. The companion account plugin owns the composer account control; the bridge owns Work/btw and Pi transport integration.
 
+## Managed tmux launch visibility
+
+Worker visibility needs a coordinated host and `pi-agent-extensions` launcher update. The host
+projects a new tmux window while it still contains the launch-gate shell, before Pi starts or the
+bridge can import its agent. Publish verifiable launch intent before creating that pane; later
+runtime records and pane options cannot prevent the first foreground publication. Keep this
+pre-import topology evidence separate from the bridge's stricter agent-bound notification identity.
+
 ## Release discipline
 
 Run targeted regression suites and installed-closure checks. Keep builds sequential and memory constrained: a previous unconstrained build OOM-killed a live Pi session. Do not restart protected Pi processes during activation. Verify the served plugin bundle, intended controls and menu behavior after deployment. Browser screenshots and Hermes compilation are useful evidence, but neither proves native-device execution.

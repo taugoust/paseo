@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { constants, promises as fs } from "node:fs";
 import path from "node:path";
 import { homedir } from "node:os";
 import { promisify } from "node:util";
@@ -40,6 +40,7 @@ export interface Pane {
   agentId?: string;
   backgroundJob?: boolean;
   backgroundJobName?: string;
+  managedLaunch?: boolean;
 }
 export interface Snapshot {
   socket: string;
@@ -315,6 +316,7 @@ export async function readSnapshot(
     }
     return value;
   };
+  const stagedSessions = new Set<string>();
   const panes = await Promise.all(
     (
       await run(socket, [
@@ -339,6 +341,7 @@ export async function readSnapshot(
           "#{pane_pid}",
           "#{@pi_background_job_start_token}",
           "#{pane_dead}",
+          "#{pane_start_command}",
         ].join(SEP),
       ])
     )
@@ -346,7 +349,7 @@ export async function readSnapshot(
       .filter(Boolean)
       .map(async (line) => {
         const f = line.split(SEP);
-        if (f.length !== 17 || !/^@\d+$/.test(f[1]!) || !/^%\d+$/.test(f[3]!))
+        if (f.length !== 18 || !/^@\d+$/.test(f[1]!) || !/^%\d+$/.test(f[3]!))
           throw new Error("Invalid tmux pane snapshot");
         const owner = await classifyPaneOwner(
           { command: f[5]!, pid: f[8], agentId: f[9], startToken: f[10] },
@@ -356,6 +359,18 @@ export async function readSnapshot(
           { jobId: f[11], pid: f[14], startToken: f[15], dead: f[16] === "1" },
           cachedOwner,
         );
+        const launch = await classifyManagedLaunch(
+          {
+            startCommand: f[17]!,
+            socket,
+            serverId,
+            paneId: f[3]!,
+            panePid: f[14]!,
+            dead: f[16] === "1",
+          },
+          cachedOwner,
+        );
+        if (launch === "foreground-staged") stagedSessions.add(f[0]!);
         const isJobId = (value: string | undefined) =>
           /^job-[a-f0-9]{24}$/.test(value?.trim() ?? "");
         let jobName = "Background job";
@@ -369,10 +384,10 @@ export async function readSnapshot(
             id: f[3]!,
             cwd: f[4]!,
             command: f[5]!,
-            infrastructure: f[6] === `1` || f[7] === `1`,
+            infrastructure: f[6] === `1` || f[7] === `1` || launch === "foreground-staged",
           },
           owner,
-          { backgroundJob },
+          { backgroundJob, managedLaunch: launch === "background" },
           backgroundJob ? { backgroundJobName: jobName } : {},
         );
       }),
@@ -380,7 +395,164 @@ export async function readSnapshot(
   // Reject restart races rather than publishing mixed-incarnation identities.
   if (pid !== (await run(socket, ["display-message", "-p", "#{pid}"])))
     throw new Error("tmux restarted during snapshot");
+  // A staged session can be observed before its post-create infrastructure option.
+  for (const session of sessions) {
+    const members = panes.filter((pane) => pane.sessionId === session.id);
+    if (stagedSessions.has(session.id) && members.every((pane) => pane.infrastructure))
+      session.infrastructure = true;
+  }
   return { socket, serverId, sessions, panes };
+}
+async function isLiveLaunchOwner(
+  pid: string,
+  token: unknown,
+  readOwner: ReadPiOwner,
+): Promise<boolean> {
+  if (!/^\d+$/.test(pid)) return false;
+  const owner = await readOwner(pid);
+  return (
+    !!owner &&
+    !["Z", "X"].includes(owner.state) &&
+    `${pid}:${owner.startToken.split(":").at(-1)}` === token
+  );
+}
+
+function matchesManagedLaunch(
+  manifest: {
+    runtimeId?: unknown;
+    childId?: unknown;
+    placement?: { ownershipNonce?: unknown; paneId?: unknown };
+    panePid?: unknown;
+  },
+  intent: { runtimeId?: unknown; childId?: unknown; nonce?: unknown },
+  pane: { paneId: string; panePid: string },
+): boolean {
+  return (
+    manifest.runtimeId === intent.runtimeId &&
+    manifest.childId === intent.childId &&
+    manifest.placement?.ownershipNonce === intent.nonce &&
+    manifest.placement?.paneId === pane.paneId &&
+    String(manifest.panePid) === pane.panePid
+  );
+}
+
+// pane_start_command is tmux's quoted, C-style escaped single argument, not
+// raw shell text. Decode without evaluating shell syntax; reject unknown escapes.
+export function decodeTmuxLaunchCommand(value: string): string | undefined {
+  if (!value.startsWith('"') || !value.endsWith('"')) return undefined;
+  const escapes: Record<string, string> = {
+    a: "\u0007",
+    b: "\b",
+    f: "\f",
+    n: "\n",
+    r: "\r",
+    s: " ",
+    t: "\t",
+    v: "\v",
+    "\\": "\\",
+    '"': '"',
+    $: "$",
+  };
+  let result = "";
+  for (let index = 1; index < value.length - 1; index++) {
+    const char = value[index]!;
+    if (char === '"') return undefined;
+    if (char !== "\\") {
+      result += char;
+      continue;
+    }
+    const next = value[++index];
+    if (next === undefined || index >= value.length - 1) return undefined;
+    if (Object.hasOwn(escapes, next)) result += escapes[next];
+    else {
+      const octal = /^[0-7]{1,3}/.exec(value.slice(index, -1));
+      if (!octal) return undefined;
+      result += String.fromCharCode(Number.parseInt(octal[0], 8));
+      index += octal[0].length - 1;
+    }
+  }
+  return result;
+}
+
+async function readManagedLaunchRecord(file: string) {
+  for (let directory = path.dirname(file); ; directory = path.dirname(directory)) {
+    if (!(await fs.lstat(directory)).isDirectory())
+      throw new Error("Managed launch path must not contain symlinks");
+    if (directory === path.dirname(directory)) break;
+  }
+  const directory = await fs.lstat(path.dirname(file));
+  if (
+    !directory.isDirectory() ||
+    directory.uid !== process.getuid!() ||
+    (directory.mode & 0o077) !== 0
+  )
+    throw new Error("Managed launch directory must be private");
+  const handle = await fs.open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.uid !== process.getuid!() || (stat.mode & 0o077) !== 0)
+      throw new Error("Managed launch intent must be private");
+    return JSON.parse(await handle.readFile("utf8"));
+  } finally {
+    await handle.close();
+  }
+}
+
+/** Pre-import topology evidence only. Notification ownership still requires the
+ * bridge's agent-bound runtime record. The nonce is captured with pane creation;
+ * a live launcher covers the gate before its committed manifest exists. */
+export async function classifyManagedLaunch(
+  pane: {
+    startCommand: string;
+    socket: string;
+    serverId: string;
+    paneId: string;
+    panePid: string;
+    dead: boolean;
+  },
+  readOwner: ReadPiOwner = readPiProcessIdentity,
+): Promise<"background" | "foreground-staged" | undefined> {
+  const match = /^"?PASEO_MANAGED_LAUNCH=([A-Za-z0-9_-]+)\.([a-f0-9]{64}); /.exec(
+    pane.startCommand,
+  );
+  if (!match) return undefined;
+  try {
+    const file = Buffer.from(match[1]!, "base64url").toString("utf8");
+    if (!path.isAbsolute(file) || path.basename(file) !== "launch-intent.json") return undefined;
+    const intent = await readManagedLaunchRecord(file);
+    if (
+      typeof intent.command !== "string" ||
+      decodeTmuxLaunchCommand(pane.startCommand) !== intent.command
+    )
+      return undefined;
+    if (
+      intent.schemaVersion !== 1 ||
+      intent.nonce !== match[2] ||
+      (await fs.realpath(intent.socketPath)) !== pane.socket ||
+      intent.serverEpoch !== pane.serverId.split(":").slice(0, 2).join(":")
+    )
+      return undefined;
+    const live = (pid: string, token: unknown) => isLiveLaunchOwner(pid, token, readOwner);
+    let presentation = intent.presentation;
+    const manifest = await readManagedLaunchRecord(
+      path.join(path.dirname(file), "manifest.json"),
+    ).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+      return undefined;
+    });
+    if (manifest) {
+      const matches = matchesManagedLaunch(manifest, intent, pane);
+      if (!matches || (!pane.dead && !(await live(pane.panePid, manifest.paneProcessToken))))
+        return undefined;
+      presentation = manifest.presentation;
+    } else if (pane.dead || !(await live(String(intent.ownerPid), intent.ownerToken)))
+      return undefined;
+    return presentation === "background" || presentation === "foreground-staged"
+      ? presentation
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 type ProjectedWindow = ReturnType<typeof projectSnapshot>["windows"][number];
 
@@ -702,11 +874,12 @@ export class TmuxTopology {
     this.placements.set(window.workspaceId, placement);
     const old = await workspaceRegistry.get(window.workspaceId);
     const managed = await Promise.all(
-      panes.map((pane) =>
-        pane.agent && pane.agentId && this.options.isBackgroundAgent
-          ? this.options.isBackgroundAgent(pane.agentId)
-          : Promise.resolve(false),
-      ),
+      panes.map(async (pane) => {
+        if (pane.managedLaunch) return true;
+        if (pane.agent && pane.agentId && this.options.isBackgroundAgent)
+          return this.options.isBackgroundAgent(pane.agentId);
+        return false;
+      }),
     );
     const background =
       managed.some(Boolean) &&
