@@ -246,6 +246,7 @@ test("persisted agent list projection removes stale child badge without mutating
     },
     workspaceRegistry: { list: async () => [workspace] },
     listAgentPayloads: async () => [listed],
+    workspaceLastUserMessageTimes: async () => new Map(),
     listProviderSubagentActivity: async () => [],
     listTerminalActivityContributions: async () => [],
     isProviderVisibleToClient: () => true,

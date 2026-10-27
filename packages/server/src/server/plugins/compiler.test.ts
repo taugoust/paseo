@@ -138,7 +138,8 @@ async function createRootAlias(directory: string): Promise<string> {
   return rootAlias;
 }
 
-describe("plugin runtime entries", () => {
+// Cold sandbox compilation of protocol imports and highlighting grammars can exceed 5s.
+describe("plugin runtime entries", { timeout: 30_000 }, () => {
   it.each([
     'import type { AgentTimelineItem, ToolCallDetail } from "@getpaseo/protocol/agent-types"; export type Detail = ToolCallDetail; export type Item = AgentTimelineItem;',
     'import { type AgentTimelineItem } from "@getpaseo/protocol/agent-types"; export type Item = AgentTimelineItem;',
@@ -601,6 +602,25 @@ export type Value = string;`,
     const { clientBundle } = await compilePlugin(entries);
     expect(clientBundle).toContain("react/jsx-runtime");
     expect(clientBundle).not.toContain("React.createElement");
+  });
+
+  it("imports an SVG file from a runtime directory as its markup", async () => {
+    const entries = await createSplitPlugin();
+    const svg = '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z" /></svg>';
+    await writeFile(path.join(entries.directory, "client", "icon.svg"), svg);
+    await writeFile(
+      entries.client,
+      `import icon from "./client/icon.svg";
+export default function contribute(client) {
+  client.addCommandCenterItem({ id: "open", title: "Open", icon: { svg: icon }, context: "global", onSelect() {} });
+  return () => undefined;
+}`,
+    );
+    const { clientBundle } = await compilePlugin(entries);
+    const registered: unknown[] = [];
+    const exports = new Function(`return ${clientBundle}`)()(() => undefined);
+    exports.default({ addCommandCenterItem: (item: unknown) => registered.push(item) });
+    expect(registered).toMatchObject([{ icon: { svg } }]);
   });
 
   it("lowers async callbacks before Hermes evaluates the client bundle", async () => {
