@@ -12,7 +12,11 @@ const WEB_CONTAINER = { userSelect: "text", WebkitUserSelect: "text" } as const;
 
 export function createMarkdownStyles(
   theme: Theme,
-  { compact = false, blockGap }: { compact?: boolean; blockGap: number },
+  {
+    compact = false,
+    muted = false,
+    blockGap,
+  }: { compact?: boolean; muted?: boolean; blockGap: number },
 ): { markdownStyle: MarkdownStyle; selectionColor: string; containerStyle?: typeof WEB_CONTAINER } {
   const fontSize = compact ? theme.fontSize.base : theme.fontSize.content;
   // Every block is followed by the same gap; the library drops it after the last block.
@@ -22,7 +26,8 @@ export function createMarkdownStyles(
   const paragraph = {
     ...textMetrics,
     fontFamily: theme.fontFamily.ui,
-    color: theme.colors.foreground,
+    lineHeight: Math.round(fontSize * 1.4),
+    color: muted ? theme.colors.foregroundMuted : theme.colors.foreground,
     ...block,
   };
   const heading = (level: number) => ({
@@ -73,7 +78,7 @@ export function createMarkdownStyles(
       },
       code: {
         fontFamily: theme.fontFamily.mono === "ui-monospace" && !isWeb ? "" : theme.fontFamily.mono,
-        fontSize: codeMetrics.fontSize,
+        fontScale: codeMetrics.fontSize / fontSize,
         color: theme.colors.foreground,
         backgroundColor: theme.colors.surface2,
         borderColor: "transparent",

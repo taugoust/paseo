@@ -204,6 +204,8 @@ export interface PaseoProjectActions {
 }
 
 export interface PaseoWorkspaceActions {
+  /** Read native checkout status, including comparison counts, without creating a workspace. */
+  inspectCheckout: DaemonClient["getCheckoutStatus"];
   list(options: PaseoWorkspaceListOptions & { subscribe: {} }): Promise<
     PaseoWorkspaceListResult & {
       subscriptionId: string;
@@ -369,6 +371,11 @@ export interface PaseoAgentHandle {
   readonly timeline: PaseoAgentTimelineHandle;
   current(): PaseoAgent | null;
   refresh(requestId?: string): Promise<PaseoAgentRefetchResult | null>;
+  /**
+   * Reopens the provider session with current configuration, rerunning session-open hooks.
+   * Interrupts a running turn and returns the refreshed snapshot.
+   */
+  reload(options?: { requestId?: string }): Promise<PaseoAgentRefetchResult | null>;
   send(text: string, options?: PaseoAgentSendOptions): Promise<void>;
   respondToPermission(options: PaseoAgentRespondToPermissionOptions): Promise<void>;
   /** Sends a prompt and resolves when that turn finishes or needs attention. */
@@ -728,6 +735,7 @@ export function createPaseoApi(
       },
     },
     workspaces: {
+      inspectCheckout: (cwd, options) => daemonClient.getCheckoutStatus(cwd, options),
       list: listWorkspaces,
       ref: (workspace) => createWorkspaceHandle(workspace),
       open: (input, requestId) =>
@@ -978,6 +986,12 @@ function createAgentHandleFactory(
       current: () => current,
       refresh: async (requestId) => {
         const result = await daemonClient.fetchAgent({ agentId: id, requestId });
+        current = result?.agent ?? null;
+        return result;
+      },
+      reload: async (options) => {
+        await daemonClient.refreshAgent(id, options?.requestId);
+        const result = await daemonClient.fetchAgent({ agentId: id });
         current = result?.agent ?? null;
         return result;
       },

@@ -28,6 +28,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
     return {
       cwd,
       isGit: false,
+      diffStat: null,
       repoRoot: null,
       currentBranch: null,
       isDirty: null,
@@ -56,6 +57,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
     return {
       cwd,
       isGit: true,
+      diffStat: snapshot.git.diffStat ?? null,
       repoRoot: snapshot.git.repoRoot,
       mainRepoRoot: snapshot.git.mainRepoRoot,
       currentBranch: snapshot.git.currentBranch ?? null,
@@ -76,6 +78,7 @@ export function buildCheckoutStatusPayloadFromSnapshot({
   return {
     cwd,
     isGit: true,
+    diffStat: snapshot.git.diffStat ?? null,
     repoRoot: snapshot.git.repoRoot,
     mainRepoRoot: snapshot.git.mainRepoRoot,
     currentBranch: snapshot.git.currentBranch ?? null,

@@ -380,9 +380,9 @@ function piModelSupportsImageInput(model: PiModel | null | undefined): boolean {
   return model?.input?.includes("image") === true;
 }
 
-function renderTextOnlyImageHint(image: { data: string; mimeType: string }): string {
+async function renderTextOnlyImageHint(image: { data: string; mimeType: string }): Promise<string> {
   try {
-    const materialized = materializeProviderImage({
+    const materialized = await materializeProviderImage({
       data: image.data,
       mimeType: image.mimeType,
     });
@@ -392,10 +392,10 @@ function renderTextOnlyImageHint(image: { data: string; mimeType: string }): str
   }
 }
 
-function convertPromptInput(
+async function convertPromptInput(
   prompt: AgentPromptInput,
   options: { model: PiModel | null | undefined },
-): PiPromptPayload {
+): Promise<PiPromptPayload> {
   if (typeof prompt === "string") {
     return { text: prompt };
   }
@@ -418,7 +418,7 @@ function convertPromptInput(
           mimeType: block.mimeType,
         });
       } else {
-        textParts.push(renderTextOnlyImageHint(block));
+        textParts.push(await renderTextOnlyImageHint(block));
       }
       continue;
     }
@@ -1210,6 +1210,7 @@ export class PiRpcAgentSession implements AgentSession {
   private readonly contextUserEntries: PiCapturedEntry[] = [];
   private readonly treeUserEntriesById = new Map<string, PiCapturedEntry>();
   private readonly pendingExtensionResults = new Map<string, PendingExtensionResult>();
+  private compactionPromise: Promise<void> | null = null;
   private outOfBandCompactionEmit: ((event: AgentStreamEvent) => void) | null = null;
   private outOfBandCompactionStarted = false;
   private outOfBandCompactionCompleted = false;
@@ -1305,6 +1306,7 @@ export class PiRpcAgentSession implements AgentSession {
   private readonly logger: Logger;
   private readonly usagePoller: PiUsagePoller;
   private closed = false;
+  private interruptingTurn: { turnId: string | undefined; error: string | null } | null = null;
   private readonly closeController = new AbortController();
   private readonly pendingExtensionHydrations = new Set<Promise<void>>();
   private readonly usageSessionKey = randomUUID();
@@ -1386,9 +1388,9 @@ export class PiRpcAgentSession implements AgentSession {
       throw new Error("A Pi turn is already active");
     }
 
-    const payload = convertPromptInput(prompt, { model: this.state.model });
     const turnId = randomUUID();
     this.runAdmissionEpoch += 1;
+    const admissionEpoch = this.runAdmissionEpoch;
     this.activeTurnId = turnId;
     this.usagePoller.startTurn();
     this.activeClientMessageId = options?.clientMessageId ?? null;
@@ -1399,11 +1401,25 @@ export class PiRpcAgentSession implements AgentSession {
     this.activePromptRequestId = null;
     this.pendingSteerSubmissions.length = 0;
     this.clearNoTurnBuffers();
+    const payload = await convertPromptInput(prompt, { model: this.state.model });
+    if (this.closed) throw new Error("Pi session is closed");
+    if (this.activeTurnId !== turnId) return { turnId };
     this.activeNoTurnPromptText = payload.text;
     const shouldProbeForNoTurnPrompt = this.parseSlashCommandInput(payload.text) !== null;
 
     void (async () => {
       try {
+        if (this.compactionPromise) {
+          // Pi RPC rejects prompts until the manual compaction request settles.
+          await this.compactionPromise.catch(() => undefined);
+          const turnCanceled =
+            this.closed ||
+            this.activeTurnId !== turnId ||
+            this.runAdmissionEpoch !== admissionEpoch;
+          if (turnCanceled) {
+            return;
+          }
+        }
         const ack = await this.runtimeSession.prompt(payload.text, payload.images);
         this.activePromptRequestId = ack.requestId ?? null;
         const correlatedResult = ack.requestId
@@ -1463,7 +1479,9 @@ export class PiRpcAgentSession implements AgentSession {
     if (this.closed || this.activeTurnId !== options.expectedTurnId) {
       return { status: "unavailable" };
     }
-    const payload = convertPromptInput(prompt, { model: this.state.model });
+    const payload = await convertPromptInput(prompt, { model: this.state.model });
+    if (this.closed || this.activeTurnId !== options.expectedTurnId)
+      return { status: "unavailable" };
     // Pi rejects steer RPCs that are extension commands, so slash inputs keep the
     // interrupt-and-replace fallback where they can run directly.
     if (this.parseSlashCommandInput(payload.text)) {
@@ -1706,8 +1724,14 @@ export class PiRpcAgentSession implements AgentSession {
     if (this.closed) {
       throw new Error("Pi session is closed");
     }
-    const epoch = this.runAdmissionEpoch;
+    const epoch = ++this.runAdmissionEpoch;
     const turnId = this.activeTurnId;
+    const canSettleOnAbort = this.canSettleAbortAcknowledgment();
+    const interruption =
+      this.activeTurnId || this.activeTurnStarted
+        ? { turnId: turnId ?? undefined, error: null as string | null }
+        : null;
+    this.interruptingTurn = interruption;
     try {
       await this.runtimeSession.clearQueue();
     } catch (error) {
@@ -1733,9 +1757,62 @@ export class PiRpcAgentSession implements AgentSession {
     ) {
       return;
     }
-    // No await between the identity check and abort dispatch. Acknowledgement
-    // is not a terminal event: preserve state until agent_end/agent_settled.
-    await this.runtimeSession.abort();
+    // No await between the identity check and abort dispatch. If no terminal arrived
+    // before the abort acknowledgment, complete only this still-current admission.
+    try {
+      await this.runtimeSession.abort();
+    } catch (error) {
+      const terminalError = this.interruptingTurn === interruption ? interruption?.error : null;
+      if (this.interruptingTurn === interruption) this.interruptingTurn = null;
+      if (terminalError) {
+        this.completeTurn(turnId ?? undefined, [
+          { role: "assistant", content: [], stopReason: "error", errorMessage: terminalError },
+        ]);
+      }
+      throw error;
+    }
+    this.settleInterruptedAdmission(interruption, epoch, turnId, canSettleOnAbort);
+    if (this.interruptingTurn === interruption) this.interruptingTurn = null;
+  }
+
+  private canSettleAbortAcknowledgment(): boolean {
+    return (
+      this.activeTurnStarted ||
+      this.compactionPromise !== null ||
+      !this.activeNoTurnPromptText?.startsWith("/")
+    );
+  }
+
+  private settleInterruptedAdmission(
+    interruption: typeof this.interruptingTurn,
+    epoch: number,
+    turnId: string | null,
+    canSettleOnAbort: boolean,
+  ): void {
+    if (
+      interruption &&
+      (canSettleOnAbort || interruption.error !== null) &&
+      this.interruptingTurn === interruption &&
+      this.runAdmissionEpoch === epoch &&
+      this.activeTurnId === turnId &&
+      (turnId !== null || this.activeTurnStarted)
+    ) {
+      this.usagePoller.stopTurn();
+      this.activeTurnId = null;
+      this.activeClientMessageId = null;
+      this.activeTurnStarted = false;
+      this.activeTurnStartedEmitted = false;
+      this.pendingSettledMessages = null;
+      this.activeAssistantMessageId = null;
+      this.pendingSteerSubmissions.length = 0;
+      this.clearNoTurnBuffers();
+      this.emit({
+        type: "turn_canceled",
+        provider: this.provider,
+        reason: "interrupted",
+        turnId: turnId ?? undefined,
+      });
+    }
   }
 
   async revertConversation(input: { messageId: string }): Promise<void> {
@@ -1764,6 +1841,21 @@ export class PiRpcAgentSession implements AgentSession {
     const payload = Buffer.from(JSON.stringify({ targetId, requestId })).toString("base64url");
     await this.runtimeSession.prompt(`/${PASEO_PI_TREE_EXTENSION_COMMAND} ${payload}`);
     return await resultPromise;
+  }
+
+  async canStopRuntime(): Promise<boolean> {
+    if (
+      this.closed ||
+      this.activeTurnId ||
+      this.pendingExtensionUiRequests.size ||
+      this.pendingExtensionResults.size ||
+      this.pendingExtensionHydrations.size ||
+      this.pendingSteerSubmissions.length ||
+      this.pendingNoTurnOutputs.length
+    )
+      return false;
+    const state = await this.runtimeSession.getState();
+    return !state.isStreaming && !state.isCompacting && state.pendingMessageCount === 0;
   }
 
   async close(): Promise<void> {
@@ -1993,7 +2085,8 @@ export class PiRpcAgentSession implements AgentSession {
     this.outOfBandCompactionStarted = false;
     this.outOfBandCompactionCompleted = false;
     try {
-      await this.runtimeSession.compact(customInstructions);
+      this.compactionPromise = this.runtimeSession.compact(customInstructions);
+      await this.compactionPromise;
     } catch (error) {
       if (this.outOfBandCompactionEmit === emit && this.outOfBandCompactionCompleted) return;
       const message = error instanceof Error ? error.message : String(error);
@@ -2020,6 +2113,7 @@ export class PiRpcAgentSession implements AgentSession {
         },
       });
     } finally {
+      this.compactionPromise = null;
       if (this.outOfBandCompactionEmit === emit && !this.outOfBandCompactionStarted) {
         this.outOfBandCompactionEmit = null;
         this.outOfBandCompactionStarted = false;
@@ -2363,6 +2457,7 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   private handleProcessExit(error: string): void {
+    this.interruptingTurn = null;
     this.rejectAllExtensionResults(new Error(error));
     if (!this.activeTurnId && !this.activeTurnStarted) {
       return;
@@ -2794,9 +2889,18 @@ export class PiRpcAgentSession implements AgentSession {
       item,
     });
     if (status === "completed" || status === "failed") {
-      for (const imageItem of mapPiToolResultImages(result, toolCallId)) {
-        this.emit({ type: "timeline", provider: this.provider, turnId, item: imageItem });
-      }
+      void mapPiToolResultImages(result, toolCallId)
+        .then((imageItems) => {
+          for (const imageItem of imageItems)
+            this.emit({ type: "timeline", provider: this.provider, turnId, item: imageItem });
+          return undefined;
+        })
+        .catch((projectionError: unknown) => {
+          this.logger.warn(
+            { error: projectionError, toolCallId },
+            "Failed to project Pi tool result images",
+          );
+        });
     }
     this.emitExtensionOutput(mapping, turnId);
     return true;
@@ -2804,6 +2908,15 @@ export class PiRpcAgentSession implements AgentSession {
 
   private completeTurn(turnId: string | undefined, messages: PiAgentMessage[]): void {
     const errorMessage = latestPiErrorMessage(messages);
+    if (
+      this.interruptingTurn &&
+      this.interruptingTurn.turnId === turnId &&
+      (errorMessage || isPiAbortedTerminalResponse(messages))
+    ) {
+      this.interruptingTurn.error = errorMessage ?? "Pi turn failed";
+      return;
+    }
+    this.interruptingTurn = null;
     this.activeTurnId = null;
     this.activeClientMessageId = null;
     this.activeAssistantMessageId = null;

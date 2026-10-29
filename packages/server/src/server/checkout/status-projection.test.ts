@@ -4,10 +4,33 @@ import { CheckoutPrStatusSchema } from "@getpaseo/protocol/messages";
 import type { WorkspaceGitRuntimeSnapshot } from "../workspace-git-service.js";
 import {
   buildCheckoutPrStatusPayloadFromSnapshot,
+  buildCheckoutStatusPayloadFromSnapshot,
   normalizeCheckoutPrStatusPayload,
 } from "./status-projection.js";
 
 describe("checkout status projection", () => {
+  test("exposes canonical native comparison counts including zero and unknown without inventing them", () => {
+    for (const diffStat of [
+      { additions: 17, deletions: 4 },
+      { additions: 0, deletions: 0 },
+      null,
+    ]) {
+      const snapshot = {
+        git: {
+          isGit: true,
+          repoRoot: "/repo",
+          mainRepoRoot: "/repo",
+          isDirty: false,
+          isPaseoOwnedWorktree: false,
+          diffStat,
+        },
+      } as unknown as WorkspaceGitRuntimeSnapshot;
+      expect(
+        buildCheckoutStatusPayloadFromSnapshot({ cwd: "/repo", requestId: "stats", snapshot })
+          .diffStat,
+      ).toEqual(diffStat);
+    }
+  });
   test("includes repository identity fields on the PR status wire payload", () => {
     const payload = normalizeCheckoutPrStatusPayload(
       {

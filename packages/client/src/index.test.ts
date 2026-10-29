@@ -254,6 +254,23 @@ test("createPaseoClient exposes workspace list through the daemon client", async
   await client.close();
 });
 
+test("public workspace checkout inspection delegates a read without opening or creating workspaces", async () => {
+  const driver = new DaemonClient({
+    url: "ws://daemon.test",
+    clientId: "checkout-read",
+    reconnect: { enabled: false },
+  });
+  const inspect = vi.spyOn(driver, "getCheckoutStatus").mockResolvedValue({
+    cwd: "/repo/worktree",
+    diffStat: { additions: 8, deletions: 3 },
+  } as Awaited<ReturnType<DaemonClient["getCheckoutStatus"]>>);
+  const api = createPaseoApi(driver);
+  const result = await api.workspaces.inspectCheckout("/repo/worktree");
+  expect(inspect).toHaveBeenCalledExactlyOnceWith("/repo/worktree", undefined);
+  expect(result.diffStat).toEqual({ additions: 8, deletions: 3 });
+  await api.dispose();
+});
+
 test("createPaseoApi borrows daemon capabilities without exposing connection ownership", () => {
   const daemonClient = new DaemonClient({
     url: "ws://daemon.test",
@@ -1769,4 +1786,67 @@ test("qualified parents preserve foreign identity without resolving an equal loc
   await creating;
   await client.close();
   expect(localParent.address).toEqual({ serverId: "srv_sdk_test", agentId: "same-parent" });
+});
+
+test("agent reload reopens through the daemon RPC then returns the observed snapshot; refresh remains a read", async () => {
+  const { client, ws } = await connectClient();
+  try {
+    const agent = client.agents.ref("agent_sdk");
+    const snapshot = createAgent();
+    const reloaded = agent.reload({ requestId: "reload-sdk" });
+    expect(parseSentSessionMessage(ws.sent.at(-1))).toMatchObject({
+      type: "refresh_agent_request",
+      agentId: "agent_sdk",
+      requestId: "reload-sdk",
+    });
+    ws.message(
+      sessionMessage({
+        type: "status",
+        payload: {
+          status: "agent_refreshed",
+          requestId: "reload-sdk",
+          agentId: "agent_sdk",
+          timelineSize: 0,
+        },
+      }),
+    );
+    await expect
+      .poll(() => parseSentSessionMessage(ws.sent.at(-1)).type)
+      .toBe("fetch_agent_request");
+    const fetched = parseSentSessionMessage(ws.sent.at(-1));
+    ws.message(
+      sessionMessage({
+        type: "fetch_agent_response",
+        payload: {
+          requestId: fetched.requestId,
+          agentId: "agent_sdk",
+          agent: snapshot,
+          project: null,
+          error: null,
+        },
+      }),
+    );
+    expect(await reloaded).toEqual({ agent: snapshot, project: null });
+    expect(agent.current()).toEqual(snapshot);
+    const read = agent.refresh("snapshot-read");
+    expect(parseSentSessionMessage(ws.sent.at(-1))).toMatchObject({
+      type: "fetch_agent_request",
+      requestId: "snapshot-read",
+    });
+    ws.message(
+      sessionMessage({
+        type: "fetch_agent_response",
+        payload: {
+          requestId: "snapshot-read",
+          agentId: "agent_sdk",
+          agent: snapshot,
+          project: null,
+          error: null,
+        },
+      }),
+    );
+    expect(await read).toEqual({ agent: snapshot, project: null });
+  } finally {
+    await client.close();
+  }
 });

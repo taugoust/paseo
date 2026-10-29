@@ -1,6 +1,6 @@
 # Pi integration fork
 
-`pi-integration` started at upstream `cafe4b01c8522ff39560241c5deb01427dc8dc5b` (0.12.0). The current upgrade target is `d2941157a8f91512daf54fc688241d416e8f5ebd` (0.13.2); preparing this merge does not change the deployed baseline. Keep migration of downstream changes separate from upstream upgrades. Leave `main` available for upstream tracking; merge upgrades deliberately and rerun compatibility checks.
+`pi-integration` started at upstream `cafe4b01c8522ff39560241c5deb01427dc8dc5b` (0.12.0). The current upgrade target is `8c6de842a3157530c26a7a94c78a3d647fb96ce9` (0.14.0); preparing this merge does not change the deployed baseline. Keep migration of downstream changes separate from upstream upgrades. Leave `main` available for upstream tracking; merge upgrades deliberately and rerun compatibility checks.
 
 Application changes and their regression tests belong in this repository, not in the Nix configuration's patch stack. The fork's Nix package owns dependency patches, runtime closure tracing and native-addon installation. Downstream Nix selects the revision, supplies host configuration and runs integration checks against the actual built host and plugin sources.
 

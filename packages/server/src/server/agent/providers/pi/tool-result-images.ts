@@ -10,7 +10,10 @@ import type { PiToolResult } from "./tool-call-mapper.js";
  * timeline entries used by native providers. Keep the source result untouched:
  * tool-call detail/history still owns the original image payload.
  */
-export function mapPiToolResultImages(result: PiToolResult, callId: string): AgentTimelineItem[] {
+export async function mapPiToolResultImages(
+  result: PiToolResult,
+  callId: string,
+): Promise<AgentTimelineItem[]> {
   if (!result || typeof result === "string" || !Array.isArray(result.content)) return [];
 
   const items: AgentTimelineItem[] = [];
@@ -24,7 +27,7 @@ export function mapPiToolResultImages(result: PiToolResult, callId: string): Age
       mimeType?: unknown;
       altText?: unknown;
     };
-    const item = renderProviderImageOutputAsAssistantMarkdown(
+    const item = await renderProviderImageOutputAsAssistantMarkdown(
       {
         path: typeof candidate.path === "string" ? candidate.path : null,
         url: typeof candidate.url === "string" ? candidate.url : null,

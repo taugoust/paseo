@@ -46,7 +46,7 @@ test("registered mapper emits native tasks, preserving blocked and completion se
   );
   assert.deepEqual(todos(host.mapToolCall(call({ version: 5, steps: [] })))[0].items, []);
 });
-test("completion retains checked native rows for activity and history replay", () => {
+test("completion retains checked native rows for activity and history replay", async () => {
   const host = createPiExtensionHost();
   const complete = steps.map((step) => ({ ...step, status: "completed" }));
   const details = { version: 5, steps: complete };
@@ -68,7 +68,7 @@ test("completion retains checked native rows for activity and history replay", (
       3,
     );
   }
-  const events = new PiHistoryMapper("pi").mapMessages([
+  const events = await new PiHistoryMapper("pi").mapMessages([
     {
       role: "toolResult",
       toolCallId: "restored",
@@ -102,9 +102,9 @@ test("running, failed, other tools, malformed and unsupported snapshots stay ord
   ])
     assert.equal(todos(host.mapToolCall(input)).length, 0);
 });
-test("native tasks restore from persisted Pi history and match streamed mapping", () => {
+test("native tasks restore from persisted Pi history and match streamed mapping", async () => {
   const mapper = new PiHistoryMapper("pi");
-  const events = mapper.mapMessages([
+  const events = await mapper.mapMessages([
     {
       role: "assistant",
       content: [

@@ -9,6 +9,12 @@ export { projectSubagentToolPresentation } from "./extensions/pi-subagents/prese
 
 /** Native adapter presentation precedence, without discovery/hydration/events. */
 export function mapPiToolCallDetail(tracked: PiTrackedToolCall, result: PiToolResult, callId = "") {
-  return projectSubagentToolPresentation({callId,toolName:tracked.toolName,args:tracked.args,result})?.detail
-    ?? mapToolDetail(tracked,result);
+  return (
+    projectSubagentToolPresentation({
+      callId,
+      toolName: tracked.toolName,
+      args: tracked.args,
+      result,
+    })?.detail ?? mapToolDetail(tracked, result)
+  );
 }

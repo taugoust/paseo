@@ -55,7 +55,7 @@ function assistantImages(events: AgentStreamEvent[]) {
 
 describe("Pi tool result image timeline", () => {
   test("uses native markdown image entries with deterministic IDs, order, and materialized URIs", async () => {
-    const direct = mapPiToolResultImages(result, "call-images");
+    const direct = await mapPiToolResultImages(result, "call-images");
     expect(direct).toHaveLength(2);
     expect(direct.map((item) => item.type === "assistant_message" && item.messageId)).toEqual([
       "call-images-image-0",
@@ -66,7 +66,7 @@ describe("Pi tool result image timeline", () => {
       expect.stringMatching(/!\[first\]\(file:\/\//),
       expect.stringMatching(/!\[second\]\(file:\/\//),
     ]);
-    expect(mapPiToolResultImages(result, "call-images")).toEqual(direct);
+    expect(await mapPiToolResultImages(result, "call-images")).toEqual(direct);
 
     const events = await history();
     expect(assistantImages(events)).toEqual(direct);
@@ -98,7 +98,7 @@ describe("Pi tool result image timeline", () => {
 
   test("retains useful failure screenshots without changing failed tool status", async () => {
     const failed = await history(true);
-    expect(assistantImages(failed)).toEqual(mapPiToolResultImages(result, "call-images"));
+    expect(assistantImages(failed)).toEqual(await mapPiToolResultImages(result, "call-images"));
     expect(
       failed.some(
         (event) =>
@@ -108,20 +108,20 @@ describe("Pi tool result image timeline", () => {
       ),
     ).toBe(true);
     expect(
-      mapPiToolResultImages({ content: [{ type: "text", text: "only text" }] }, "text-call"),
+      await mapPiToolResultImages({ content: [{ type: "text", text: "only text" }] }, "text-call"),
     ).toEqual([]);
     expect(
-      mapPiToolResultImages(
+      await mapPiToolResultImages(
         { content: [{ type: "image", data: "", mimeType: "image/png" }] },
         "empty-call",
       ),
     ).toEqual([]);
-    expect(mapPiToolResultImages(null, "null-call")).toEqual([]);
+    expect(await mapPiToolResultImages(null, "null-call")).toEqual([]);
   });
 
   test("history image identities use the resolved child/tool scope", async () => {
     expect(assistantImages(await history(false, "child:"))).toEqual(
-      mapPiToolResultImages(result, "child:call-images"),
+      await mapPiToolResultImages(result, "child:call-images"),
     );
   });
 
@@ -154,7 +154,7 @@ describe("Pi tool result image timeline", () => {
         result,
         isError: false,
       });
-      expect(assistantImages(events)).toEqual(assistantImages(await history()));
+      await expect.poll(() => assistantImages(events)).toEqual(assistantImages(await history()));
       fake.emit({
         type: "tool_execution_end",
         toolCallId: "failure-images",
@@ -162,9 +162,9 @@ describe("Pi tool result image timeline", () => {
         result,
         isError: true,
       });
-      expect(assistantImages(events).slice(2)).toEqual(
-        mapPiToolResultImages(result, "failure-images"),
-      );
+      await expect
+        .poll(() => assistantImages(events).slice(2))
+        .toEqual(await mapPiToolResultImages(result, "failure-images"));
     } finally {
       await session.close();
     }
