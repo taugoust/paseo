@@ -6,6 +6,8 @@ const Details = z
   .object({
     version: z.literal(5),
     goalId: z.string().min(1).max(128).optional(),
+    revision: z.number().int().nonnegative().optional(),
+    activationId: z.string().min(1).max(128).optional(),
     steps: z
       .array(
         z
@@ -21,8 +23,7 @@ const Details = z
       )
       .max(50),
   })
-  .strict()
-  .refine((value) => value.steps.filter((step) => step.status === "in_progress").length <= 1);
+  .strict();
 
 /** Use Paseo's native todo timeline, for both streamed results and history replay. */
 export const piProgress: PiExtension = {

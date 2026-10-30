@@ -11,11 +11,18 @@ const { createPiExtensionHost } = await import(
 );
 const { PiHistoryMapper } = await import(pathToFileURL(join(directory, "history-mapper.js")));
 const steps = [
-  { text: "Inspect", status: "completed" },
-  { text: "Implement", status: "in_progress" },
-  { text: "Approve release", status: "blocked" },
+  { id: "task-1", text: "Inspect", status: "completed" },
+  { id: "task-2", text: "Implement", status: "in_progress" },
+  { id: "task-3", text: "Approve release", status: "blocked" },
 ];
-const call = (details = { version: 5, steps }) => ({
+const producerDetails = {
+  version: 5,
+  steps,
+  goalId: "goal-stable",
+  revision: 17,
+  activationId: "activation-stable",
+};
+const call = (details = producerDetails) => ({
   callId: "progress-1",
   toolName: "update_progress",
   args: { steps },
@@ -39,17 +46,17 @@ test("registered mapper emits native tasks, preserving blocked and completion se
       { text: "Blocked · Approve release", status: "pending", completed: false },
     ],
   );
-  const reversed = todos(host.mapToolCall(call({ version: 5, steps: [...steps].toReversed() })))[0];
+  const reversed = todos(host.mapToolCall(call({ ...producerDetails, steps: [...steps].toReversed() })))[0];
   assert.deepEqual(
     reversed.items.map((x) => x.id),
     todo.items.map((x) => x.id).toReversed(),
   );
-  assert.deepEqual(todos(host.mapToolCall(call({ version: 5, steps: [] })))[0].items, []);
+  assert.deepEqual(todos(host.mapToolCall(call({ ...producerDetails, steps: [] })))[0].items, []);
 });
 test("completion retains checked native rows for activity and history replay", async () => {
   const host = createPiExtensionHost();
   const complete = steps.map((step) => ({ ...step, status: "completed" }));
-  const details = { version: 5, steps: complete };
+  const details = { ...producerDetails, steps: complete };
   const before = JSON.stringify(details);
   const completed = todos(host.mapToolCall(call(details)))[0].items;
   assert.deepEqual(
@@ -91,14 +98,9 @@ test("running, failed, other tools, malformed and unsupported snapshots stay ord
     { ...call(), status: "failed" },
     { ...call(), toolName: "other" },
     call({ version: 4, steps }),
-    call({ version: 5, steps: [{ text: "bad", status: "invented" }] }),
-    call({
-      version: 5,
-      steps: [
-        { text: "a", status: "in_progress" },
-        { text: "b", status: "in_progress" },
-      ],
-    }),
+    call({ ...producerDetails, steps: [{ text: "bad", status: "invented" }] }),
+    call({ ...producerDetails, unexpected: true }),
+    call({ ...producerDetails, revision: "17" }),
   ])
     assert.equal(todos(host.mapToolCall(input)).length, 0);
 });
@@ -116,7 +118,7 @@ test("native tasks restore from persisted Pi history and match streamed mapping"
       toolCallId: "progress-1",
       toolName: "update_progress",
       content: [{ type: "text", text: "Updated" }],
-      details: { version: 5, steps },
+      details: producerDetails,
       isError: false,
     },
   ]);
