@@ -53,6 +53,35 @@ test("registered mapper emits native tasks, preserving blocked and completion se
   );
   assert.deepEqual(todos(host.mapToolCall(call({ ...producerDetails, steps: [] })))[0].items, []);
 });
+test("producer v5 supports eight simultaneous active tasks with stable IDs and history replay", async () => {
+  const activeSteps = Array.from({ length: 8 }, (_, index) => ({
+    id: `task-${index + 1}`,
+    text: `Task ${index + 1}`,
+    status: "in_progress",
+  }));
+  const details = { ...producerDetails, steps: activeSteps };
+  const host = createPiExtensionHost();
+  const [live] = todos(host.mapToolCall(call(details)));
+  assert.equal(live.items.length, 8);
+  assert.deepEqual(
+    live.items.map(({ id }) => id),
+    activeSteps.map(({ id }) => `pi-progress-goal-stable-${id}`),
+  );
+  const events = await new PiHistoryMapper("pi").mapMessages([
+    {
+      role: "toolResult",
+      toolCallId: "restored-eight",
+      toolName: "update_progress",
+      content: [{ type: "text", text: "Updated" }],
+      details,
+      isError: false,
+    },
+  ]);
+  assert.deepEqual(
+    events.find((event) => event.type === "timeline" && event.item.type === "todo").item,
+    live,
+  );
+});
 test("completion retains checked native rows for activity and history replay", async () => {
   const host = createPiExtensionHost();
   const complete = steps.map((step) => ({ ...step, status: "completed" }));
