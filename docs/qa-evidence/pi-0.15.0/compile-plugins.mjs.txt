@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { access, readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const compiler = process.env.PASEO_PLUGIN_COMPILER;
+assert.ok(compiler, 'Explicit migrated compiler required');
+const { compilePlugin } = await import(pathToFileURL(compiler));
+const base = path.join(import.meta.dirname, 'sources');
+const candidates = [path.join(base, 'bridge/plugin'), path.join(base, 'accounts'), ...(await readdir(path.join(base,'plugins'))).map(name => path.join(base,'plugins',name))];
+let count = 0;
+for (const directory of candidates) {
+  const entries = {};
+  for (const [key, file] of [['client','index.client.tsx'],['server','index.server.ts']]) {
+    const entry = path.join(directory,file);
+    if (await access(entry).then(() => true, () => false)) entries[key] = entry;
+  }
+  if (!Object.keys(entries).length) continue;
+  const bundles = await compilePlugin(entries);
+  for (const key of Object.keys(entries)) assert.ok(bundles[`${key}Bundle`], `${directory}: ${key} bundle missing`);
+  console.log(`PASS ${path.relative(base,directory)} client=${bundles.clientBundle?.length ?? 0} server=${bundles.serverBundle?.length ?? 0}`);
+  count++;
+}
+assert.equal(count, 9);
+console.log(`PASS ${count} pinned/current integration plugins compiled through migrated host`);

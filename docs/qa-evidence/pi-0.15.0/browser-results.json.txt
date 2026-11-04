@@ -1,0 +1,242 @@
+{
+  "config": {
+    "configFile": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/playwright.nix.config.ts",
+    "rootDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/support/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "browser",
+        "name": "browser",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [
+          "**/*.real.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "real-provider",
+        "name": "real-provider",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [
+          "**/relay-deployment-reconnect.real.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.real.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "relay-deployment",
+        "name": "relay-deployment",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/relay-deployment-reconnect.real.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "plugin-workspace-panels.spec.ts",
+      "file": "plugin-workspace-panels.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "plugin workspace panels and Command Center",
+          "file": "plugin-workspace-panels.spec.ts",
+          "line": 260,
+          "column": 6,
+          "specs": [
+            {
+              "title": "follows workspace, agent, host, compact, and unavailable state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser",
+                  "projectName": "browser",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 46321,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[e2e] Worker 0 daemon started on port 43231, home: /tmp/nix-shell.ndsXex/paseo-e2e-worker-0-15uA3a\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "workspace context opens the real wide panel bridge",
+                          "duration": 2101
+                        },
+                        {
+                          "title": "plugin links open browser tabs and in-app browsing is unavailable",
+                          "duration": 1000
+                        },
+                        {
+                          "title": "direct and sidebar routes preserve same-id contribution kind",
+                          "duration": 1199
+                        },
+                        {
+                          "title": "surface navigation opens host-owned workspace and agent routes",
+                          "duration": 4157
+                        },
+                        {
+                          "title": "surface navigation opens a workspace and agent on another host",
+                          "duration": 2151
+                        },
+                        {
+                          "title": "switching hosts removes commands from an uninstalled host",
+                          "duration": 733
+                        },
+                        {
+                          "title": "legacy sidebar URLs survive a full browser navigation",
+                          "duration": 3536
+                        },
+                        {
+                          "title": "agent context opens the compact panel with synchronous snapshots",
+                          "duration": 11307
+                        },
+                        {
+                          "title": "removing the active plugin renders the panel unavailable",
+                          "duration": 727
+                        }
+                      ],
+                      "startTime": "2026-11-04T16:59:41.680Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "plugin-workspace-panel-wide",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-workspace-panel-wide-de77160d1994d34214ebf0b74cb9be946ca3a912.png"
+                        },
+                        {
+                          "name": "plugin-external-links-web",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-external-links-web-cadf943acd8a9f3c43a739ac631d7345bd9dbca9.png"
+                        },
+                        {
+                          "name": "plugin-surface-kind-collision",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-surface-kind-collision-43a2f5f4d7559d47f9e485686ca6c34bf07f73e5.png"
+                        },
+                        {
+                          "name": "plugin-composer-pill-wide",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-composer-pill-wide-1a7ba691a74815d94b26c7649f58c42cf929239f.png"
+                        },
+                        {
+                          "name": "plugin-composer-pill-compact",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-composer-pill-compact-7ae6f0ade8f7de3caaabe3a2e2e96364320df403.png"
+                        },
+                        {
+                          "name": "plugin-agent-panel-compact",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-agent-panel-compact-8010770588d34e1b75f5cba1deaf3768cd21528b.png"
+                        },
+                        {
+                          "name": "plugin-panel-unavailable",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/attachments/plugin-panel-unavailable-747a4c6bdbe5070f9f4a0b6fbdaebbdf4216eeb3.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d926b49bd46f882506c4-5d3cddddd7e35a7a2653",
+              "file": "plugin-workspace-panels.spec.ts",
+              "line": 263,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-04T16:58:50.099Z",
+    "duration": 111940.31999999999,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

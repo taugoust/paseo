@@ -1,0 +1,38 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+
+> @getpaseo/protocol@0.15.0 pretest
+> npm run generate:validators
+
+
+> @getpaseo/protocol@0.15.0 generate:validators
+> node scripts/generate-validation-aot.mjs
+
+generated src/generated/validation/ws-outbound.aot.ts: envelope + 237 session message validators
+
+> @getpaseo/protocol@0.15.0 test
+> vitest run src/messages.wire-compat.test.ts --bail=1 --maxWorkers=1 --no-file-parallelism
+
+
+ RUN  v4.1.7 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/protocol
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  16:48:07
+   Duration  806ms (transform 332ms, setup 0ms, import 609ms, tests 45ms, environment 0ms)
+
+
+> @getpaseo/server@0.15.0 test:unit
+> vitest run --fileParallelism --exclude "**/*.e2e.test.ts" src/server/wire-compat.test.ts --bail=1 --maxWorkers=1 --no-file-parallelism
+
+
+ RUN  v4.1.6 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/server
+
+(node:1870090) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  16:48:08
+   Duration  10.09s (transform 7.57s, setup 45ms, import 9.83s, tests 58ms, environment 0ms)
+

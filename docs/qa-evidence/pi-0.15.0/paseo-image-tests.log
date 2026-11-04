@@ -1,0 +1,9 @@
+
+ RUN  v4.1.6 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248
+
+
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+   Start at  17:22:25
+   Duration  2.07s (transform 442ms, setup 0ms, import 753ms, tests 763ms, environment 0ms)
+

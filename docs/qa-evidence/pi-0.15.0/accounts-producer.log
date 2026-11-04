@@ -1,0 +1,10 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+Actual producer /home/theo/Workspace/pi-agent-extensions/openai-accounts/accounts.ts
+SHA256 82684a701ed03b4ddaa08f3f123f8ffcaac4463bea7ff028f93ae36c9367d17e
+PASS actual producer: selected OpenAI pin replaced by Codex local default; same model role
+PASS actual producer: reverse Codex pin -> OpenAI local default
+PASS actual producer: same-provider selected named pin reset to local default
+PASS actual producer: source pin changed after final read; stale route rejected atomically
+PASS actual producer: busy during validation -> no selection/revision/route or deferred activation
+PASS actual producer: destination selection revision race rejected without changing source routing
+PASS isolation: temporary HOME/TMPDIR, offline producer, zero inference or live user mutation

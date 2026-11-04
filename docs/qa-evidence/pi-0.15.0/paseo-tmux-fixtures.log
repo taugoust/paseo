@@ -1,0 +1,51 @@
+✔ actual Pi provider creation provisions root first and passes verified JSON to spawn (16.596821ms)
+✔ submitted Pi tab/fork uses explicit workspace, without allocating another session/window (2.412542ms)
+✔ actual import provisioning accepts explicit window despite different cwd, rejects cwd-only import (2.664758ms)
+✔ fork-PR workspaces preserve script approval metadata from the first publication through reconciliation (7.430617ms)
+✔ missing-pane archival closes only the exact Pi owner, without child cascade or native revival (0.891312ms)
+✔ actual terminal handlers route creation and report successful pane close after proxy already exited (3.34008ms)
+✔ terminal close fails closed on stale topology and leaves proxies untouched (2.068749ms)
+✔ ordinary terminal close still awaits the upstream worker exit (0.280314ms)
+✔ Pi tab archive closes exactly its pane, including managed children, without cascading to sibling panes (6.607709ms)
+✔ explicit superseded-owner handlers use metadata archival without dead-provider cancel or child cascade (4.368637ms)
+✔ authoritative archive callback NOOP (provider changed) cannot report handled or drop ghost binding (4.838302ms)
+✔ authoritative archive callback NOOP (workspace changed) cannot report handled or drop ghost binding (4.706569ms)
+✔ authoritative archive callback NOOP (archive write ignored) cannot report handled or drop ghost binding (4.207647ms)
+✔ compiled lifecycle handler rejects handled probe whose stored readback is unarchived (1.444673ms)
+✔ Pi tab refuses changed ownership instead of closing a successor or falling back to archive (1.669308ms)
+✔ unproven retirement preserves in_progress cancellation barrier before close (2.010483ms)
+✔ unproven retirement preserves refused cancellation barrier before close (1.71801ms)
+✔ ghost archive callback failure prevents cancellation and preserves binding for retry (4.229448ms)
+✔ workspace archive is one kill-window, not recursive agent archival or filesystem teardown (2.854067ms)
+✔ project removal kills only the session and preserves windows linked into another session (3.25963ms)
+✔ stale server and failed kills never fall back to a broader close (1.68508ms)
+node:internal/fs/promises:697
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/nix/tests/tmux-topology.ts'
+    at async open (node:internal/fs/promises:697:25)
+    at async Object.readFile (node:internal/fs/promises:1348:14)
+    at async file:///home/theo/.worktrees/paseo/pi-worker-1c9f80763248/nix/tests/tmux-topology.test.mjs:18:17 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/nix/tests/tmux-topology.ts'
+}
+
+Node.js v24.19.0
+✖ nix/tests/tmux-topology.test.mjs (48.011228ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 21
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1789.904506
+
+✖ failing tests:
+
+test at nix/tests/tmux-topology.test.mjs:1:1
+✖ nix/tests/tmux-topology.test.mjs (48.011228ms)
+  'test failed'

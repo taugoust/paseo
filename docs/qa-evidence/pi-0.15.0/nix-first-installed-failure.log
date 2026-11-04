@@ -1,0 +1,2057 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+this derivation will be built:
+  /nix/store/l523rxgal5rmd738121nxvg31qsf6lf3-paseo-0.15.0.drv
+building '/nix/store/l523rxgal5rmd738121nxvg31qsf6lf3-paseo-0.15.0.drv'...
+paseo> Running phase: unpackPhase
+paseo> unpacking source archive /nix/store/cqg9nps9yqgakpzahay6dblw8lg3l7cl-source
+paseo> source root is source
+paseo> Running phase: patchPhase
+paseo> Executing npmConfigHook
+paseo> Configuring npm
+paseo> Validating consistency between /build/source/package-lock.json and /nix/store/n87pfvnpbx5xbzckdj6xw563d3my8kca-paseo-0.15.0-npm-deps/package-lock.json
+paseo> Setting npm_config_cache to /nix/store/n87pfvnpbx5xbzckdj6xw563d3my8kca-paseo-0.15.0-npm-deps
+paseo> Installing dependencies
+paseo> npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+paseo> npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+paseo> npm warn deprecated rimraf@2.4.5: Rimraf versions prior to v4 are no longer supported
+paseo> npm warn deprecated @oclif/screen@3.0.8: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+paseo> npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+paseo> npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+paseo> npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+paseo> npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@6.0.4: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
+paseo> npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+paseo> npm warn deprecated @xmldom/xmldom@0.7.13: this version is no longer supported, please update to at least 0.8.*
+paseo> npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+paseo> 
+paseo> added 2756 packages, and audited 2769 packages in 35s
+paseo> 
+paseo> 504 packages are looking for funding
+paseo>   run `npm fund` for details
+paseo> 
+paseo> found 0 vulnerabilities
+paseo> patching script interpreter paths in node_modules
+paseo> node_modules/playwright/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/wait-on/bin/wait-on: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/tsconfig-paths/node_modules/json5/lib/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jiti/lib/jiti-cli.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo-modules-autolinking/bin/expo-modules-autolinking.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint-config-prettier/bin/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/thread-stream/.husky/pre-commit: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/thread-stream/test/ts/transpile.sh: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/metro-config/node_modules/metro/src/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/metro-config/node_modules/metro-symbolicate/src/index.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/oxlint-tsgolint/bin/tsgolint.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint-plugin-import/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/tiny-async-pool/node_modules/semver/bin/semver: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/serve-sim/Sources/SimCameraHelper/build.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/serve-sim/Sources/SimCameraInjector/build.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/serve-sim/dist/serve-sim.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/escodegen/bin/escodegen.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/escodegen/bin/esgenerate.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo/scripts/resolveAppEntry.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo/scripts/node-binary.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo/scripts/xcode/with-environment.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo/scripts/react-native-xcode.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo/scripts/compose-source-maps.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo/bin/cli: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo/bin/fingerprint: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo/bin/autolinking: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint-plugin-node/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@vercel/nft/out/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/shell-quote/print.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/nan/tools/1to2.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/loose-envify/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/srvx/bin/srvx.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/qrcode-terminal/bin/qrcode-terminal.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@playwright/test/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/uuid/dist/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/pino-abstract-transport/.husky/pre-commit: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/make-dir/node_modules/semver/bin/semver: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/helper-compilation-targets/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/core/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/helper-create-regexp-features-plugin/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/preset-env/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/cli/bin/babel.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/cli/bin/babel-external-helpers.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/parser/bin/babel-parser.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/helper-create-class-features-plugin/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@babel/plugin-transform-runtime/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/zx/build/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/zx/build/cli.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/katex/src/metrics/extract_tfms.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/katex/src/metrics/extract_ttfs.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/katex/src/metrics/format_json.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/katex/src/fonts/generate_fonts.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/katex/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/glob/dist/esm/bin.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/lz-string/bin/bin.js: interpreter directive changed from "#! /usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest-expo/node_modules/sucrase/bin/sucrase: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest-expo/node_modules/sucrase/bin/sucrase-node: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest-expo/bin/jest.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/knip/bin/knip.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ua-parser-js/script/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo-module-scripts/templates/scripts/with-node.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-typecheck: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-test: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo-module-scripts/bin/expo-module-build: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/npx: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-configure: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-clean: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-lint: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-prepublishOnly: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-prepare: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-tsc: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-babel: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-jest: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-eslint: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-module-scripts/bin/expo-module-readme: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/inspect-webkit/dist/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build-optional-packages/build-test.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build-optional-packages/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build-optional-packages/optional.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/metro/src/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/cardinal/bin/cdl.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/electron-builder/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/electron-builder/install-app-deps.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/esprima/bin/esvalidate.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/esprima/bin/esparse.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/terser/bin/uglifyjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/terser/bin/terser: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rollup/dist/bin/rollup: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/h3-v2/bin/h3.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/concurrently/dist/bin/concurrently.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/playwright-core/lib/utilsBundleImpl/xdg-open: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/playwright-core/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_dev_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_stable_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_stable_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_beta_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_chrome_beta_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_dev_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_chrome_stable_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_chrome_beta_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_chrome_stable_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/playwright-core/bin/reinstall_msedge_beta_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/wrangler/bin/wrangler.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/mv/node_modules/mkdirp/bin/cmd.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/mv/node_modules/rimraf/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@istanbuljs/load-nyc-config/node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/json5/lib/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/rudder-sdk-node/node_modules/uuid/dist/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/rudder-sdk-node/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/plugin-help/node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/steps/bin/set-env: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@expo/steps/bin/set-output: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@expo/npm-proofread/node_modules/semver/bin/semver: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/npm-proofread/proofread.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/cli/main.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/plugin-warn-if-update-available/node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/fingerprint/bin/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/xcpretty/build/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/apple-utils/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/expo-modules-macros-plugin/apple/build.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/eas-json/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/eas-json/node_modules/@expo/eas-build-job/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@expo/bunyan/node_modules/uuid/dist/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/vite/bin/vite.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/oxfmt/bin/oxfmt: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/lefthook/bin/index.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/mermaid/node_modules/uuid/dist-node/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/istanbul-lib-instrument/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-jest/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/mkdirp/bin/cmd.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jsesc/bin/jsesc: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/nopt/bin/nopt.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/chromium-edge-launcher/manual-edge-launcher.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/chromium-edge-launcher/scripts/format.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/gradle-to-js/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/chrome-launcher/manual-chrome-launcher.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/chrome-launcher/scripts/format.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/chrome-launcher/scripts/download-chrome.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/chrome-launcher/bin/print-chrome-path.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/tree-kill/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest-cli/bin/jest.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/cytoscape/.github/workflows/scripts/new-feature-version.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/cytoscape/.github/workflows/scripts/pre_release_test.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/cytoscape/.github/workflows/scripts/merge_unstable_to_master.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/formatly/bin/index.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@eslint/eslintrc/node_modules/ajv/scripts/travis-gh-pages: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@eslint/eslintrc/node_modules/ajv/scripts/info: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@eslint/eslintrc/node_modules/ajv/scripts/publish-built-version: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@eslint/eslintrc/node_modules/ajv/scripts/prepare-tests: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/expo-modules-jsi/apple/scripts/generate-modulemap.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-modules-jsi/apple/scripts/create-stub-xcframework.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-modules-jsi/apple/scripts/test.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/regjsparser/bin/parser: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/import-local/fixtures/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/markdown-it/bin/markdown-it.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/create-jest/bin/create-jest.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/send/node_modules/mime/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/send/node_modules/mime/src/build.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/pino/inc-version.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/pino/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/pino/test/fixtures/ts/transpile.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@react-native/gradle-plugin/gradlew: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/ncp/bin/ncp: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp/bin/node-gyp.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp/node_modules/which/bin/which.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/input_test.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/win_tool.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/common_test.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/generator/msvs_test.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/flock_tool.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/__init__.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/mac_tool.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/MSVSSettings_test.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/pylib/gyp/easy_xml_test.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/gyp_main.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/test_gyp.py: interpreter directive changed from "#!/usr/bin/env python3" to "/nix/store/m1fw8l8y9ycxh5dzispbb7cwl6rra14l-python3-3.13.12/bin/python3"
+paseo> node_modules/node-gyp/gyp/gyp: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/esbuild/bin/esbuild: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/unzip-crx-3/node_modules/mkdirp/bin/cmd.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/bunyan/bin/bunyan: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/qrcode/bin/qrcode: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/is-docker/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/cross-env/dist/bin/cross-env.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/cross-env/dist/bin/cross-env-shell.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/miniflare/bootstrap.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/browserslist/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/tsx/dist/cli.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/oxlint/bin/oxlint: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@mapbox/node-pre-gyp/bin/node-pre-gyp: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/open/xdg-open: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/nanoid/bin/nanoid.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build/optional.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build/build-test.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-gyp-build/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ejs/bin/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/tsconfck/bin/tsconfck.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-exports-info/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/xcode/node_modules/uuid/dist/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/workerd/lib/main.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/workerd/bin/workerd: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/yaml/bin.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/why-is-node-running/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/exit/test/fixtures/create-files.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@nicolo-ribaudo/chokidar-2/build-chokidar.sh: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/sandbox-cli-detector/dist/cli.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/sandbox-cli-detector/dist/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/envinfo/dist/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/which/bin/node-which: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/bcryptjs/bin/bcrypt: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/pino-pretty/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/mime/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/electron-publish/node_modules/mime/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/read-binary-file-arch/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/zod-aot/dist/cli/index.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/react-native-reanimated/android/gradlew: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/minizlib/node_modules/rimraf/dist/esm/bin.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@develar/schema-utils/node_modules/ajv/scripts/publish-built-version: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@develar/schema-utils/node_modules/ajv/scripts/travis-gh-pages: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@develar/schema-utils/node_modules/ajv/scripts/prepare-tests: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/@develar/schema-utils/node_modules/ajv/scripts/info: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint/bin/eslint.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint/node_modules/ajv/scripts/prepare-tests: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/eslint/node_modules/ajv/scripts/info: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint/node_modules/ajv/scripts/travis-gh-pages: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/eslint/node_modules/ajv/scripts/publish-built-version: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/@oclif/core/node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@oclif/plugin-autocomplete/node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/sucrase/bin/sucrase: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/sucrase/bin/sucrase-node: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/msgpackr-extract/bin/download-prebuilds.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@typescript/native-preview/bin/tsgo.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/update-browserslist-db/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/babel-plugin-polyfill-corejs2/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/node-addon-api/tools/conversion.js: interpreter directive changed from "#! /usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/agent-cli-detector/dist/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/agent-cli-detector/dist/cli.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eas-cli/bin/dev: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eas-cli/bin/run: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eas-cli/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eas-cli/node_modules/nanoid/bin/nanoid.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eas-cli/node_modules/yaml/bin.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@electron/asar/bin/asar.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@electron/fuses/dist/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@electron/rebuild/lib/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@electron/osx-sign/bin/electron-osx-sign.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@electron/osx-sign/bin/electron-osx-flat.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/napi-postinstall/lib/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin-cwd.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin-transpile.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin-esm.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin-script-deprecated.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/ts-node/dist/bin-script.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/app-builder-lib/node_modules/@electron/get/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/app-builder-lib/node_modules/which/bin/which.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/get-port-cli/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint-plugin-react/node_modules/resolve/bin/resolve: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/eslint-plugin-react/node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/better-opn/node_modules/open/xdg-open: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/resolve/bin/resolve: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/react-native/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/views/scroll/generate-nested-scroll-view.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/build-mac-framework.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/copy-hermes-xcode.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/build-ios-framework.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/build-hermes-xcode.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/build-apple-framework.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/sdks/hermes-engine/utils/build-hermesc-xcode.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/scripts/compose-source-maps.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/react-native/scripts/packager.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/scripts/xcode/ccache-clang++.sh: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/react-native/scripts/xcode/with-environment.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/scripts/xcode/ccache-clang.sh: interpreter directive changed from "#!/bin/sh" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/sh"
+paseo> node_modules/react-native/scripts/react-native-xcode.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/scripts/react_native_pods_utils/script_phases.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/react-native/scripts/ios-configure-glog.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/d3-dsv/bin/dsv2json.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/d3-dsv/bin/json2dsv.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/d3-dsv/bin/dsv2dsv.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/vitest/vitest.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jake/bin/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jake/bin/bash_completion.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/electron/install.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/electron/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/expo-constants/scripts/with-node.sh: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/expo-constants/scripts/get-app-config-ios.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/patch-package/index.js: interpreter directive changed from "#! /usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest/bin/jest.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/lan-network/dist/lan-network-cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/metro-symbolicate/src/index.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/@anthropic-ai/sdk/bin/cli: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/encoding-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/encoding-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/encode-object-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/cat-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/encode-string-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/write-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/wc-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/encode-object-sync: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/wc-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/cat-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/run-tests: interpreter directive changed from "#!/bin/bash" to "/nix/store/2hjsch59amjs3nbgh7ahcfzm2bfwl8zi-bash-5.3p9/bin/bash"
+paseo> node_modules/rw/test/encode-string-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/rw/test/write-async: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/typescript/bin/tsc: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/typescript/bin/tsserver: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/acorn/bin/acorn: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/fb-dotslash/bin/dotslash: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/marked/bin/marked.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/jest-snapshot-prettier/bin-prettier.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/baseline-browser-mapping/dist/cli.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/opentype.js/bin/server.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/opentype.js/bin/ot: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/opentype.js/bin/test-render: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node"
+paseo> rebuilt dependencies successfully
+paseo> patching script interpreter paths in node_modules
+paseo> Finished npmConfigHook
+paseo> patchPhase completed in 41 seconds
+paseo> Running phase: updateAutotoolsGnuConfigScriptsPhase
+paseo> Running phase: configurePhase
+paseo> no configure script, doing nothing
+paseo> Running phase: buildPhase
+paseo> 
+paseo> > paseo@0.15.0 postinstall
+paseo> > node scripts/postinstall-patches.mjs
+paseo> 
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> expo-modules-core@57.0.23 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-enriched-markdown@1.2.0-nightly-20261014-766fc0e67 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-unistyles@3.2.4 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-reanimated@4.5.5 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-draggable-flatlist@4.0.3 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-gesture-handler@2.32.0 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> @gorhom/bottom-sheet@5.2.14 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> react-native-svg@15.15.4 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> @mattermost/react-native-paste-input@2.0.1 ✔
+paseo> patch-package 8.0.1
+paseo> Applying patches...
+paseo> @opencode-ai/sdk@1.14.46 ✔
+paseo> export { BottomSheetModalInternalProvider } from './contexts/modal/internal';
+paseo> export { BottomSheetModalInternalProvider } from './contexts/modal/internal';
+paseo> rebuilt dependencies successfully
+paseo> 
+paseo> > paseo@0.15.0 build:server
+paseo> > npm run build:server-deps && npm run build --workspace=@getpaseo/server && npm run build --workspace=@getpaseo/cli
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:server-deps
+paseo> > npm run build:client && concurrently --kill-others-on-fail --names highlight,plugin,relay --prefix-colors yellow,green,blue "npm run build:highlight" "npm run build:plugin" "npm run build:relay"
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:client
+paseo> > npm run build --workspace=@getpaseo/client
+paseo> 
+paseo> 
+paseo> > @getpaseo/client@0.15.0 build
+paseo> > npm run build --workspace=@getpaseo/protocol && npm run build --workspace=@getpaseo/relay && tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 prebuild
+paseo> > npm run generate:validators
+paseo> 
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 generate:validators
+paseo> > node scripts/generate-validation-aot.mjs
+paseo> 
+paseo> generated src/generated/validation/ws-outbound.aot.ts: envelope + 237 session message validators
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > @getpaseo/relay@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> [plugin]
+paseo> [plugin] > paseo@0.15.0 build:plugin
+paseo> [plugin] > npm run build --workspace=@getpaseo/plugin
+paseo> [plugin]
+paseo> [highlight]
+paseo> [highlight] > paseo@0.15.0 build:highlight
+paseo> [highlight] > npm run build --workspace=@getpaseo/highlight
+paseo> [highlight]
+paseo> [relay]
+paseo> [relay] > paseo@0.15.0 build:relay
+paseo> [relay] > npm run build --workspace=@getpaseo/relay
+paseo> [relay]
+paseo> [plugin]
+paseo> [plugin] > @getpaseo/plugin@0.15.0 build
+paseo> [plugin] > tsc -p tsconfig.json --incremental false
+paseo> [plugin]
+paseo> [highlight]
+paseo> [highlight] > @getpaseo/highlight@0.15.0 build
+paseo> [highlight] > tsc -p tsconfig.json --incremental false
+paseo> [highlight]
+paseo> [relay]
+paseo> [relay] > @getpaseo/relay@0.15.0 build
+paseo> [relay] > tsc -p tsconfig.json --incremental false
+paseo> [relay]
+paseo> [highlight] npm run build:highlight exited with code 0
+paseo> [relay] npm run build:relay exited with code 0
+paseo> [plugin] npm run build:plugin exited with code 0
+paseo> 
+paseo> > @getpaseo/server@0.15.0 build
+paseo> > npm run build:lib && npm run build:scripts
+paseo> 
+paseo> 
+paseo> > @getpaseo/server@0.15.0 build:lib
+paseo> > tsc -p tsconfig.server.json --incremental false && node scripts/build-opencode-bridge-plugin.mjs && node scripts/build-terminal-worker.mjs && node -e "const fs=require('node:fs'); fs.mkdirSync('dist/server/server/speech/providers/local/sherpa/assets',{recursive:true}); fs.copyFileSync('src/server/speech/providers/local/sherpa/assets/silero_vad.onnx','dist/server/server/speech/providers/local/sherpa/assets/silero_vad.onnx'); fs.cpSync('src/terminal/shell-integration','dist/server/terminal/shell-integration',{recursive:true}); fs.cpSync('src/terminal/shell-integration','dist/src/terminal/shell-integration',{recursive:true}); fs.copyFileSync('src/terminal/terminal-ts-loader.mjs','dist/server/terminal/terminal-ts-loader.mjs'); fs.rmSync('dist/server/skills',{recursive:true,force:true}); fs.cpSync('../../skills','dist/server/skills',{recursive:true}); fs.rmSync('dist/server/builtin-plugins',{recursive:true,force:true}); fs.cpSync('../../plugins','dist/server/builtin-plugins',{recursive:true,filter:(source)=>!source.split(require('node:path').sep).some((segment)=>segment==='node_modules'||segment==='test')&&!/\.(test|spec)\.[cm]?[jt]sx?$/.test(source)&&!source.endsWith('.tsbuildinfo')});"
+paseo> 
+paseo> 
+paseo> > @getpaseo/server@0.15.0 build:scripts
+paseo> > tsc -p tsconfig.scripts.json --incremental false && node -e "const fs=require('node:fs'); fs.mkdirSync('dist/scripts',{recursive:true}); fs.copyFileSync('scripts/mcp-stdio-socket-bridge-cli.mjs','dist/scripts/mcp-stdio-socket-bridge-cli.mjs');"
+paseo> 
+paseo> 
+paseo> > @getpaseo/cli@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:daemon-web-ui
+paseo> > node scripts/build-daemon-web-ui.mjs
+paseo> 
+paseo> Exporting browser web app...
+paseo> 
+paseo> > @getpaseo/app@0.15.0 build:web
+paseo> > npm --prefix ../.. run build:app-deps && NODE_OPTIONS=--max-old-space-size=4096 expo export --platform web --max-workers 1
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:app-deps
+paseo> > npm run build:highlight && npm run build:client && npm run build:plugin && npm run build --workspace=@getpaseo/expo-two-way-audio
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:highlight
+paseo> > npm run build --workspace=@getpaseo/highlight
+paseo> 
+paseo> 
+paseo> > @getpaseo/highlight@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:client
+paseo> > npm run build --workspace=@getpaseo/client
+paseo> 
+paseo> 
+paseo> > @getpaseo/client@0.15.0 build
+paseo> > npm run build --workspace=@getpaseo/protocol && npm run build --workspace=@getpaseo/relay && tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 prebuild
+paseo> > npm run generate:validators
+paseo> 
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 generate:validators
+paseo> > node scripts/generate-validation-aot.mjs
+paseo> 
+paseo> generated src/generated/validation/ws-outbound.aot.ts: envelope + 237 session message validators
+paseo> 
+paseo> > @getpaseo/protocol@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > @getpaseo/relay@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > paseo@0.15.0 build:plugin
+paseo> > npm run build --workspace=@getpaseo/plugin
+paseo> 
+paseo> 
+paseo> > @getpaseo/plugin@0.15.0 build
+paseo> > tsc -p tsconfig.json --incremental false
+paseo> 
+paseo> 
+paseo> > @getpaseo/expo-two-way-audio@0.15.0 build
+paseo> > tsc
+paseo> 
+paseo> Using src/app as the root directory for Expo Router.
+paseo> React Compiler enabled
+paseo> Expo Autolinking module resolution enabled
+paseo> Starting Metro Bundler
+paseo> 
+paseo> Web packages/app/index.ts ░░░░░░░░░░░░░░░░  1.0% (1/1)
+paseo> Web packages/app/index.ts ▓▓▓░░░░░░░░░░░░░ 20.6% (166/366)
+paseo> Web packages/app/index.ts ▓▓▓░░░░░░░░░░░░░ 20.6% (253/564)
+paseo> Web packages/app/index.ts ▓▓▓▓░░░░░░░░░░░░ 29.9% (388/709)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% (419/800)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 424/2709)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 472/2861)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 506/2937)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 547/3058)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 711/3213)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 826/3335)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% (1174/3339)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 32.7% (1573/3339)
+paseo> Web packages/app/index.ts ▓▓▓▓▓░░░░░░░░░░░ 34.8% (1970/3339)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓░░░░░░░░ 50.4% (2370/3339)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.1% (2711/3359)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (2772/3463)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (2806/3522)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (2866/3585)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (2942/3657)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (2983/3707)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (3018/3729)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (3041/3760)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (3054/3768)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.5% (3205/3908)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.1% (3371/4027)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.3% (3469/4146)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.9% (3514/4178)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.1% (3616/4268)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.1% (3668/4290)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.1% (3710/4340)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.3% (3809/4390)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.3% (3977/4536)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 78.8% (4122/4649)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 79.5% (4187/4697)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.6% (4291/4749)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.6% (4322/4819)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.6% (4385/4859)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.7% (4508/4871)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% (4628/4952)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.9% (4710/4968)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.3% (4765/5016)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.8% (4820/5057)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.3% (4956/5131)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (5026/5172)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.9% (5097/5248)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.3% (5200/5300)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.4% (5203/5300)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.4% (5204/5300)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.1% (5292/5376)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.3% (5314/5386)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.8% (5384/5488)
+paseo> Web packages/app/index.ts ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.0% (5584/5641)
+paseo> Web Bundled 257888ms packages/app/index.ts (5668 modules)
+paseo> 
+paseo> › Assets (25):
+paseo> ../../node_modules/expo-router/assets/arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.5KB)
+paseo> ../../node_modules/expo-router/assets/error.d1ea1496f9057eb392d5bbf3732a61b7.png (469B)
+paseo> ../../node_modules/expo-router/assets/file.19eeb73b9593a38f8e9f418337fc7d10.png (138B)
+paseo> ../../node_modules/expo-router/assets/forward.d8b800c443b8972542883e0b9de2bdc6.png (188B)
+paseo> ../../node_modules/expo-router/assets/pkg.ab19f4cbc543357183a20571f68380a3.png (364B)
+paseo> ../../node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653B)
+paseo> ../../node_modules/expo-router/assets/react-navigation/elements/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207B)
+paseo> ../../node_modules/expo-router/assets/react-navigation/elements/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425B)
+paseo> ../../node_modules/expo-router/assets/react-navigation/elements/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235B)
+paseo> ../../node_modules/expo-router/assets/react-navigation/elements/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928B)
+paseo> ../../node_modules/expo-router/assets/sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465B)
+paseo> ../../node_modules/expo-router/assets/unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.8KB)
+paseo> assets/images/favicon-dark-attention.882b3a27dcb2073e9e31b334f9ed9728.png (2.2KB)
+paseo> assets/images/favicon-dark-running.8112342ff0d39e047a7f8d4fad9402f3.png (2.2KB)
+paseo> assets/images/favicon-dark.8005ed36ac07a5a7c60de25780897bd4.png (1.7KB)
+paseo> assets/images/favicon-light-attention.882b3a27dcb2073e9e31b334f9ed9728.png (2.2KB)
+paseo> assets/images/favicon-light-running.8112342ff0d39e047a7f8d4fad9402f3.png (2.2KB)
+paseo> assets/images/favicon-light.8005ed36ac07a5a7c60de25780897bd4.png (1.7KB)
+paseo> assets/images/notification-icon.3bf81d33ddbf380606bdd248ba83e158.png (2.3KB)
+paseo> 
+paseo> › web bundles (7):
+paseo> _expo/static/css/xterm-3bb1704bf6cb0876640973dc0244b4cb.css (4.2KB)
+paseo> _expo/static/js/web/desktop-attachment-bridge-cb19b40edbc364301bc30b97949ce959.js (644B)
+paseo> _expo/static/js/web/desktop-attachment-store-dde2a29f732b9f4df88b4d91b74599b7.js (2.9KB)
+paseo> _expo/static/js/web/index-4089a5cb3d372d16e10b1b5675d266de.js (24MB)
+paseo> _expo/static/js/web/index-ef5e62b265605545d786f264b6973970.js (45KB)
+paseo> _expo/static/js/web/indexeddb-attachment-store-a3c225434364b0359c7706e45d3ab549.js (3.2KB)
+paseo> _expo/static/js/web/native-file-attachment-store-27b326f6c66102c3ef085d7d81e2fb72.js (4.3KB)
+paseo> 
+paseo> › Files (3):
+paseo> favicon.ico (15KB)
+paseo> index.html (3.3KB)
+paseo> metadata.json (49B)
+paseo> 
+paseo> Exported: dist
+paseo> Cleaning packages/server/dist/server/web-ui...
+paseo> Copying assets to packages/server/dist/server/web-ui...
+paseo> Daemon web UI bundle:
+paseo>   raw:    22.97 MiB
+paseo>   gzip:   5.08 MiB
+paseo>   brotli: 3.68 MiB
+paseo> buildPhase completed in 6 minutes 44 seconds
+paseo> Running phase: checkPhase
+paseo> ✔ Nix build source retains fork-owned checks and focused TypeScript suites (1.126631ms)
+paseo> ℹ tests 1
+paseo> ℹ suites 0
+paseo> ℹ pass 1
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 87.746449
+paseo> (node:3721) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+paseo> (Use `node --trace-warnings ...` to show where the warning was created)
+paseo> ✔ CLI terminal list preserves workspace identity without a downstream mapper (78.925691ms)
+paseo> ✔ Goal controls have native action titles, labeled input and objective-only output (2.81324ms)
+paseo> ✔ Goal metadata is versioned and no-goal status never exposes its machine contract (0.459784ms)
+paseo> ✔ running Goal input shows an objective or title only, never machine controls (0.457421ms)
+paseo> ✔ Goal failures keep diagnostics instead of projecting an available objective (0.318344ms)
+paseo> ✔ native error adapter uses shared production formatter and leaves raw results intact (0.757303ms)
+paseo> ✔ harness families show human prose only while unrelated generic tools retain their fields (1.31671ms)
+paseo> ✔ subagent tasks preserve native card and outcome semantics while formatting result wrapper (0.423953ms)
+paseo> ✔ canonical files, diff and shell payloads are not parsed or rewritten (2.572059ms)
+paseo> ✔ arbitrary textual tools also get native-compatible labeled presentation (0.784889ms)
+paseo> ✔ unknown structured results keep every field and nontext block without JSON serialization (1.480804ms)
+paseo> ✔ native Paseo result catalog does not discard unexpected fields or human content (0.650169ms)
+paseo> ✔ legacy non-array tool content remains readable instead of crashing the mapper (0.704257ms)
+paseo> ✔ compact showcase: Successful job wait (0.865127ms)
+paseo> ✔ compact showcase: Failed job wait (0.249303ms)
+paseo> ✔ compact showcase: Subagent native result (0.228227ms)
+paseo> ✔ compact showcase: Subagent native wait (0.47631ms)
+paseo> ✔ compact showcase: Progress checklist (0.371606ms)
+paseo> ✔ compact showcase: Goal management (0.165386ms)
+paseo> ✔ compact showcase: Goal wait (0.188588ms)
+paseo> ✔ subagent control families use structured group states, never delegated prompts or bookkeeping (2.17454ms)
+paseo> ✔ subagent reap prefers canonical displayName and retains status and outcome (0.836457ms)
+paseo> ✔ subagent list and tasks share the latest-attempt overview across backend envelopes (1.184248ms)
+paseo> ✔ subagent unknown execution stays unavailable and explicit parent sessions never collapse (0.454458ms)
+paseo> ✔ subagent prompts show verbatim instructions without generated delivery headings (0.418722ms)
+paseo> ✔ native subagent full answers and JSON logs survive validated wrapper removal (0.446036ms)
+paseo> ✔ versioned subagent presentation renders framed multi-worker reports verbatim without control details (0.977622ms)
+paseo> ✔ unknown presentation schemas and unframed multi-worker output preserve full legacy text as compatibility fallback (0.410326ms)
+paseo> ✔ legacy subagent result page validates byte metadata before removing generated selectors (0.319135ms)
+paseo> ✔ goal terminal tools, worker reports, notifications and rejected controls preserve useful human diagnostics (0.511043ms)
+paseo> ✔ background wait projects only human name, concise state and verbatim requested logs (0.506113ms)
+paseo> ✔ background failure, signal, cancellation and unavailable output retain compact diagnostics (0.744964ms)
+paseo> ✔ background output keeps JSON and header-like log lines byte-for-byte, including truncation (0.292937ms)
+paseo> ✔ background unrecognized or mismatched headers and raw JSON payloads are not stripped (0.451262ms)
+paseo> ✔ background watch, alerts and lifecycle controls do not expose transport metadata (0.817643ms)
+paseo> ✔ background start, status, adopt and list use compact states instead of key-value dumps (0.650366ms)
+paseo> ✔ generic fallback handles malformed JSON, long values, empty values and cycles without loss (0.170295ms)
+paseo> ✔ real mapper → reducer → Added click renders only the immutable individual full title (83.479024ms)
+paseo> ✔ multiple Added rows each own their exact title and do not show siblings (67.157719ms)
+paseo> ✔ blocked Added preserves only its immutable native full title, including native prefix (21.425507ms)
+paseo> ✔ other native activities keep their list rows, icons, and expandable controls (56.216861ms)
+paseo> (node:3743) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+paseo> (Use `node --trace-deprecation ...` to show where the warning was created)
+paseo> ✔ parent push selective=false modern=false (14.989451ms)
+paseo> ✔ parent push selective=false modern=true (3.48608ms)
+paseo> ✔ parent push selective=true modern=false (3.321457ms)
+paseo> ✔ parent push selective=true modern=true (2.574247ms)
+paseo> ✔ parent web selective=false modern=false (2.788612ms)
+paseo> ✔ parent web selective=false modern=true (2.370072ms)
+paseo> ✔ parent web selective=true modern=false (2.30356ms)
+paseo> ✔ parent web selective=true modern=true (2.438846ms)
+paseo> ✔ child push selective=false modern=false (2.716771ms)
+paseo> ✔ child push selective=false modern=true (2.637803ms)
+paseo> ✔ child push selective=true modern=false (11.425587ms)
+paseo> ✔ child push selective=true modern=true (2.178324ms)
+paseo> ✔ child web selective=false modern=false (1.878952ms)
+paseo> ✔ child web selective=false modern=true (1.666224ms)
+paseo> ✔ child web selective=true modern=false (1.534967ms)
+paseo> ✔ child web selective=true modern=true (1.687001ms)
+paseo> ✔ unproven identity does not mute: {"agentId":"other"} (1.628094ms)
+paseo> ✔ unproven identity does not mute: {"sessionFile":"/other/session"} (1.247287ms)
+paseo> ✔ unproven identity does not mute: {"managed":false} (1.194445ms)
+paseo> ✔ unproven identity does not mute: {"parentSessionId":null} (1.175272ms)
+paseo> ✔ unproven identity does not mute: {"runtimeId":""} (1.163221ms)
+paseo> ✔ unproven identity does not mute: {"childId":null} (1.323869ms)
+paseo> ✔ unproven identity does not mute: {"schemaVersion":1} (1.233427ms)
+paseo> ✔ missing/corrupt record and other providers do not mute; no cwd/title heuristic (1.662444ms)
+paseo> ✔ live agent snapshot projection clears badge attention only for exact managed child (1.65714ms)
+paseo> ✔ persisted agent list projection removes stale child badge without mutating stored record (3.298647ms)
+paseo> ✔ native child classification requires Pi and complete exact runtime identity (1.256967ms)
+paseo> ✔ Pi import preserves live selection, descriptor=null (11.273694ms)
+paseo> ✔ Pi import preserves live selection, descriptor={"provider":"openai","modelId":"stale-model"} (2.097251ms)
+paseo> ✔ explicit user model changes still reach the runtime (1.799429ms)
+paseo> ✔ registered mapper emits native tasks, preserving blocked and completion semantics (7.30069ms)
+paseo> ✔ producer v5 supports eight simultaneous active tasks with stable IDs and history replay (4.613077ms)
+paseo> ✔ completion retains checked native rows for activity and history replay (1.265207ms)
+paseo> ✔ running, failed, other tools, malformed and unsupported snapshots stay ordinary tool calls (1.269546ms)
+paseo> ✔ native tasks restore from persisted Pi history and match streamed mapping (0.816029ms)
+paseo> ✔ parent deletion clears descriptorless hides and retained history only for that parent (13.691287ms)
+paseo> ✔ hidden harness state emits neither assistant output nor completion (active=false) (2.2126ms)
+paseo> ✔ visible custom output remains visible without prematurely settling active turns (active=false) (0.579729ms)
+paseo> ✔ hidden harness state emits neither assistant output nor completion (active=true) (0.181639ms)
+paseo> ✔ visible custom output remains visible without prematurely settling active turns (active=true) (0.11433ms)
+paseo> ✔ explicit warning/error notifications remain actionable and never finish the turn (0.732812ms)
+paseo> ✔ latest attempts group by session and task, never the shared title (3.294606ms)
+paseo> ✔ execution failures stay visible and only explicit verification establishes complete (0.267068ms)
+paseo> ✔ missing session or malformed attempt cannot merge legacy records (0.258764ms)
+paseo> ℹ tests 85
+paseo> ℹ suites 0
+paseo> ℹ pass 85
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 3368.965507
+paseo> (node:3799) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+paseo> (Use `node --trace-warnings ...` to show where the warning was created)
+paseo> ✔ production expanded generic component uses readable fields within bounded scroll area (3.560448ms)
+paseo> ✔ production expanded native helper keeps future metadata and prose (0.996345ms)
+paseo> ✔ native compact harness section has no empty header and uses host spacing (0.841628ms)
+paseo> ✔ production detail fields wrap at narrow widths and follow both native theme palettes (0.689498ms)
+paseo> ✔ production canonical shell and error rendering are not reformatted (0.593369ms)
+paseo> ℹ tests 5
+paseo> ℹ suites 0
+paseo> ℹ pass 5
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 421.425802
+paseo> ✔ failed jobs show captured stderr rather than duplicate combined output, live/history helper leaves result intact (2.325016ms)
+paseo> ✔ empty stderr and unavailable legacy/adopted capture use explicit failure fallback, never combined text (0.284298ms)
+paseo> ✔ other tool failures keep their literal diagnostic and do not interpret job-shaped payloads (0.945688ms)
+paseo> ℹ tests 3
+paseo> ℹ suites 0
+paseo> ℹ pass 3
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 11.145943
+paseo> ✔ legacy live/history/reconnect snapshots only hide: no registration or file readers (4.477812ms)
+paseo> ✔ strict private payload validation retained (0.462709ms)
+paseo> ℹ tests 2
+paseo> ℹ suites 0
+paseo> ℹ pass 2
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 11.609941
+paseo> ✔ pi: replacement stays pending after acknowledgment until the real old terminal (5.994527ms)
+paseo> ✔ codex: replacement stays pending after acknowledgment until the real old terminal (0.722078ms)
+paseo> ✔ claude: replacement stays pending after acknowledgment until the real old terminal (0.404635ms)
+paseo> ✔ replacement can settle before a late interrupt acknowledgment without blocking a successor (0.361743ms)
+paseo> ✔ the real replacement method admits the new prompt exactly once, after settlement (0.614857ms)
+paseo> ✔ real settlement wins a racing late provider failure, which remains logged (0.464901ms)
+paseo> ✔ late interrupt failure rejects a pending replacement instead of silently starting it (0.954316ms)
+paseo> ✔ concurrent/repeated Stop remains bounded and shares one interrupt with pending replacement (1.751071ms)
+paseo> ✔ reload retains bounded fail-closed cancellation, unlike a queued replacement (0.571909ms)
+paseo> ✔ rewind retains bounded fail-closed cancellation, unlike a queued replacement (0.495697ms)
+paseo> ✔ archive retains bounded fail-closed cancellation, unlike a queued replacement (0.238784ms)
+paseo> ✔ an old cancellation cannot dispatch its interrupt into an already-admitted successor (0.188708ms)
+paseo> ℹ tests 12
+paseo> ℹ suites 0
+paseo> ℹ pass 12
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 19.419789
+paseo> ✔ failed background_job wait shows readable traceback, not JSON envelope (2.888747ms)
+paseo> ✔ failed background_job output shows readable traceback, not JSON envelope (0.368275ms)
+paseo> ✔ known nested error envelopes expose text without altering metadata (0.344349ms)
+paseo> ✔ mixed content shows only text while retaining every non-text payload (0.944259ms)
+paseo> ✔ successful and running jobs never expose an error (0.365707ms)
+paseo> ✔ existing direct strings and string-content errors remain verbatim (0.351766ms)
+paseo> ✔ unknown objects and non-text errors use readable fields without losing structured data (1.118861ms)
+paseo> ✔ nested extraction is bounded and cyclic errors retain the safe fallback (0.360594ms)
+paseo> ℹ tests 8
+paseo> ℹ suites 0
+paseo> ℹ pass 8
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 14.441594
+paseo> Paseo task-outcome rendering checks passed
+paseo> Pi web-search structured detail tests passed
+paseo> ✔ onToolStart stores valid questionnaire state without creating premature UI (3.709606ms)
+paseo> ✔ first compatible frame creates one native batch with descriptions and capability-gated Other options (2.158404ms)
+paseo> ✔ batch answers map by index and custom text stays literal through a correlated input frame (0.976438ms)
+paseo> ✔ real option named Other remains distinct from the appended sentinel (0.303278ms)
+paseo> ✔ input capability is global and allowOther remains question-specific (0.400432ms)
+paseo> ✔ input capability gates Other globally while allowOther remains question-specific (0.369249ms)
+paseo> ✔ legacy bridge frames without metadata remain unclaimed and do not create a batch form (0.239101ms)
+paseo> ✔ unrelated and mismatched dialogs pass through; incomplete batches cancel the matching frame (0.260237ms)
+paseo> ✔ custom input cancellation declines only its correlated input frame (0.512807ms)
+paseo> ✔ unrelated concurrent tools do not cancel the active questionnaire (0.497806ms)
+paseo> ✔ overlapping questionnaire calls fail closed rather than misattributing dialogs (0.306259ms)
+paseo> ℹ tests 11
+paseo> ℹ suites 0
+paseo> ℹ pass 11
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 19.238035
+paseo> 
+paseo>  RUN  v4.1.6 /build/source
+paseo> 
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/agent.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (4)
+paseo>       Tests 0 passed (0)
+paseo>    Start at 17:12:21
+paseo>    Duration 100ms
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/agent.test.ts 0/158
+paseo> 
+paseo>  Test Files 0 passed (4)
+paseo>       Tests 0 passed (158)
+paseo>    Start at 17:12:21
+paseo>    Duration 813ms
+paseo>  ✓ packages/server/src/server/agent/providers/pi/agent.test.ts (158 tests | 124 skipped) 66ms
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/agent.test.ts 158/158
+paseo> 
+paseo>  Test Files 1 passed (4)
+paseo>       Tests 34 passed | 124 skipped (158)
+paseo>    Start at 17:12:21
+paseo>    Duration 915ms
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/cli-runtime.test.ts 0/30
+paseo> 
+paseo>  Test Files 1 passed (4)
+paseo>       Tests 34 passed | 124 skipped (188)
+paseo>    Start at 17:12:21
+paseo>    Duration 1.01s
+paseo>  ✓ packages/server/src/server/agent/providers/pi/cli-runtime.test.ts (30 tests | 19 skipped) 30ms
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/tool-result-images.test.ts [queued]
+paseo> 
+paseo>  Test Files 2 passed (4)
+paseo>       Tests 45 passed | 143 skipped (188)
+paseo>    Start at 17:12:21
+paseo>    Duration 1.22s
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/tool-result-images.test.ts 0/4
+paseo> 
+paseo>  Test Files 2 passed (4)
+paseo>       Tests 45 passed | 143 skipped (192)
+paseo>    Start at 17:12:21
+paseo>    Duration 1.41s
+paseo>  ✓ packages/server/src/server/agent/providers/pi/tool-result-images.test.ts (4 tests) 85ms
+paseo> 
+paseo>  ❯ packages/server/src/server/agent/providers/pi/usage-lifecycle.test.ts [queued]
+paseo> 
+paseo>  Test Files 3 passed (4)
+paseo>       Tests 49 passed | 143 skipped (192)
+paseo>    Start at 17:12:21
+paseo>    Duration 1.61s
+paseo>  ✓ packages/server/src/server/agent/providers/pi/usage-lifecycle.test.ts (4 tests) 6ms
+paseo> 
+paseo>  Test Files  4 passed (4)
+paseo>       Tests  53 passed | 143 skipped (196)
+paseo>    Start at  17:12:21
+paseo>    Duration  1.69s (transform 540ms, setup 0ms, import 927ms, tests 187ms, environment 0ms)
+paseo> 
+paseo> 
+paseo> > @getpaseo/builtin-plugins@0.15.0 test
+paseo> > vitest run codex-usage-source/server
+paseo> 
+paseo> 
+paseo>  RUN  v4.1.7 /build/source/plugins
+paseo> 
+paseo> 
+paseo>  ❯ codex-usage-source/server/usage.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 0 passed (0)
+paseo>    Start at 17:12:23
+paseo>    Duration 100ms
+paseo> 
+paseo>  ❯ codex-usage-source/server/stores.test.ts 0/11
+paseo>  ❯ codex-usage-source/server/usage.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 0 passed (11)
+paseo>    Start at 17:12:23
+paseo>    Duration 409ms
+paseo> (node:3952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+paseo> (Use `node --trace-warnings ...` to show where the warning was created)
+paseo> 
+paseo>  ❯ codex-usage-source/server/stores.test.ts 1/11
+paseo>  ❯ codex-usage-source/server/usage.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 1 passed (11)
+paseo>    Start at 17:12:23
+paseo>    Duration 509ms
+paseo> 
+paseo>  ❯ codex-usage-source/server/stores.test.ts 4/11
+paseo>  ❯ codex-usage-source/server/usage.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 4 passed (11)
+paseo>    Start at 17:12:23
+paseo>    Duration 609ms
+paseo>  ✓ codex-usage-source/server/stores.test.ts (11 tests) 250ms
+paseo> 
+paseo>  ❯ codex-usage-source/server/usage.test.ts 1/20
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 12 passed (31)
+paseo>    Start at 17:12:23
+paseo>    Duration 809ms
+paseo> (node:3951) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+paseo> (Use `node --trace-warnings ...` to show where the warning was created)
+paseo> 
+paseo>  ❯ codex-usage-source/server/usage.test.ts 1/20
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 12 passed (31)
+paseo>    Start at 17:12:23
+paseo>    Duration 809ms
+paseo> 
+paseo>  ❯ codex-usage-source/server/usage.test.ts 17/20
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 28 passed (31)
+paseo>    Start at 17:12:23
+paseo>    Duration 909ms
+paseo>  ✓ codex-usage-source/server/usage.test.ts (20 tests) 234ms
+paseo> 
+paseo>  Test Files  2 passed (2)
+paseo>       Tests  31 passed (31)
+paseo>    Start at  17:12:23
+paseo>    Duration  939ms (transform 448ms, setup 0ms, import 846ms, tests 484ms, environment 0ms)
+paseo> 
+paseo> 
+paseo> > @getpaseo/plugin@0.15.0 test
+paseo> > vitest run src/shared
+paseo> 
+paseo> 
+paseo>  RUN  v4.1.7 /build/source/packages/plugin
+paseo> 
+paseo> 
+paseo>  ❯ src/shared/quota.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 0 passed (0)
+paseo>    Start at 17:12:25
+paseo>    Duration 100ms
+paseo>  ✓ src/shared/presentation.test.ts (3 tests) 5ms
+paseo>  ✓ src/shared/quota.test.ts (3 tests) 5ms
+paseo> 
+paseo>  Test Files  2 passed (2)
+paseo>       Tests  6 passed (6)
+paseo>    Start at  17:12:25
+paseo>    Duration  210ms (transform 83ms, setup 0ms, import 114ms, tests 10ms, environment 0ms)
+paseo> 
+paseo> 
+paseo> > @getpaseo/app@0.15.0 test
+paseo> > vitest run src/components/markdown/renderer.test.ts src/components/synced-loader-state.test.ts
+paseo> 
+paseo> 
+paseo>  RUN  v4.1.7 /build/source/packages/app
+paseo> 
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 0 passed (0)
+paseo>    Start at 17:12:26
+paseo>    Duration 101ms
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo>  ❯  unit  src/components/synced-loader-state.test.ts 0/2
+paseo> 
+paseo>  Test Files 0 passed (2)
+paseo>       Tests 0 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 207ms
+paseo>  ✓  unit  src/components/synced-loader-state.test.ts (2 tests) 4ms
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 913ms
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 1.94s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 6.12s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 7.21s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 8.11s
+paseo> (node:4064) [DEP0151] DeprecationWarning: Package /build/source/node_modules/react-native-worklets/ has a "main" field set to "./lib/module/index", excluding the full filename and extension to the resolved file at "lib/module/index.js", imported from /build/source/node_modules/react-native-reanimated/lib/module/initializers.js.
+paseo>  Automatic extension resolution of the "main" field is deprecated for ES modules.
+paseo> (Use `node --trace-deprecation ...` to show where the warning was created)
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 9.12s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts [queued]
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (2)
+paseo>    Start at 17:12:26
+paseo>    Duration 10.96s
+paseo> stderr | src/components/markdown/renderer.test.ts
+paseo> [DraftStore] Attachment garbage collection failed Error: IndexedDB is unavailable in this runtime.
+paseo>     at ensureIndexedDb (/build/source/packages/app/src/attachments/web/indexeddb-attachment-store.ts:27:11)
+paseo>     at /build/source/packages/app/src/attachments/web/indexeddb-attachment-store.ts:34:21
+paseo>     at new Promise (<anonymous>)
+paseo>     at openAttachmentDb (/build/source/packages/app/src/attachments/web/indexeddb-attachment-store.ts:33:10)
+paseo>     at Object.garbageCollect (/build/source/packages/app/src/attachments/web/indexeddb-attachment-store.ts:192:24)
+paseo>     at /build/source/packages/app/src/attachments/service.ts:188:17
+paseo>     at processTicksAndRejections (node:internal/process/task_queues:103:5)
+paseo> 
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts 0/151
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 2 passed (153)
+paseo>    Start at 17:12:26
+paseo>    Duration 11.46s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts 1/151
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 3 passed (153)
+paseo>    Start at 17:12:26
+paseo>    Duration 11.56s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts 85/151
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 87 passed (153)
+paseo>    Start at 17:12:26
+paseo>    Duration 11.86s
+paseo> 
+paseo>  ❯  unit  src/components/markdown/renderer.test.ts 86/151
+paseo> 
+paseo>  Test Files 1 passed (2)
+paseo>       Tests 88 passed (153)
+paseo>    Start at 17:12:26
+paseo>    Duration 12.26s
+paseo>  ✓  unit  src/components/markdown/renderer.test.ts (151 tests) 798ms
+paseo>    ✓ normalizes a large HTML table into one block per row  661ms
+paseo> 
+paseo>  Test Files  2 passed (2)
+paseo>       Tests  153 passed (153)
+paseo>    Start at  17:12:26
+paseo>    Duration  12.31s (transform 9.26s, setup 98ms, import 11.39s, tests 802ms, environment 1ms)
+paseo> 
+paseo> 
+paseo>  RUN  v4.1.6 /build/source
+paseo> 
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts [queued]
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 0 passed (0)
+paseo>    Start at 17:12:39
+paseo>    Duration 100ms
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 0/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 0 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 228ms
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 1/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 1 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 328ms
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 4/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 4 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 929ms
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 5/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 5 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 1.33s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 9/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 9 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 1.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 9/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 9 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 2.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 9/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 9 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 3.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 9/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 9 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 4.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 9/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 9 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 5.93s
+paseo> [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 10/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 10 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 6.43s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 12/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 12 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 6.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 13/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 13 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 7.13s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 14/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 14 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 7.83s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 14/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 14 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 7.93s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 15/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 15 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 8.54s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 15/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 15 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 8.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 16/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 16 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 9.74s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 16/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 16 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 9.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 17/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 17 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 10.34s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 18/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 18 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 10.44s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 18/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 18 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 10.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 19/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 19 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 11.14s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 20/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 20 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 11.74s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 20/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 20 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 11.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 21/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 21 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 12.44s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 21/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 21 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 12.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 22/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 22 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 13.14s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 23/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 23 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 13.74s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 23/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 23 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 13.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 23/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 23 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 14.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 25/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 25 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 15.64s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 26/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 26 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 15.74s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 26/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 26 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 15.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 26/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 26 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 16.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 28/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 28 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 17.04s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 29/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 29 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 17.74s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 29/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 29 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 17.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 30/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 30 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 18.44s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 30/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 30 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 18.94s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 31/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 31 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 19.14s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 32/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 32 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 19.75s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 32/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 32 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 19.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 32/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 32 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 20.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 34/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 34 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 21.65s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 35/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 35 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 21.75s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 35/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 35 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 21.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 36/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 36 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 22.45s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 36/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 36 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 22.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 37/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 37 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 23.15s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 38/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 38 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 23.75s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 38/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 38 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 23.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 38/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 38 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 24.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 39/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 39 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 25.35s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 42/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 42 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 25.45s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 42/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 42 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 25.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 42/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 42 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 26.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 44/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 44 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 27.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 45/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 45 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 28.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 46/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 46 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 29.46s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 47/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 47 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 29.56s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 47/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 47 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 29.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 48/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 48 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 30.25s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 49/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 49 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 30.86s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 50/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 50 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 31.55s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 50/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 50 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 31.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 51/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 51 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 32.86s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 52/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 52 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 32.95s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 53/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 53 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 33.56s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 53/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 53 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 33.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 54/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 54 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 34.26s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 55/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 55 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 34.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 56/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 56 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 35.56s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 56/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 56 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 35.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 56/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 56 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 36.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 58/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 58 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 37.16s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 63/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 63 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 37.26s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 67/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 67 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 37.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 69/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 69 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 38.66s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 69/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 69 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 38.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 70/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 70 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 39.36s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 70/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 70 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 39.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 71/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 71 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 40.56s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 72/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 72 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 40.66s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 72/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 72 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 40.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 73/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 73 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 41.26s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 73/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 73 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 41.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 73/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 73 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 42.96s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 74/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 74 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 43.67s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 77/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 77 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 43.77s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 77/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 77 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 43.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 77/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 77 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 44.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 78/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 78 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 45.27s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 80/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 80 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 45.37s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 80/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 80 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 45.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 81/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 81 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 46.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 82/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 82 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 47.47s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 83/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 83 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 47.57s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 84/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 84 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 47.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 85/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 85 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 48.27s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 85/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 85 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 48.97s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 87/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 87 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 49.88s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 88/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 88 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 50.48s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 88/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 88 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 50.98s
+paseo> 
+paseo>  ❯ packages/server/src/server/plugins/compiler.test.ts 89/90
+paseo> 
+paseo>  Test Files 0 passed (1)
+paseo>       Tests 89 passed (90)
+paseo>    Start at 17:12:39
+paseo>    Duration 51.28s
+paseo>  ✓ packages/server/src/server/plugins/compiler.test.ts (90 tests) 51005ms
+paseo>    ✓ asar esbuild binary resolution (4)
+paseo>      ✓ rewrites an asar package path to the unpacked platform binary 2ms
+paseo>      ✓ ignores package paths that are not inside app.asar 0ms
+paseo>      ✓ returns null when the unpacked binary is missing 0ms
+paseo>      ✓ returns the unpacked path when the binary exists 0ms
+paseo>    ✓ plugin runtime entries (83)
+paseo>      ✓ compiles protocol types without local dependencies: import type { AgentTimelineItem, ToolCallDetail } from "@getpaseo/protocol/agent-types"; export type Detail = ToolCallDetail; export type Item = AgentTimelineItem;  950ms
+paseo>      ✓ compiles protocol types without local dependencies: import { type AgentTimelineItem } from "@getpaseo/protocol/agent-types"; export type Item = AgentTimelineItem; 24ms
+paseo>      ✓ compiles protocol types without local dependencies: export type { AgentTimelineItem } from "@getpaseo/protocol/agent-types"; 26ms
+paseo>      ✓ compiles protocol types without local dependencies: export type Item = import("@getpaseo/protocol/agent-types").AgentTimelineItem; 19ms
+paseo>      ✓ compiles protocol types without local dependencies: export type { AgentAttachment } from "@getpaseo/protocol/messages"; 20ms
+paseo>      ✓ bundles fork highlighting helpers into external plugins without host runtime imports  5026ms
+paseo>      ✓ bundles shared helpers for both targets without requiring new host modules 29ms
+paseo>      ✓ does not open private SDK subpaths through the shared alias: @getpaseo/plugin/shared/private 52ms
+paseo>      ✓ does not open private SDK subpaths through the shared alias: @getpaseo/plugin/shared/../server  650ms
+paseo>      ✓ still requires local dependencies for protocol runtime imports  669ms
+paseo>      ✓ still rejects missing third-party type dependencies  667ms
+paseo>      ✓ rejects react from server code  663ms
+paseo>      ✓ rejects react/jsx-runtime from server code  661ms
+paseo>      ✓ rejects react-native from server code  656ms
+paseo>      ✓ rejects @getpaseo/plugin/client from server code  653ms
+paseo>      ✓ rejects @getpaseo/plugin/client/ui from server code  661ms
+paseo>      ✓ rejects @getpaseo/plugin/server from client code  660ms
+paseo>      ✓ rejects @getpaseo/plugin/server/provider from client code  665ms
+paseo>      ✓ rejects @getpaseo/plugin/server/acp from client code  656ms
+paseo>      ✓ rejects react from shared code  675ms
+paseo>      ✓ rejects node:fs from shared code  659ms
+paseo>      ✓ rejects fs from shared code  665ms
+paseo>      ✓ rejects @getpaseo/plugin/client from shared code  663ms
+paseo>      ✓ rejects @getpaseo/plugin/server from shared code  660ms
+paseo>      ✓ rejects ../client/surface from shared code  663ms
+paseo>      ✓ rejects ../server/handler from shared code  670ms
+paseo>      ✓ rejects a shared dependency reaching 'react' in the 'client' bundle  686ms
+paseo>      ✓ rejects a shared dependency reaching 'node:fs' in the 'server' bundle  679ms
+paseo>      ✓ rejects a shared dependency reaching '@getpaseo/plugin/server/provider' in the 'server' bundle  666ms
+paseo>      ✓ rejects runtime-owned types in shared code: import type { PluginClientContext } from "@getpaseo/plugin/client"; export type Context = PluginClientContext;  664ms
+paseo>      ✓ rejects runtime-owned types in shared code: export type { PluginClientContext } from "@getpaseo/plugin/client";  682ms
+paseo>      ✓ rejects runtime-owned types in shared code: export type Context = import("@getpaseo/plugin/client").PluginClientContext;  671ms
+paseo>      ✓ rejects runtime-owned types in shared code: import { type PluginClientContext } from "@getpaseo/plugin/client"; export type Context = PluginClientContext;  660ms
+paseo>      ✓ rejects runtime-owned types in shared code: import type { ComponentType } from "react"; export type Component = ComponentType;  661ms
+paseo>      ✓ accepts declaration-only dependencies: {"types":"./index.d.ts"}  891ms
+paseo>      ✓ accepts declaration-only dependencies: {"exports":{".":{"types":"./index.d.ts"}}} 29ms
+paseo>      ✓ accepts a declaration import used only as a type without import type 54ms
+paseo>      ✓ preserves guarded optional requires in server dependencies  681ms
+paseo>      ✓ checks declaration reference path directives  1563ms
+paseo>      ✓ checks declaration reference types directives  922ms
+paseo>      ✓ checks the physical owner of type-only symlinks 29ms
+paseo>      ✓ resolves type-only path aliases from the plugin tsconfig  938ms
+paseo>      ✓ rejects transitive declaration dependencies on '@getpaseo/plugin/client' through 'import type'  674ms
+paseo>      ✓ rejects transitive declaration dependencies on '@getpaseo/plugin/server' through 'import type'  670ms
+paseo>      ✓ rejects transitive declaration dependencies on '@getpaseo/plugin/client' through 'import'  664ms
+paseo>      ✓ rejects transitive declaration dependencies on '@getpaseo/plugin/server' through 'import'  674ms
+paseo>      ✓ checks files reached only through type imports  673ms
+paseo>      ✓ rejects retired entry @paseo/plugin  675ms
+paseo>      ✓ rejects retired entry @getpaseo/plugin/react-native  662ms
+paseo>      ✓ rejects retired entry @getpaseo/plugin/ui  675ms
+paseo>      ✓ rejects retired entry @getpaseo/plugin/provider  659ms
+paseo>      ✓ rejects retired entry @getpaseo/plugin/acp  661ms
+paseo>      ✓ rejects retired entry @getpaseo/plugin/host  655ms
+paseo>      ✓ builds each runtime from its own entry and shares neutral modules  880ms
+paseo>      ✓ builds a dependency that declares only main into both runtimes 36ms
+paseo>      ✓ builds a dependency that declares only module into both runtimes 25ms
+paseo>      ✓ uses the automatic JSX runtime without a React import 18ms
+paseo>      ✓ imports an SVG file from a runtime directory as its markup 17ms
+paseo>      ✓ lowers async callbacks before Hermes evaluates the client bundle 19ms
+paseo>      ✓ reduces client bytes while preserving registration and leaving server output readable 18ms
+paseo>      ✓ retains dependency license notices while minifying executable client code 17ms
+paseo>      ✓ keeps distinct host exports eager when minifying in the worker 11ms
+paseo>      ✓ rejects node imports from the client entry 25ms
+paseo>      ✓ rejects server directory imports from the client bundle  685ms
+paseo>      ✓ rejects client directory imports from the server bundle  673ms
+paseo>      ✓ rejects modules imported directly from the plugin root  653ms
+paseo>      ✓ rejects relative imports that escape the plugin root  652ms
+paseo>      ✓ rejects absolute imports from outside the plugin root  650ms
+paseo>      ✓ rejects plugin-authored relative imports that escape into node_modules  655ms
+paseo>      ✓ keeps nested modules owned by their top-level runtime directory  881ms
+paseo>      ✓ does not classify dependency directories as plugin runtime boundaries 31ms
+paseo>      ✓ rejects dependency-relative imports that escape into the opposite runtime 29ms
+paseo>      ✓ preserves authored ownership through root and file aliases  1536ms
+paseo>      ✓ preserves authored ownership through root and directory aliases  910ms
+paseo>      ✓ rejects generated React imports in dependencies reached through shared symlinks 36ms
+paseo>      ✓ classifies symlink targets through a root alias: false  679ms
+paseo>      ✓ classifies symlink targets through a root alias: true  679ms
+paseo>      ✓ classifies bare package imports by their canonical target  666ms
+paseo>      ✓ allows linked dependencies to resolve within their own package root  884ms
+paseo>      ✓ rejects plugin manifests as linked roots through an alias: false 29ms
+paseo>      ✓ rejects plugin manifests as linked roots through an alias: true  668ms
+paseo>      ✓ does not let remembered linked roots hide plugin-local runtime boundaries  671ms
+paseo>      ✓ builds a single runtime when the other entry is absent  885ms
+paseo>    ✓ preserves esbuild diagnostics across the compiler boundary  655ms
+paseo>    ✓ preserves manifest validation errors across the compiler boundary  433ms
+paseo>    ✓ preserves filesystem error metadata for a missing entry  417ms
+paseo> 
+paseo>  Test Files  1 passed (1)
+paseo>       Tests  90 passed (90)
+paseo>    Start at  17:12:39
+paseo>    Duration  51.31s (transform 102ms, setup 0ms, import 161ms, tests 51.00s, environment 0ms)
+paseo> 
+paseo> checkPhase completed in 1 minutes 14 seconds
+paseo> Running phase: installPhase
+paseo> trace warning: Failed to parse /build/source/packages/server/src/server/daemon-worker.ts as module:
+paseo> Unexpected token (8:12)
+paseo> trace warning: Failed to parse /build/source/packages/server/dist/server/server/tmux-topology.d.ts as module:
+paseo> Unexpected token (1:12)
+paseo> trace warning: Failed to parse /build/source/packages/server/src/server/tmux-topology.ts as module:
+paseo> Unexpected token (7:12)
+paseo> trace warning: Failed to parse /build/source/packages/server/dist/server/terminal-worker/shell-integration/zsh/.zshenv as script:
+paseo> Unexpected token (1:11)
+paseo> trace warning: Failed to parse /build/source/packages/server/dist/server/terminal-worker/shell-integration/zsh/.zshenv as module:
+paseo> Unexpected token (1:11)
+paseo> trace warning: Failed to resolve dependency "utf-8-validate":
+paseo> Cannot find module 'utf-8-validate' loaded from /build/source/node_modules/ws/lib/validation.js
+paseo> trace warning: Failed to resolve dependency "bufferutil":
+paseo> Cannot find module 'bufferutil' loaded from /build/source/node_modules/ws/lib/buffer-util.js
+paseo> trace warning: Failed to resolve dependency "pnpapi":
+paseo> Cannot find module 'pnpapi' loaded from /build/source/packages/server/node_modules/esbuild/lib/main.js
+paseo> trace warning: Failed to parse /build/source/packages/server/node_modules/@esbuild/linux-x64/bin/esbuild as script:
+paseo> Unexpected character '' (1:0)
+paseo> trace warning: Failed to parse /build/source/packages/server/node_modules/@esbuild/linux-x64/bin/esbuild as module:
+paseo> Unexpected character '' (1:0)
+paseo> patching script interpreter paths in /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo
+paseo> /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/cli/bin/paseo: interpreter directive changed from "#!/usr/bin/env -S node --disable-warning=DEP0040" to "/nix/store/hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10/bin/env -S /nix/store/gi0p7azcixb20pddx39k5mwnkj6xl4bz-nodejs-22.22.1/bin/node --disable-warning=DEP0040"
+paseo> Copied license texts for 26 highlight packages
+paseo> ✔ installed highlight bundle retains Paseo, Astro, and all transitive grammar license texts (2.644249ms)
+paseo> ℹ tests 1
+paseo> ℹ suites 0
+paseo> ℹ pass 1
+paseo> ℹ fail 0
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 8.943916
+paseo> [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+paseo> [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+paseo> PASS: native class lowering, eager host imports, bundled highlighting and shared helpers with installed declarations
+paseo> ✖ native public mapper and display helpers bundle into both targets without new host modules (740.492253ms)
+paseo> ✔ reachable subagent adapter presentation is pure and preserves native running/failure/managed precedence (4.751169ms)
+paseo> ✔ pure mapper boundary rejects ambient I/O and dynamic loading (197.481221ms)
+paseo> ✔ exact aliases do not open server internals, protocol traversal or weaken transitive shared boundaries (4080.601082ms)
+paseo> ℹ tests 4
+paseo> ℹ suites 0
+paseo> ℹ pass 3
+paseo> ℹ fail 1
+paseo> ℹ cancelled 0
+paseo> ℹ skipped 0
+paseo> ℹ todo 0
+paseo> ℹ duration_ms 5369.750327
+paseo> 
+paseo> ✖ failing tests:
+paseo> 
+paseo> test at nix/tests/plugin-bundled-tool-presentation.test.mjs:35:1
+paseo> ✖ native public mapper and display helpers bundle into both targets without new host modules (740.492253ms)
+paseo>   Error: Build failed with 1 error:
+paseo>   error: Node module cannot be imported into the plugin shared bundle: node:crypto imported by /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/dist/server/server/agent/providers/provider-image-output.js
+paseo>       at failureErrorWithLog (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:1467:15)
+paseo>       at /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:926:25
+paseo>       at runOnEndCallbacks (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:1307:45)
+paseo>       at buildResponseToResult (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:924:7)
+paseo>       at /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:951:16
+paseo>       at responseCallbacks.<computed> (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:603:9)
+paseo>       at handleIncomingPacket (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:658:12)
+paseo>       at Socket.readFromStdout (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:581:7)
+paseo>       at Socket.emit (node:events:519:28)
+paseo>       at addChunk (node:internal/streams/readable:561:12) {
+paseo>     errors: [ { detail: undefined, id: '', location: null, notes: [], pluginName: 'paseo-plugin-client-runtime-boundary', text: 'Node module cannot be imported into the plugin shared bundle: node:crypto imported by /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/dist/server/server/agent/providers/provider-image-output.js' } ],
+paseo>     warnings: []
+paseo>   }
+error: Cannot build '/nix/store/l523rxgal5rmd738121nxvg31qsf6lf3-paseo-0.15.0.drv'.
+       Reason: builder failed with exit code 1.
+       Output paths:
+         /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0
+       Last 25 log lines:
+       > ℹ fail 1
+       > ℹ cancelled 0
+       > ℹ skipped 0
+       > ℹ todo 0
+       > ℹ duration_ms 5369.750327
+       >
+       > ✖ failing tests:
+       >
+       > test at nix/tests/plugin-bundled-tool-presentation.test.mjs:35:1
+       > ✖ native public mapper and display helpers bundle into both targets without new host modules (740.492253ms)
+       >   Error: Build failed with 1 error:
+       >   error: Node module cannot be imported into the plugin shared bundle: node:crypto imported by /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/dist/server/server/agent/providers/provider-image-output.js
+       >       at failureErrorWithLog (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:1467:15)
+       >       at /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:926:25
+       >       at runOnEndCallbacks (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:1307:45)
+       >       at buildResponseToResult (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:924:7)
+       >       at /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:951:16
+       >       at responseCallbacks.<computed> (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:603:9)
+       >       at handleIncomingPacket (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:658:12)
+       >       at Socket.readFromStdout (/nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/node_modules/esbuild/lib/main.js:581:7)
+       >       at Socket.emit (node:events:519:28)
+       >       at addChunk (node:internal/streams/readable:561:12) {
+       >     errors: [ { detail: undefined, id: '', location: null, notes: [], pluginName: 'paseo-plugin-client-runtime-boundary', text: 'Node module cannot be imported into the plugin shared bundle: node:crypto imported by /nix/store/cz69mzzd4yk379rkd2pgbx69fcxyqf78-paseo-0.15.0/lib/paseo/packages/server/dist/server/server/agent/providers/provider-image-output.js' } ],
+       >     warnings: []
+       >   }
+       For full logs, run:
+         nix log /nix/store/l523rxgal5rmd738121nxvg31qsf6lf3-paseo-0.15.0.drv

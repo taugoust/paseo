@@ -1,0 +1,27 @@
+Independent reviewer final result
+
+Reviewed stable source commit d69c95eb36473011e5b74b3994e22ae2d28543ae.
+Verdict: no outstanding findings.
+
+Second parent is peeled upstream v0.15.0 commit 8938fde3c713143f12eacbdd60c11fdfc0be0fb1; 071cd7d943ca636b7a02b0b4e2e077849ae228f2 is the annotated tag object.
+
+The earlier P3 declaration-test issue is fixed: nix/tests/plugin-bundled-tool-presentation.test.mjs:35–41 resolves the actual Pi presentation entry and adjacent mapper declaration instead of assuming PASEO_INSTALL is set. This preserves compiler-only invocation.
+
+Source review confirmed the mapper image-output type is locally inferred (tool-call-mapper.ts:379–433), with unchanged image fields/null defaults and no Node-backed type import. Live/history paths sanitize image content and render native Markdown after tool results; tests cover ordering, IDs, failures, path/URL forms, redaction and no partial-result images. The installed-daemon smoke uses assembled markers, same terminal ID, replay plus new execution after keep-terminals restart, bounded CLI calls and private-home cleanup. Generic Nix/Vitest checks disable tmux topology discovery.
+
+Reviewer performed read-only source, diff, commit and hash inspection, not tests/builds. Runtime claims in the main verification record are supported by coordinator/worker logs, not attributed to reviewer execution.
+
+Reviewed SHA-256s:
+efcd21b1de7954e881f2d060678d1bd92314a53438177c4dc2f87388ad5b02d6  packages/server/src/server/agent/providers/pi/tool-call-mapper.ts
+b6e9bd609b2977e3ce83aa9fdc1b92da457c41d94d2749816cc38c0868f8fe46  packages/server/src/server/agent/providers/pi/tool-call-mapper.test.ts
+8f840d6619f2b40154b5569ecef4d386550b7c66b5d4dd07970150407d5a8e7f  packages/server/src/server/agent/providers/pi/history-mapper.ts
+cc0704603f54a38a4f5c60615bbfbc285ea6bdfd5e09e7c4eb54db31bc30bbd1  packages/server/src/server/agent/providers/pi/agent.ts
+d040b8d1792e610ae2843aaba98d1c0194b88cd270c7be02c775f8c3a76c7f8c  packages/server/src/server/agent/providers/pi/tool-result-images.test.ts
+8c33007765b162593774b156e392f39e606e994920bf814e275d79031186edb5  packages/server/src/server/agent/providers/provider-image-output.ts
+84c55ae4aa75bac7d9a7445ddcfbbecd41eab7cb511cfd066b37e1569950722b  packages/server/src/server/agent/providers/provider-image-output.test.ts
+005c7c621631582ac56811f59a38747064defd6dab50b050b9baf000a82db97e  packages/server/src/server/agent/providers/provider-image-materialization.ts
+3e02b46b2681cd325f716bb0f60cc59f3119c8b03742732cafbfbabdb2e78047  packages/server/src/test-utils/vitest-setup.ts
+1cbcf403b63ec427d80ded6ebd9eb74134d0a5290fcbc45480440b3c26d6c03d  nix/tests/plugin-bundled-tool-presentation.test.mjs
+df3d32b758e74238630bef40113554f2fd24e4b88a6445f1f7f93edff314a1e8  nix/tests/installed-daemon-smoke.mjs
+149c854a29a243cd39cbf279b702675ccda7cbf5bc4da46af6638dbe665185c7  nix/package.nix
+ec5a01e7c9e80e87260fa1bc892432b8d287e754d7968fb90a40442217a98d5b  packages/server/package.json

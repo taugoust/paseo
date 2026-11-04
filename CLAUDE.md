@@ -43,6 +43,7 @@ At the start of non-trivial work, list `docs/` and skim anything relevant to the
 | [docs/custom-providers.md](docs/custom-providers.md)                 | Custom provider config: Z.AI, Alibaba/Qwen, ACP agents, profiles, custom binaries                                              |
 | [docs/plugins.md](docs/plugins.md)                                   | Local plugin manifest, directory source config, RPCs, native surfaces, and attachment sources                                  |
 | [docs/pi-integration.md](docs/pi-integration.md)                     | Fork ownership, existing native-client compatibility, shared plugin libraries, and release discipline                          |
+| [docs/qa-evidence/pi-0.15.0.md](docs/qa-evidence/pi-0.15.0.md)       | 0.15.0 fork migration checks, raw evidence, platform limits and rollout prerequisites                                          |
 | [docs/website-i18n.md](docs/website-i18n.md)                         | Website languages: locale URLs, translated Markdown pairs, `{#id}` anchors, Chinese style                                      |
 | [docs/service-proxy.md](docs/service-proxy.md)                       | Service proxy: exposing workspace scripts at public URLs, DNS setup, reverse proxy config                                      |
 | [docs/relay-endpoint-security.md](docs/relay-endpoint-security.md)   | Relay E2EE modes: Noise NK mapping, record framing, negotiation, the `requireProtectedSecurity` flag, close codes              |

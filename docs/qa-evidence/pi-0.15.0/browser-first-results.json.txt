@@ -1,0 +1,227 @@
+{
+  "config": {
+    "configFile": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/playwright.nix.config.ts",
+    "rootDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/support/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "browser",
+        "name": "browser",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [
+          "**/*.real.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "real-provider",
+        "name": "real-provider",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [
+          "**/relay-deployment-reconnect.real.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.real.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "relay-deployment",
+        "name": "relay-deployment",
+        "testDir": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/relay-deployment-reconnect.real.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "plugin-workspace-panels.spec.ts",
+      "file": "plugin-workspace-panels.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "plugin workspace panels and Command Center",
+          "file": "plugin-workspace-panels.spec.ts",
+          "line": 260,
+          "column": 6,
+          "specs": [
+            {
+              "title": "follows workspace, agent, host, compact, and unavailable state",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser",
+                  "projectName": "browser",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 30245,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByText('Workspace bridge wks_dc4b20be6e877058')\nExpected: visible\nReceived: hidden\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')\u001b[22m\n\u001b[2m    14 × locator resolved to <div dir=\"auto\" class=\"css-text-146c3p1\">Workspace bridge wks_dc4b20be6e877058</div>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByText('Workspace bridge wks_dc4b20be6e877058')\nExpected: visible\nReceived: hidden\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')\u001b[22m\n\u001b[2m    14 × locator resolved to <div dir=\"auto\" class=\"css-text-146c3p1\">Workspace bridge wks_dc4b20be6e877058</div>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:325:81\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:315:7",
+                        "location": {
+                          "file": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts",
+                          "column": 81,
+                          "line": 325
+                        },
+                        "snippet": "  323 |         await expectCommandUnavailable(page, \"Open plugin agent\");\n  324 |         await runCommand(page, \"Open plugin workspace\");\n> 325 |         await expect(page.getByText(`Workspace bridge ${primary.workspaceId}`)).toBeVisible();\n      |                                                                                 ^\n  326 |         const renderCount = Number(\n  327 |           (await page.getByText(/Workspace renders \\d+/).textContent())?.split(\" \").at(-1),\n  328 |         );"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts",
+                            "column": 81,
+                            "line": 325
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByText('Workspace bridge wks_dc4b20be6e877058')\nExpected: visible\nReceived: hidden\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')\u001b[22m\n\u001b[2m    14 × locator resolved to <div dir=\"auto\" class=\"css-text-146c3p1\">Workspace bridge wks_dc4b20be6e877058</div>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n\n  323 |         await expectCommandUnavailable(page, \"Open plugin agent\");\n  324 |         await runCommand(page, \"Open plugin workspace\");\n> 325 |         await expect(page.getByText(`Workspace bridge ${primary.workspaceId}`)).toBeVisible();\n      |                                                                                 ^\n  326 |         const renderCount = Number(\n  327 |           (await page.getByText(/Workspace renders \\d+/).textContent())?.split(\" \").at(-1),\n  328 |         );\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:325:81\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:315:7"
+                        },
+                        {
+                          "message": "Error: Command failed: /nix/store/yqkhp0j27pk15yd2wmqjkjbglwaa5z1l-nodejs-slim-22.22.1/bin/node /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/cli/dist/index.js daemon stop --home /tmp/nix-shell.rjrc9X/paseo-e2e-worker-0-2ia67A --force\nnode:internal/modules/cjs/loader:1386\n  throw err;\n  ^\n\nError: Cannot find module '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/cli/dist/index.js'\n\u001b[90m    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)\u001b[39m\n\u001b[90m    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)\u001b[39m\n\u001b[90m    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)\u001b[39m\n\u001b[90m    at Function._load (node:internal/modules/cjs/loader:1192:37)\u001b[39m\n\u001b[90m    at TracingChannel.traceSync (node:diagnostics_channel:328:14)\u001b[39m\n\u001b[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)\u001b[39m\n\u001b[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)\u001b[39m\n\u001b[90m    at node:internal/main/run_main_module:36:49\u001b[39m {\n  code: \u001b[32m'MODULE_NOT_FOUND'\u001b[39m,\n  requireStack: []\n}\n\nNode.js v22.22.1\n"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "[e2e] Worker 0 daemon started on port 45563, home: /tmp/nix-shell.rjrc9X/paseo-e2e-worker-0-2ia67A\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "workspace context opens the real wide panel bridge",
+                          "duration": 11782,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByText('Workspace bridge wks_dc4b20be6e877058')\nExpected: visible\nReceived: hidden\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')\u001b[22m\n\u001b[2m    14 × locator resolved to <div dir=\"auto\" class=\"css-text-146c3p1\">Workspace bridge wks_dc4b20be6e877058</div>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByText('Workspace bridge wks_dc4b20be6e877058')\nExpected: visible\nReceived: hidden\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')\u001b[22m\n\u001b[2m    14 × locator resolved to <div dir=\"auto\" class=\"css-text-146c3p1\">Workspace bridge wks_dc4b20be6e877058</div>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:325:81\n    at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:315:7",
+                            "location": {
+                              "file": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts",
+                              "column": 81,
+                              "line": 325
+                            },
+                            "snippet": "  323 |         await expectCommandUnavailable(page, \"Open plugin agent\");\n  324 |         await runCommand(page, \"Open plugin workspace\");\n> 325 |         await expect(page.getByText(`Workspace bridge ${primary.workspaceId}`)).toBeVisible();\n      |                                                                                 ^\n  326 |         const renderCount = Number(\n  327 |           (await page.getByText(/Workspace renders \\d+/).textContent())?.split(\" \").at(-1),\n  328 |         );"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-11-04T16:53:55.431Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/test-failed-1.png"
+                        },
+                        {
+                          "name": "browser-console",
+                          "contentType": "text/plain",
+                          "body": "W2NvbnNvbGU6aW5mb10gJWNEb3dubG9hZCB0aGUgUmVhY3QgRGV2VG9vbHMgZm9yIGEgYmV0dGVyIGRldmVsb3BtZW50IGV4cGVyaWVuY2U6IGh0dHBzOi8vcmVhY3QuZGV2L2xpbmsvcmVhY3QtZGV2dG9vbHMgZm9udC13ZWlnaHQ6Ym9sZApbY29uc29sZTpsb2ddIFJ1bm5pbmcgYXBwbGljYXRpb24gIm1haW4iIHdpdGggYXBwUGFyYW1zOgoge3Jvb3RUYWc6ICNyb290LCBoeWRyYXRlOiB1bmRlZmluZWR9IApEZXZlbG9wbWVudC1sZXZlbCB3YXJuaW5nczogT04uClBlcmZvcm1hbmNlIG9wdGltaXphdGlvbnM6IE9GRi4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL3N0b3Jlcy93b3Jrc3BhY2UtbGF5b3V0LXN0b3JlLnRzIC0+IHNyYy9wbHVnaW5zL3dvcmtzcGFjZS1wYW5lbHMvbG9jYXRpb25zLnRzIC0+IHNyYy9wbHVnaW5zL3JlZ2lzdHJ5LnRzIC0+IHNyYy9wbHVnaW5zL2NsaWVudC1ydW50aW1lLnRzIC0+IHNyYy9ydW50aW1lL2hvc3QtcnVudGltZS50cyAtPiBzcmMvZGVza3RvcC9icm93c2VyL2F1dG9tYXRpb24vaGFuZGxlci50cyAtPiBzcmMvc3RvcmVzL3dvcmtzcGFjZS1sYXlvdXQtc3RvcmUudHMKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvcnVudGltZS9ob3N0LXJ1bnRpbWUudHMgLT4gc3JjL3J1bnRpbWUvZGlyZWN0b3J5LXN5bmMvaW5kZXgudHMgLT4gc3JjL3J1bnRpbWUvZGlyZWN0b3J5LXN5bmMvYWdlbnQtcmVwbGljYS50cyAtPiBzcmMvaG9va3MvdXNlLWFyY2hpdmUtYWdlbnQudHMgLT4gc3JjL3J1bnRpbWUvaG9zdC1ydW50aW1lLnRzCgpSZXF1aXJlIGN5Y2xlcyBhcmUgYWxsb3dlZCwgYnV0IGNhbiByZXN1bHQgaW4gdW5pbml0aWFsaXplZCB2YWx1ZXMuIENvbnNpZGVyIHJlZmFjdG9yaW5nIHRvIHJlbW92ZSB0aGUgbmVlZCBmb3IgYSBjeWNsZS4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL3BsdWdpbnMvd29ya3NwYWNlLXBhbmVscy9sb2NhdGlvbnMudHMgLT4gc3JjL3BsdWdpbnMvcmVnaXN0cnkudHMgLT4gc3JjL3BsdWdpbnMvY2xpZW50LXJ1bnRpbWUudHMgLT4gc3JjL3BsdWdpbnMvYWN0aW9ucy50cyAtPiBzcmMvcGx1Z2lucy93b3Jrc3BhY2UtcGFuZWxzL2xvY2F0aW9ucy50cwoKUmVxdWlyZSBjeWNsZXMgYXJlIGFsbG93ZWQsIGJ1dCBjYW4gcmVzdWx0IGluIHVuaW5pdGlhbGl6ZWQgdmFsdWVzLiBDb25zaWRlciByZWZhY3RvcmluZyB0byByZW1vdmUgdGhlIG5lZWQgZm9yIGEgY3ljbGUuCltjb25zb2xlOndhcm5pbmddIFJlcXVpcmUgY3ljbGU6IHNyYy9zdG9yZXMvbmF2aWdhdGlvbi1hY3RpdmUtd29ya3NwYWNlLXN0b3JlL2luZGV4LnRzIC0+IHNyYy93b3Jrc3BhY2UtdGFicy9uYXZpZ2F0aW9uLnRzIC0+IHNyYy9zdG9yZXMvd29ya3NwYWNlLWxheW91dC1zdG9yZS50cyAtPiBzcmMvcGx1Z2lucy93b3Jrc3BhY2UtcGFuZWxzL2xvY2F0aW9ucy50cyAtPiBzcmMvcGx1Z2lucy9yZWdpc3RyeS50cyAtPiBzcmMvcGx1Z2lucy9jbGllbnQtcnVudGltZS50cyAtPiBzcmMvcGx1Z2lucy9uYXZpZ2F0aW9uLnRzIC0+IHNyYy9zdG9yZXMvbmF2aWdhdGlvbi1hY3RpdmUtd29ya3NwYWNlLXN0b3JlL2luZGV4LnRzCgpSZXF1aXJlIGN5Y2xlcyBhcmUgYWxsb3dlZCwgYnV0IGNhbiByZXN1bHQgaW4gdW5pbml0aWFsaXplZCB2YWx1ZXMuIENvbnNpZGVyIHJlZmFjdG9yaW5nIHRvIHJlbW92ZSB0aGUgbmVlZCBmb3IgYSBjeWNsZS4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL3N0b3Jlcy93b3Jrc3BhY2UtbGF5b3V0LXN0b3JlLnRzIC0+IHNyYy9wbHVnaW5zL3dvcmtzcGFjZS1wYW5lbHMvbG9jYXRpb25zLnRzIC0+IHNyYy9wbHVnaW5zL3JlZ2lzdHJ5LnRzIC0+IHNyYy9wbHVnaW5zL2NsaWVudC1ydW50aW1lLnRzIC0+IHNyYy9wbHVnaW5zL25hdmlnYXRpb24udHMgLT4gc3JjL3N0b3Jlcy93b3Jrc3BhY2UtbGF5b3V0LXN0b3JlLnRzCgpSZXF1aXJlIGN5Y2xlcyBhcmUgYWxsb3dlZCwgYnV0IGNhbiByZXN1bHQgaW4gdW5pbml0aWFsaXplZCB2YWx1ZXMuIENvbnNpZGVyIHJlZmFjdG9yaW5nIHRvIHJlbW92ZSB0aGUgbmVlZCBmb3IgYSBjeWNsZS4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL3BsdWdpbnMvcmVnaXN0cnkudHMgLT4gc3JjL3BsdWdpbnMvZXZhbHVhdGUudHMgLT4gc3JjL3BsdWdpbnMvdGhlbWVzL2luZGV4LnRzIC0+IHNyYy9wbHVnaW5zL3JlZ2lzdHJ5LnRzCgpSZXF1aXJlIGN5Y2xlcyBhcmUgYWxsb3dlZCwgYnV0IGNhbiByZXN1bHQgaW4gdW5pbml0aWFsaXplZCB2YWx1ZXMuIENvbnNpZGVyIHJlZmFjdG9yaW5nIHRvIHJlbW92ZSB0aGUgbmVlZCBmb3IgYSBjeWNsZS4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL2NvbXBvbmVudHMvc2lkZWJhci13b3Jrc3BhY2UtbGlzdC50c3ggLT4gc3JjL2NvbXBvbmVudHMvc2lkZWJhci9zaWRlYmFyLXN0YXR1cy1saXN0LnRzeCAtPiBzcmMvY29tcG9uZW50cy9zaWRlYmFyL3NpZGViYXItd29ya3NwYWNlLXJvdy1jb250ZW50LnRzeCAtPiBzcmMvY29tcG9uZW50cy93b3Jrc3BhY2UtaG92ZXItY2FyZC50c3ggLT4gc3JjL2NvbXBvbmVudHMvc2lkZWJhci13b3Jrc3BhY2UtbGlzdC50c3gKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBwcm9wcy5wb2ludGVyRXZlbnRzIGlzIGRlcHJlY2F0ZWQuIFVzZSBzdHlsZS5wb2ludGVyRXZlbnRzCltjb25zb2xlOndhcm5pbmddIEFuaW1hdGVkOiBgdXNlTmF0aXZlRHJpdmVyYCBpcyBub3Qgc3VwcG9ydGVkIGJlY2F1c2UgdGhlIG5hdGl2ZSBhbmltYXRlZCBtb2R1bGUgaXMgbWlzc2luZy4gRmFsbGluZyBiYWNrIHRvIEpTLWJhc2VkIGFuaW1hdGlvbi4gVG8gcmVzb2x2ZSB0aGlzLCBhZGQgYFJDVEFuaW1hdGlvbmAgbW9kdWxlIHRvIHRoaXMgYXBwLCBvciByZW1vdmUgYHVzZU5hdGl2ZURyaXZlcmAuIE1ha2Ugc3VyZSB0byBydW4gYGJ1bmRsZSBleGVjIHBvZCBpbnN0YWxsYCBmaXJzdC4gUmVhZCBtb3JlIGFib3V0IGF1dG9saW5raW5nOiBodHRwczovL2dpdGh1Yi5jb20vcmVhY3QtbmF0aXZlLWNvbW11bml0eS9jbGkvYmxvYi9tYXN0ZXIvZG9jcy9hdXRvbGlua2luZy5tZApbY29uc29sZTppbmZvXSAlY0Rvd25sb2FkIHRoZSBSZWFjdCBEZXZUb29scyBmb3IgYSBiZXR0ZXIgZGV2ZWxvcG1lbnQgZXhwZXJpZW5jZTogaHR0cHM6Ly9yZWFjdC5kZXYvbGluay9yZWFjdC1kZXZ0b29scyBmb250LXdlaWdodDpib2xkCltjb25zb2xlOmxvZ10gUnVubmluZyBhcHBsaWNhdGlvbiAibWFpbiIgd2l0aCBhcHBQYXJhbXM6CiB7cm9vdFRhZzogI3Jvb3QsIGh5ZHJhdGU6IHVuZGVmaW5lZH0gCkRldmVsb3BtZW50LWxldmVsIHdhcm5pbmdzOiBPTi4KUGVyZm9ybWFuY2Ugb3B0aW1pemF0aW9uczogT0ZGLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvc3RvcmVzL3dvcmtzcGFjZS1sYXlvdXQtc3RvcmUudHMgLT4gc3JjL3BsdWdpbnMvd29ya3NwYWNlLXBhbmVscy9sb2NhdGlvbnMudHMgLT4gc3JjL3BsdWdpbnMvcmVnaXN0cnkudHMgLT4gc3JjL3BsdWdpbnMvY2xpZW50LXJ1bnRpbWUudHMgLT4gc3JjL3J1bnRpbWUvaG9zdC1ydW50aW1lLnRzIC0+IHNyYy9kZXNrdG9wL2Jyb3dzZXIvYXV0b21hdGlvbi9oYW5kbGVyLnRzIC0+IHNyYy9zdG9yZXMvd29ya3NwYWNlLWxheW91dC1zdG9yZS50cwoKUmVxdWlyZSBjeWNsZXMgYXJlIGFsbG93ZWQsIGJ1dCBjYW4gcmVzdWx0IGluIHVuaW5pdGlhbGl6ZWQgdmFsdWVzLiBDb25zaWRlciByZWZhY3RvcmluZyB0byByZW1vdmUgdGhlIG5lZWQgZm9yIGEgY3ljbGUuCltjb25zb2xlOndhcm5pbmddIFJlcXVpcmUgY3ljbGU6IHNyYy9ydW50aW1lL2hvc3QtcnVudGltZS50cyAtPiBzcmMvcnVudGltZS9kaXJlY3Rvcnktc3luYy9pbmRleC50cyAtPiBzcmMvcnVudGltZS9kaXJlY3Rvcnktc3luYy9hZ2VudC1yZXBsaWNhLnRzIC0+IHNyYy9ob29rcy91c2UtYXJjaGl2ZS1hZ2VudC50cyAtPiBzcmMvcnVudGltZS9ob3N0LXJ1bnRpbWUudHMKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvcGx1Z2lucy93b3Jrc3BhY2UtcGFuZWxzL2xvY2F0aW9ucy50cyAtPiBzcmMvcGx1Z2lucy9yZWdpc3RyeS50cyAtPiBzcmMvcGx1Z2lucy9jbGllbnQtcnVudGltZS50cyAtPiBzcmMvcGx1Z2lucy9hY3Rpb25zLnRzIC0+IHNyYy9wbHVnaW5zL3dvcmtzcGFjZS1wYW5lbHMvbG9jYXRpb25zLnRzCgpSZXF1aXJlIGN5Y2xlcyBhcmUgYWxsb3dlZCwgYnV0IGNhbiByZXN1bHQgaW4gdW5pbml0aWFsaXplZCB2YWx1ZXMuIENvbnNpZGVyIHJlZmFjdG9yaW5nIHRvIHJlbW92ZSB0aGUgbmVlZCBmb3IgYSBjeWNsZS4KW2NvbnNvbGU6d2FybmluZ10gUmVxdWlyZSBjeWNsZTogc3JjL3N0b3Jlcy9uYXZpZ2F0aW9uLWFjdGl2ZS13b3Jrc3BhY2Utc3RvcmUvaW5kZXgudHMgLT4gc3JjL3dvcmtzcGFjZS10YWJzL25hdmlnYXRpb24udHMgLT4gc3JjL3N0b3Jlcy93b3Jrc3BhY2UtbGF5b3V0LXN0b3JlLnRzIC0+IHNyYy9wbHVnaW5zL3dvcmtzcGFjZS1wYW5lbHMvbG9jYXRpb25zLnRzIC0+IHNyYy9wbHVnaW5zL3JlZ2lzdHJ5LnRzIC0+IHNyYy9wbHVnaW5zL2NsaWVudC1ydW50aW1lLnRzIC0+IHNyYy9wbHVnaW5zL25hdmlnYXRpb24udHMgLT4gc3JjL3N0b3Jlcy9uYXZpZ2F0aW9uLWFjdGl2ZS13b3Jrc3BhY2Utc3RvcmUvaW5kZXgudHMKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvc3RvcmVzL3dvcmtzcGFjZS1sYXlvdXQtc3RvcmUudHMgLT4gc3JjL3BsdWdpbnMvd29ya3NwYWNlLXBhbmVscy9sb2NhdGlvbnMudHMgLT4gc3JjL3BsdWdpbnMvcmVnaXN0cnkudHMgLT4gc3JjL3BsdWdpbnMvY2xpZW50LXJ1bnRpbWUudHMgLT4gc3JjL3BsdWdpbnMvbmF2aWdhdGlvbi50cyAtPiBzcmMvc3RvcmVzL3dvcmtzcGFjZS1sYXlvdXQtc3RvcmUudHMKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvcGx1Z2lucy9yZWdpc3RyeS50cyAtPiBzcmMvcGx1Z2lucy9ldmFsdWF0ZS50cyAtPiBzcmMvcGx1Z2lucy90aGVtZXMvaW5kZXgudHMgLT4gc3JjL3BsdWdpbnMvcmVnaXN0cnkudHMKClJlcXVpcmUgY3ljbGVzIGFyZSBhbGxvd2VkLCBidXQgY2FuIHJlc3VsdCBpbiB1bmluaXRpYWxpemVkIHZhbHVlcy4gQ29uc2lkZXIgcmVmYWN0b3JpbmcgdG8gcmVtb3ZlIHRoZSBuZWVkIGZvciBhIGN5Y2xlLgpbY29uc29sZTp3YXJuaW5nXSBSZXF1aXJlIGN5Y2xlOiBzcmMvY29tcG9uZW50cy9zaWRlYmFyLXdvcmtzcGFjZS1saXN0LnRzeCAtPiBzcmMvY29tcG9uZW50cy9zaWRlYmFyL3NpZGViYXItc3RhdHVzLWxpc3QudHN4IC0+IHNyYy9jb21wb25lbnRzL3NpZGViYXIvc2lkZWJhci13b3Jrc3BhY2Utcm93LWNvbnRlbnQudHN4IC0+IHNyYy9jb21wb25lbnRzL3dvcmtzcGFjZS1ob3Zlci1jYXJkLnRzeCAtPiBzcmMvY29tcG9uZW50cy9zaWRlYmFyLXdvcmtzcGFjZS1saXN0LnRzeAoKUmVxdWlyZSBjeWNsZXMgYXJlIGFsbG93ZWQsIGJ1dCBjYW4gcmVzdWx0IGluIHVuaW5pdGlhbGl6ZWQgdmFsdWVzLiBDb25zaWRlciByZWZhY3RvcmluZyB0byByZW1vdmUgdGhlIG5lZWQgZm9yIGEgY3ljbGUuCltjb25zb2xlOndhcm5pbmddIHByb3BzLnBvaW50ZXJFdmVudHMgaXMgZGVwcmVjYXRlZC4gVXNlIHN0eWxlLnBvaW50ZXJFdmVudHMKW2NvbnNvbGU6d2FybmluZ10gQW5pbWF0ZWQ6IGB1c2VOYXRpdmVEcml2ZXJgIGlzIG5vdCBzdXBwb3J0ZWQgYmVjYXVzZSB0aGUgbmF0aXZlIGFuaW1hdGVkIG1vZHVsZSBpcyBtaXNzaW5nLiBGYWxsaW5nIGJhY2sgdG8gSlMtYmFzZWQgYW5pbWF0aW9uLiBUbyByZXNvbHZlIHRoaXMsIGFkZCBgUkNUQW5pbWF0aW9uYCBtb2R1bGUgdG8gdGhpcyBhcHAsIG9yIHJlbW92ZSBgdXNlTmF0aXZlRHJpdmVyYC4gTWFrZSBzdXJlIHRvIHJ1biBgYnVuZGxlIGV4ZWMgcG9kIGluc3RhbGxgIGZpcnN0LiBSZWFkIG1vcmUgYWJvdXQgYXV0b2xpbmtpbmc6IGh0dHBzOi8vZ2l0aHViLmNvbS9yZWFjdC1uYXRpdmUtY29tbXVuaXR5L2NsaS9ibG9iL21hc3Rlci9kb2NzL2F1dG9saW5raW5nLm1k"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts",
+                        "column": 81,
+                        "line": 325
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d926b49bd46f882506c4-5d3cddddd7e35a7a2653",
+              "file": "plugin-workspace-panels.spec.ts",
+              "line": 263,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-04T16:53:04.645Z",
+    "duration": 94223.108,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
