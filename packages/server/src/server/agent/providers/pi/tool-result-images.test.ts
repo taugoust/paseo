@@ -4,7 +4,11 @@ import pino from "pino";
 import { PiRpcAgentClient } from "./agent.js";
 import { FakePi } from "./test-utils/fake-pi.js";
 import { streamPiHistory } from "./history-mapper.js";
-import { mapPiToolResultImages } from "./tool-result-images.js";
+import {
+  materializeProviderImage,
+  renderProviderImageOutputAsAssistantMarkdown,
+} from "../provider-image-output.js";
+import { splitPiToolResultImages, type PiToolResult } from "./tool-call-mapper.js";
 import type { PiAgentMessage } from "./rpc-types.js";
 
 const result = {
@@ -22,8 +26,28 @@ const result = {
       mimeType: "image/png",
       altText: "second",
     },
+    { type: "image", path: "/tmp/generated.png", altText: "path image" },
+    { type: "image", url: "https://example.test/generated.png", altText: "remote image" },
   ],
+  structuredContent: {
+    nested: {
+      type: "image",
+      data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQAAAABJRU5ErkJggg==",
+    },
+  },
 };
+
+async function nativeImages(toolResult: PiToolResult, callId: string) {
+  const { images } = splitPiToolResultImages(toolResult);
+  const items = [];
+  for (const [index, image] of images.entries()) {
+    const item = await renderProviderImageOutputAsAssistantMarkdown(image, {
+      materialize: materializeProviderImage,
+    });
+    if (item) items.push({ ...item, messageId: `${callId}-image-${index}` });
+  }
+  return items;
+}
 
 async function history(isError = false, prefix = ""): Promise<AgentStreamEvent[]> {
   const messages: PiAgentMessage[] = [
@@ -55,18 +79,22 @@ function assistantImages(events: AgentStreamEvent[]) {
 
 describe("Pi tool result image timeline", () => {
   test("uses native markdown image entries with deterministic IDs, order, and materialized URIs", async () => {
-    const direct = await mapPiToolResultImages(result, "call-images");
-    expect(direct).toHaveLength(2);
+    const direct = await nativeImages(result, "call-images");
+    expect(direct).toHaveLength(4);
     expect(direct.map((item) => item.type === "assistant_message" && item.messageId)).toEqual([
       "call-images-image-0",
       "call-images-image-1",
+      "call-images-image-2",
+      "call-images-image-3",
     ]);
     expect(direct.every((item) => item.type === "assistant_message")).toBe(true);
     expect(direct.map((item) => item.type === "assistant_message" && item.text)).toEqual([
       expect.stringMatching(/!\[first\]\(file:\/\//),
       expect.stringMatching(/!\[second\]\(file:\/\//),
+      expect.stringMatching(/!\[path image\]\(file:\/\//),
+      expect.stringMatching(/!\[remote image\]\(https:\/\//),
     ]);
-    expect(await mapPiToolResultImages(result, "call-images")).toEqual(direct);
+    expect(await nativeImages(result, "call-images")).toEqual(direct);
 
     const events = await history();
     expect(assistantImages(events)).toEqual(direct);
@@ -76,12 +104,10 @@ describe("Pi tool result image timeline", () => {
         event.item.type === "tool_call" &&
         event.item.status === "completed",
     );
-    expect(
-      settled?.type === "timeline" && settled.item.type === "tool_call" && settled.item.detail,
-    ).toMatchObject({
-      type: "unknown",
-      output: { content: result.content },
-    });
+    expect(JSON.stringify(settled)).not.toContain(result.content[1].data);
+    expect(JSON.stringify(settled)).toContain("[image]");
+    expect(JSON.stringify(settled)).not.toContain("/tmp/generated.png");
+    expect(JSON.stringify(settled)).not.toContain("https://example.test/generated.png");
     expect(
       events.findIndex(
         (event) =>
@@ -98,7 +124,7 @@ describe("Pi tool result image timeline", () => {
 
   test("retains useful failure screenshots without changing failed tool status", async () => {
     const failed = await history(true);
-    expect(assistantImages(failed)).toEqual(await mapPiToolResultImages(result, "call-images"));
+    expect(assistantImages(failed)).toEqual(await nativeImages(result, "call-images"));
     expect(
       failed.some(
         (event) =>
@@ -108,20 +134,20 @@ describe("Pi tool result image timeline", () => {
       ),
     ).toBe(true);
     expect(
-      await mapPiToolResultImages({ content: [{ type: "text", text: "only text" }] }, "text-call"),
+      await nativeImages({ content: [{ type: "text", text: "only text" }] }, "text-call"),
     ).toEqual([]);
     expect(
-      await mapPiToolResultImages(
+      await nativeImages(
         { content: [{ type: "image", data: "", mimeType: "image/png" }] },
         "empty-call",
       ),
     ).toEqual([]);
-    expect(await mapPiToolResultImages(null, "null-call")).toEqual([]);
+    expect(await nativeImages(null, "null-call")).toEqual([]);
   });
 
   test("history image identities use the resolved child/tool scope", async () => {
     expect(assistantImages(await history(false, "child:"))).toEqual(
-      await mapPiToolResultImages(result, "child:call-images"),
+      await nativeImages(result, "child:call-images"),
     );
   });
 
@@ -155,6 +181,7 @@ describe("Pi tool result image timeline", () => {
         isError: false,
       });
       await expect.poll(() => assistantImages(events)).toEqual(assistantImages(await history()));
+      const successfulImageCount = assistantImages(events).length;
       fake.emit({
         type: "tool_execution_end",
         toolCallId: "failure-images",
@@ -163,8 +190,8 @@ describe("Pi tool result image timeline", () => {
         isError: true,
       });
       await expect
-        .poll(() => assistantImages(events).slice(2))
-        .toEqual(await mapPiToolResultImages(result, "failure-images"));
+        .poll(() => assistantImages(events).slice(successfulImageCount))
+        .toEqual(await nativeImages(result, "failure-images"));
     } finally {
       await session.close();
     }

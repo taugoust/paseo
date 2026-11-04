@@ -1,0 +1,3 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+stopped: /tmp/nix-shell.rjrc9X/paseo-e2e-worker-0-2ia67A
+stopped: /tmp/nix-shell.rjrc9X/paseo-e2e-secondary-host-RFm5iw

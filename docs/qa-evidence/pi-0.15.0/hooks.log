@@ -1,0 +1,40 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+
+ RUN  v4.1.6 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/server
+
+(node:1877501) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | src/server/plugins/lifecycle.e2e.test.ts
+[dotenv@17.3.1] injecting env (0) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.3.1] injecting env (0) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+ ❯ src/server/plugins/lifecycle.e2e.test.ts (15 tests | 1 failed | 10 skipped) 8040ms
+   × a plugin transforms workspace creation once across receipt replays and observes its committed lifecycle 8035ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/server/plugins/lifecycle.e2e.test.ts > a plugin transforms workspace creation once across receipt replays and observes its committed lifecycle
+AssertionError: expected undefined to be 'Created through a hook' // Object.is equality
+
+- Expected:
+"Created through a hook"
+
++ Received:
+undefined
+
+ ❯ src/server/plugins/lifecycle.e2e.test.ts:47:37
+     45|       source: { kind: "directory", path: directory },
+     46|     });
+     47|     expect(created.workspace?.name).toBe("Created through a hook");
+       |                                     ^
+     48|     const workspaceId = created.workspace!.id;
+     49|     const replay = await client.createWorkspace({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (15)
+   Start at  16:48:36
+   Duration  19.47s (transform 8.70s, setup 47ms, import 11.23s, tests 8.04s, environment 0ms)
+

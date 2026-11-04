@@ -6,6 +6,7 @@
   python3,
   makeWrapper,
   autoPatchelfHook,
+  procps,
   # node-pty needs libuv headers on Linux
   libuv,
   # Exposed so downstream flakes that follow a different nixpkgs revision
@@ -86,6 +87,7 @@ buildNpmPackage rec {
 
   buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
     libuv
+    procps # terminal workers inspect their own process identity with `ps`
     stdenv.cc.cc.lib # libstdc++ for sherpa-onnx prebuilt binaries
   ];
 
@@ -98,6 +100,9 @@ buildNpmPackage rec {
 
   checkPhase = ''
     runHook preCheck
+    # Generic fixture daemons must not inspect the builder's live tmux session.
+    # Dedicated tmux tests opt in with their own isolated fixture environment.
+    export PASEO_TMUX_TOPOLOGY=0
     node --test nix/tests/source-filter.test.mjs
     export PASEO_BUILD="$PWD"
     export PASEO_INSTALL="$PWD"
@@ -182,12 +187,14 @@ buildNpmPackage rec {
     # Keep Paseo's runtime mode separate from NODE_ENV, which belongs to spawned agents.
     makeWrapper ${nodejs}/bin/node $out/bin/paseo-server \
       --add-flags "$out/lib/paseo/packages/server/dist/scripts/supervisor-entrypoint.js" \
-      --set PASEO_NODE_ENV production
+      --set PASEO_NODE_ENV production \
+      ${lib.optionalString stdenv.hostPlatform.isLinux "--prefix PATH : ${procps}/bin"}
 
     # Create wrapper for the CLI
     makeWrapper ${nodejs}/bin/node $out/bin/paseo \
       --add-flags "$out/lib/paseo/packages/cli/dist/index.js" \
-      --set NODE_PATH "$out/lib/paseo/node_modules"
+      --set NODE_PATH "$out/lib/paseo/node_modules" \
+      ${lib.optionalString stdenv.hostPlatform.isLinux "--prefix PATH : ${procps}/bin"}
 
     # Retain fork-owned Nix behavioral tests for independent downstream checks.
     mkdir -p "$out/lib/paseo/nix"
@@ -226,6 +233,8 @@ buildNpmPackage rec {
     ''}
     PASEO_INSTALL="$out/lib/paseo" \
       node --test nix/tests/plugin-bundled-tool-presentation.test.mjs
+    PASEO_INSTALL="$out/lib/paseo" \
+      node nix/tests/installed-daemon-smoke.mjs "$out/bin/paseo"
 
     runHook postInstall
   '';

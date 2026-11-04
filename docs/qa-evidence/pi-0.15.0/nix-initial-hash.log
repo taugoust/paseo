@@ -1,0 +1,25 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+these 2 derivations will be built:
+  /nix/store/agccx9xpyynr9yvhwgrlh2h2pihvw267-paseo-0.15.0-npm-deps.drv
+  /nix/store/5cq491qv2dc9fpr8c6rdxvyx8dp5m4px-paseo-0.15.0.drv
+building '/nix/store/h6l516mf4kfnc50v93mdygycih2gnklw-paseo-0.15.0-npm-deps.drv'...
+paseo> Running phase: unpackPhase
+paseo> unpacking source archive /nix/store/hasyjscr5957pavgrkn4s4p5g9axr4gz-source
+paseo> source root is source
+paseo> Running phase: patchPhase
+paseo> Running phase: updateAutotoolsGnuConfigScriptsPhase
+paseo> Running phase: configurePhase
+paseo> no configure script, doing nothing
+paseo> Running phase: buildPhase
+paseo> Running phase: fixupPhase
+paseo> shrinking RPATHs of ELF executables and libraries in /nix/store/7wis613w5p4c1va4a3x26gmk0hpb4dsc-paseo-0.15.0-npm-deps
+paseo> checking for references to /build/ in /nix/store/7wis613w5p4c1va4a3x26gmk0hpb4dsc-paseo-0.15.0-npm-deps...
+paseo> patching script interpreter paths in /nix/store/7wis613w5p4c1va4a3x26gmk0hpb4dsc-paseo-0.15.0-npm-deps
+error: hash mismatch in fixed-output derivation '/nix/store/h6l516mf4kfnc50v93mdygycih2gnklw-paseo-0.15.0-npm-deps.drv':
+         specified: sha256-6C4Rjh0mRVrC9akBVGK0NZaCaLJhwKObT7HrgPmcvyw=
+            got:    sha256-LAKl3sW4A2RT9dXfcIGMuiYuZYzekUc8qYh1sT4m/s8=
+error: build of resolved derivation '/nix/store/h6l516mf4kfnc50v93mdygycih2gnklw-paseo-0.15.0-npm-deps.drv' failed
+error: Cannot build '/nix/store/5cq491qv2dc9fpr8c6rdxvyx8dp5m4px-paseo-0.15.0.drv'.
+       Reason: 1 dependency failed.
+       Output paths:
+         /nix/store/bq4h34jc6j3a6k7rannqagp8q3g1b273-paseo-0.15.0

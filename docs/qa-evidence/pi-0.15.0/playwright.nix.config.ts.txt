@@ -1,0 +1,19 @@
+import { defineConfig } from '@playwright/test';
+import path from 'node:path';
+import base from '../../packages/app/playwright.config';
+const root = path.resolve(__dirname, '../..');
+const app = path.join(root, 'packages/app');
+if (!process.env.E2E_NIX_CHROMIUM) throw new Error('Set E2E_NIX_CHROMIUM to the Nix Chromium executable');
+export default defineConfig({
+  ...base,
+  testDir: path.join(app, 'e2e/browser'),
+  globalSetup: path.join(app, 'e2e/support/global-setup.ts'),
+  outputDir: path.join(__dirname, 'browser-results'),
+  reporter: [['list'], ['json', { outputFile: path.join(__dirname, 'browser-results.json') }]],
+  use: {
+    ...base.use,
+    video: 'off',
+    screenshot: 'on',
+    launchOptions: { executablePath: process.env.E2E_NIX_CHROMIUM },
+  },
+});

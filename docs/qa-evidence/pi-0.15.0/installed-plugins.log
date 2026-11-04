@@ -1,0 +1,31 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+[BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+PASS bridge/plugin client=1758710 server=196311
+PASS accounts client=154208 server=321490
+PASS plugins/history client=31522 server=9827
+PASS plugins/playwright-pulse client=75450 server=22822
+PASS plugins/progress client=226425 server=133132
+PASS plugins/setup-monitor client=21627 server=14292
+PASS plugins/shell-yeah client=74259 server=71662
+PASS plugins/time-since client=16151 server=8944
+PASS plugins/workspace-links client=34506 server=8533
+PASS 9 pinned/current integration plugins compiled through migrated host
+TAP version 13
+# [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+# (node:2980502) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: compiled Work uses one workspace tab, source-scoped persistent UI, and UI-only close
+ok 1 - compiled Work uses one workspace tab, source-scoped persistent UI, and UI-only close
+  ---
+  duration_ms: 39580.124689
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39834.145945

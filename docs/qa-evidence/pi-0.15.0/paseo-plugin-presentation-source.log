@@ -1,0 +1,13 @@
+✔ Pi mapper declarations do not pull in Node image materialization (3.991184ms)
+✔ native public mapper and display helpers bundle into both targets without new host modules (2866.278896ms)
+✔ reachable subagent adapter presentation is pure and preserves native running/failure/managed precedence (1.777682ms)
+✔ pure mapper boundary rejects ambient I/O and dynamic loading (201.138354ms)
+✔ exact aliases do not open server internals, protocol traversal or weaken transitive shared boundaries (3941.151249ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7415.610061

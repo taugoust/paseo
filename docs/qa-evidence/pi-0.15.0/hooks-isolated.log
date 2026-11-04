@@ -1,0 +1,12 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+
+ RUN  v4.1.6 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/server
+
+(node:1912265) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  5 passed | 10 skipped (15)
+   Start at  16:50:43
+   Duration  27.55s (transform 8.15s, setup 44ms, import 10.64s, tests 16.71s, environment 0ms)
+

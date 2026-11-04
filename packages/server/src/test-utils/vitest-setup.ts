@@ -8,6 +8,8 @@ dotenv.config({ path: path.resolve(serverRoot, ".env.test"), override: true });
 dotenv.config({ path: path.resolve(serverRoot, "../.env") });
 
 process.env.PASEO_SUPERVISED = "0";
+// Generic tests must not project a developer's live tmux session into fixture daemons.
+process.env.PASEO_TMUX_TOPOLOGY = "0";
 process.env.GIT_TERMINAL_PROMPT = "0";
 process.env.GIT_SSH_COMMAND = "ssh -oBatchMode=yes";
 process.env.SSH_ASKPASS = "/usr/bin/false";

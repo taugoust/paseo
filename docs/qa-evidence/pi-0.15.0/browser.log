@@ -1,0 +1,133 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+[metro] Skipping web setup: EXPO_NO_WEB_SETUP is enabled.
+[metro] Using src/app as the root directory for Expo Router.
+[metro] Waiting on http://localhost:35649
+[metro] Logs for your project will appear below.
+[metro] Web Bundled 40933ms packages/app/index.ts (5748 modules)
+[e2e] Metro warmed on port 35649
+
+Running 1 test using 1 worker
+
+[e2e] Worker 0 daemon started on port 45563, home: /tmp/nix-shell.rjrc9X/paseo-e2e-worker-0-2ia67A
+[metro] Web Bundled 270ms packages/app/index.ts (1 module)
+[metro] Web Bundled 97ms packages/app/src/attachments/web/indexeddb-attachment-store.ts (1 module)
+[metro] Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[metro] Web  LOG  Running application "main" with appParams:
+[metro]  {"hydrate": undefined, "rootTag": "#root"} 
+[metro] Development-level warnings: ON.
+[metro] Performance optimizations: OFF.
+[metro] Web  WARN  Require cycle: src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/runtime/host-runtime.ts -> src/desktop/browser/automation/handler.ts -> src/stores/workspace-layout-store.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/runtime/host-runtime.ts -> src/runtime/directory-sync/index.ts -> src/runtime/directory-sync/agent-replica.ts -> src/hooks/use-archive-agent.ts -> src/runtime/host-runtime.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/actions.ts -> src/plugins/workspace-panels/locations.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/stores/navigation-active-workspace-store/index.ts -> src/workspace-tabs/navigation.ts -> src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/navigation.ts -> src/stores/navigation-active-workspace-store/index.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/navigation.ts -> src/stores/workspace-layout-store.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/plugins/registry.ts -> src/plugins/evaluate.ts -> src/plugins/themes/index.ts -> src/plugins/registry.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/components/sidebar-workspace-list.tsx -> src/components/sidebar/sidebar-status-list.tsx -> src/components/sidebar/sidebar-workspace-row-content.tsx -> src/components/workspace-hover-card.tsx -> src/components/sidebar-workspace-list.tsx
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[metro] Web  WARN  Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md
+[metro] Web Bundled 258ms packages/app/index.ts (1 module)
+[metro] Web Bundled 6ms packages/app/src/attachments/web/indexeddb-attachment-store.ts (1 module)
+[metro] Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[metro] Web  LOG  Running application "main" with appParams:
+[metro]  {"hydrate": undefined, "rootTag": "#root"} 
+[metro] Development-level warnings: ON.
+[metro] Performance optimizations: OFF.
+[metro] Web  WARN  Require cycle: src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/runtime/host-runtime.ts -> src/desktop/browser/automation/handler.ts -> src/stores/workspace-layout-store.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/runtime/host-runtime.ts -> src/runtime/directory-sync/index.ts -> src/runtime/directory-sync/agent-replica.ts -> src/hooks/use-archive-agent.ts -> src/runtime/host-runtime.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/actions.ts -> src/plugins/workspace-panels/locations.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/stores/navigation-active-workspace-store/index.ts -> src/workspace-tabs/navigation.ts -> src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/navigation.ts -> src/stores/navigation-active-workspace-store/index.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/stores/workspace-layout-store.ts -> src/plugins/workspace-panels/locations.ts -> src/plugins/registry.ts -> src/plugins/client-runtime.ts -> src/plugins/navigation.ts -> src/stores/workspace-layout-store.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/plugins/registry.ts -> src/plugins/evaluate.ts -> src/plugins/themes/index.ts -> src/plugins/registry.ts
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  Require cycle: src/components/sidebar-workspace-list.tsx -> src/components/sidebar/sidebar-status-list.tsx -> src/components/sidebar/sidebar-workspace-row-content.tsx -> src/components/workspace-hover-card.tsx -> src/components/sidebar-workspace-list.tsx
+[metro] Require cycles are allowed, but can result in uninitialized values. Consider refactoring to remove the need for a cycle.
+[metro] Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+[metro] Web  WARN  Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md
+  ✘  1 [browser] › packages/app/e2e/browser/plugin-workspace-panels.spec.ts:263:7 › plugin workspace panels and Command Center › follows workspace, agent, host, compact, and unavailable state (30.2s)
+[e2e] Metro stopped
+
+
+  1) [browser] › packages/app/e2e/browser/plugin-workspace-panels.spec.ts:263:7 › plugin workspace panels and Command Center › follows workspace, agent, host, compact, and unavailable state 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  getByText('Workspace bridge wks_dc4b20be6e877058')
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('Workspace bridge wks_dc4b20be6e877058')[22m
+    [2m    14 × locator resolved to <div dir="auto" class="css-text-146c3p1">Workspace bridge wks_dc4b20be6e877058</div>[22m
+    [2m       - unexpected value "hidden"[22m
+
+
+      323 |         await expectCommandUnavailable(page, "Open plugin agent");
+      324 |         await runCommand(page, "Open plugin workspace");
+    > 325 |         await expect(page.getByText(`Workspace bridge ${primary.workspaceId}`)).toBeVisible();
+          |                                                                                 ^
+      326 |         const renderCount = Number(
+      327 |           (await page.getByText(/Workspace renders \d+/).textContent())?.split(" ").at(-1),
+      328 |         );
+        at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:325:81
+        at /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/app/e2e/browser/plugin-workspace-panels.spec.ts:315:7
+
+    Error: Command failed: /nix/store/yqkhp0j27pk15yd2wmqjkjbglwaa5z1l-nodejs-slim-22.22.1/bin/node /home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/cli/dist/index.js daemon stop --home /tmp/nix-shell.rjrc9X/paseo-e2e-worker-0-2ia67A --force
+    node:internal/modules/cjs/loader:1386
+      throw err;
+      ^
+
+    Error: Cannot find module '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/packages/cli/dist/index.js'
+    [90m    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)[39m
+    [90m    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)[39m
+    [90m    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)[39m
+    [90m    at Function._load (node:internal/modules/cjs/loader:1192:37)[39m
+    [90m    at TracingChannel.traceSync (node:diagnostics_channel:328:14)[39m
+    [90m    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)[39m
+    [90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)[39m
+    [90m    at node:internal/main/run_main_module:36:49[39m {
+      code: [32m'MODULE_NOT_FOUND'[39m,
+      requireStack: []
+    }
+
+    Node.js v22.22.1
+
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: browser-console (text/plain) ────────────────────────────────────────────────────
+    [console:info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+    [console:log] Running application "main" with appParams:
+     {rootTag: #root, hydrate: undefined} 
+    Development-level warnings: ON.
+    Performance optimizations: OFF.
+    [co...
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    .dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/trace.zip
+    Usage:
+
+        npx playwright show-trace .dev/migration-validation/browser-results/plugin-workspace-panels-pl-2ff7c-mpact-and-unavailable-state-browser/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [browser] › packages/app/e2e/browser/plugin-workspace-panels.spec.ts:263:7 › plugin workspace panels and Command Center › follows workspace, agent, host, compact, and unavailable state 

@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, writeFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 assert.ok(
@@ -31,6 +31,15 @@ async function fixture(t) {
   for (const dir of ["client", "server", "shared"]) await mkdir(join(root, dir));
   return root;
 }
+
+test("Pi mapper declarations do not pull in Node image materialization", async () => {
+  const piPresentation = require.resolve("@getpaseo/server/pi-tool-presentation");
+  const declaration = await readFile(
+    join(dirname(piPresentation), "tool-call-mapper.d.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(declaration, /provider-image-output/i);
+});
 
 test("native public mapper and display helpers bundle into both targets without new host modules", async (t) => {
   const root = await fixture(t);

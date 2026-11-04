@@ -1,7 +1,10 @@
 import { mapCustomMessageToToolCall } from "../custom-message.js";
 import { nativeToolErrorText } from "./native-tool-error.js";
-import { mapPiToolResultImages } from "./tool-result-images.js";
 import type { AgentStreamEvent, AgentTimelineItem, ToolCallDetail } from "../../agent-sdk-types.js";
+import {
+  materializeProviderImage,
+  renderProviderImageOutputAsAssistantMarkdown,
+} from "../provider-image-output.js";
 import {
   createPiExtensionHost,
   type PiExtensionEventOutput,
@@ -12,6 +15,7 @@ import {
   mapToolDetail,
   parseToolArgs,
   parseToolResult,
+  splitPiToolResultImages,
   type PiToolResult,
   type PiTrackedToolCall,
 } from "./tool-call-mapper.js";
@@ -226,36 +230,47 @@ export class PiHistoryMapper {
       this.pendingToolCalls.get(message.toolCallId) ?? parseToolArgs(message.toolName, null);
     this.pendingToolCalls.delete(message.toolCallId);
     const result = parseToolResult({ content: message.content, details: message.details });
+    // Pull image blocks out of the result so base64 never reaches the tool output, then render
+    // each one as an assistant_message markdown image after the tool_call (mirroring the live
+    // path and the Claude provider, upstream #1717).
+    const { images, result: splitResult } = splitPiToolResultImages(result);
     const mapping = this.extensionHost.mapToolCall({
       callId: message.toolCallId,
       toolName: tracked.toolName,
       args: tracked.args,
       status: message.isError ? "failed" : "completed",
-      result,
+      result: splitResult,
     });
-    const detail = this.mapToolDetail(message.toolCallId, tracked, result, mapping?.detail);
+    const detail = this.mapToolDetail(message.toolCallId, tracked, splitResult, mapping?.detail);
     if (!detail) {
       return [];
+    }
+    const imageEvents: AgentStreamEvent[] = [];
+    const resolvedToolCallId = this.resolveToolCallId(message.toolCallId, tracked);
+    for (const [index, image] of images.entries()) {
+      const item = await renderProviderImageOutputAsAssistantMarkdown(image, {
+        materialize: materializeProviderImage,
+      });
+      if (item?.type === "assistant_message")
+        imageEvents.push({
+          type: "timeline",
+          provider: this.provider,
+          item: { ...item, messageId: `${resolvedToolCallId}-image-${index}` },
+        });
     }
     return [
       {
         type: "timeline",
         provider: this.provider,
         item: toToolResultTimelineItem({
-          callId: this.resolveToolCallId(message.toolCallId, tracked),
+          callId: resolvedToolCallId,
           name: mapping?.name ?? tracked.toolName,
           isError: Boolean(message.isError),
           detail,
-          errorText: nativeToolErrorText(result, tracked.toolName),
+          errorText: nativeToolErrorText(splitResult, tracked.toolName),
         }),
       },
-      ...(
-        await mapPiToolResultImages(result, this.resolveToolCallId(message.toolCallId, tracked))
-      ).map((item) => ({
-        type: "timeline" as const,
-        provider: this.provider,
-        item,
-      })),
+      ...imageEvents,
       ...this.extensionEvents(mapping),
     ];
   }
@@ -316,9 +331,10 @@ export async function* streamPiHistory(
   signal?: AbortSignal,
 ): AsyncGenerator<AgentStreamEvent> {
   const mapper = new PiHistoryMapper(provider, userEntries, hooks, extensionHost);
-  for (const event of await mapper.mapMessages(messages)) {
+  for (const message of messages) {
     if (signal?.aborted) return;
-    if (event) {
+    for (const event of await mapper.mapMessages([message])) {
+      if (signal?.aborted) return;
       yield event;
     }
   }

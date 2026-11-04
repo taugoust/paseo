@@ -95,7 +95,6 @@ const entries = [
   // dependency graph as well as the supervisor entrypoint.
   "packages/server/dist/server/server/exports.js",
   "packages/server/dist/scripts/supervisor-entrypoint.js",
-  "packages/server/dist/server/terminal/terminal-worker-process.js",
   "packages/server/dist/server/server/speech/providers/local/worker-process.js",
   ...(traceDesktop
     ? [
@@ -112,6 +111,8 @@ const additionalInputs = [
   // Agent orchestration skill catalog loaded through filesystem paths
   "packages/server/dist/server/skills/**",
   "packages/server/dist/server/builtin-plugins/**",
+  // The persistent worker is loaded from a versioned snapshot at runtime, outside nft's graph.
+  "packages/server/dist/server/terminal-worker/**",
   // Shell integration scripts loaded by the terminal manager
   "packages/server/dist/server/terminal/shell-integration/**",
   // Silero VAD ONNX model (sherpa speech provider)

@@ -1,0 +1,369 @@
+warning: Git tree '/home/theo/.worktrees/paseo/pi-worker-1c9f80763248' is dirty
+[BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+PASS bridge/plugin client=1758710 server=196230
+PASS accounts client=154208 server=321409
+PASS plugins/history client=31522 server=9827
+PASS plugins/playwright-pulse client=75450 server=22822
+PASS plugins/progress client=226425 server=133132
+PASS plugins/setup-monitor client=21627 server=14292
+PASS plugins/shell-yeah client=74259 server=71662
+PASS plugins/time-since client=16151 server=8944
+PASS plugins/workspace-links client=34506 server=8533
+PASS 9 pinned/current integration plugins compiled through migrated host
+TAP version 13
+# [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+# Subtest: retired workspace contribution never reads config, observes agents or registers UI
+ok 1 - retired workspace contribution never reads config, observes agents or registers UI
+  ---
+  duration_ms: 225.809919
+  type: 'test'
+  ...
+# Subtest: actual composer contribution targets each exact chat, includes background children and rejects context substitution
+ok 2 - actual composer contribution targets each exact chat, includes background children and rejects context substitution
+  ---
+  duration_ms: 105.025607
+  type: 'test'
+  ...
+# Subtest: Work and BTW register current and newly observed background Pi children without promotion
+ok 3 - Work and BTW register current and newly observed background Pi children without promotion
+  ---
+  duration_ms: 56.921806
+  type: 'test'
+  ...
+# Subtest: shared controls keep exactly one registration through overlapping contributions, reconnect, rename, eligibility and remount
+ok 4 - shared controls keep exactly one registration through overlapping contributions, reconnect, rename, eligibility and remount
+  ---
+  duration_ms: 50.653652
+  type: 'test'
+  ...
+# Subtest: disposing before subscription bootstrap prevents late registration; a fresh contribution works
+ok 5 - disposing before subscription bootstrap prevents late registration; a fresh contribution works
+  ---
+  duration_ms: 48.063475
+  type: 'test'
+  ...
+# Subtest: full plugin contribution leaves the account pill to the companion and leases Work/BTW controls
+ok 6 - full plugin contribution leaves the account pill to the companion and leases Work/BTW controls
+  ---
+  duration_ms: 62.233286
+  type: 'test'
+  ...
+# Subtest: compiled multi-goal creation is independent of parent idle and uses explicit paused registry action
+ok 7 - compiled multi-goal creation is independent of parent idle and uses explicit paused registry action
+  ---
+  duration_ms: 14.701791
+  type: 'test'
+  ...
+# Subtest: compiled limit fields inherit configured defaults, validate and submit explicit overrides
+ok 8 - compiled limit fields inherit configured defaults, validate and submit explicit overrides
+  ---
+  duration_ms: 8.43178
+  type: 'test'
+  ...
+# Subtest: selection and draft survive compact host remount, with active-child clear guarded
+ok 9 - selection and draft survive compact host remount, with active-child clear guarded
+  ---
+  duration_ms: 20.021706
+  type: 'test'
+  ...
+# Subtest: edit submits the seeded revision rather than overwriting a newer registry entry
+ok 10 - edit submits the seeded revision rather than overwriting a newer registry entry
+  ---
+  duration_ms: 2.082564
+  type: 'test'
+  ...
+# Subtest: successful create selects its own new entry even when objectives are equal
+ok 11 - successful create selects its own new entry even when objectives are equal
+  ---
+  duration_ms: 1.773044
+  type: 'test'
+  ...
+# Subtest: ambiguous concurrent creations require selection instead of guessing a goal identity
+ok 12 - ambiguous concurrent creations require selection instead of guessing a goal identity
+  ---
+  duration_ms: 1.719577
+  type: 'test'
+  ...
+# Subtest: clear opens a native confirmation and invalidates it when the entry changes
+ok 13 - clear opens a native confirmation and invalidates it when the entry changes
+  ---
+  duration_ms: 1.251706
+  type: 'test'
+  ...
+# Subtest: desktop default-selection confirmation never retargets when that goal completes
+ok 14 - desktop default-selection confirmation never retargets when that goal completes
+  ---
+  duration_ms: 1.195822
+  type: 'test'
+  ...
+# Subtest: empty completed view does not accidentally display a creation form on desktop
+ok 15 - empty completed view does not accidentally display a creation form on desktop
+  ---
+  duration_ms: 0.881883
+  type: 'test'
+  ...
+# Subtest: unavailable child capability disables execution without disabling metadata creation
+ok 16 - unavailable child capability disables execution without disabling metadata creation
+  ---
+  duration_ms: 1.326322
+  type: 'test'
+  ...
+# Subtest: duplicate trimmed task descriptions are rejected locally before a mutation
+ok 17 - duplicate trimmed task descriptions are rejected locally before a mutation
+  ---
+  duration_ms: 3.261249
+  type: 'test'
+  ...
+# Subtest: exhausted budgets gate Resume in every stopped state without removing Pause
+ok 18 - exhausted budgets gate Resume in every stopped state without removing Pause
+  ---
+  duration_ms: 5.139649
+  type: 'test'
+  ...
+# Subtest: assignment lists are independent of status at 390px
+ok 19 - assignment lists are independent of status at 390px
+  ---
+  duration_ms: 1.039401
+  type: 'test'
+  ...
+# Subtest: assignment lists are independent of status at 1100px
+ok 20 - assignment lists are independent of status at 1100px
+  ---
+  duration_ms: 0.92432
+  type: 'test'
+  ...
+# Subtest: copied ticket UI renders exactly four real tabs and equal ordered task segments without time guesses
+ok 21 - copied ticket UI renders exactly four real tabs and equal ordered task segments without time guesses
+  ---
+  duration_ms: 9.002262
+  type: 'test'
+  ...
+# Subtest: goal-bound questionnaire answers preserve exact identity and stale draft protection without permission approval
+ok 22 - goal-bound questionnaire answers preserve exact identity and stale draft protection without permission approval
+  ---
+  duration_ms: 5.095376
+  type: 'test'
+  ...
+# Subtest: story schema and answer RPC reject permission requests and incomplete routing identity
+ok 23 - story schema and answer RPC reject permission requests and incomplete routing identity
+  ---
+  duration_ms: 6.713062
+  type: 'test'
+  ...
+# Subtest: assigned agent route requires complete inventory and exact dedicated child, job and attempt
+ok 24 - assigned agent route requires complete inventory and exact dedicated child, job and attempt
+  ---
+  duration_ms: 0.839462
+  type: 'test'
+  ...
+# Subtest: all three assignment groups share ticket UI; assigned goals and history stay read-only
+ok 25 - all three assignment groups share ticket UI; assigned goals and history stay read-only
+  ---
+  duration_ms: 1.722281
+  type: 'test'
+  ...
+# Subtest: dedicated limits editor preserves scope for delegated active goals
+ok 26 - dedicated limits editor preserves scope for delegated active goals
+  ---
+  duration_ms: 3.410762
+  type: 'test'
+  ...
+# Subtest: dedicated limits editor preserves scope for delegated paused goals
+ok 27 - dedicated limits editor preserves scope for delegated paused goals
+  ---
+  duration_ms: 2.377594
+  type: 'test'
+  ...
+# Subtest: dedicated limits editor preserves scope for assigned active goals
+ok 28 - dedicated limits editor preserves scope for assigned active goals
+  ---
+  duration_ms: 1.891449
+  type: 'test'
+  ...
+# Subtest: dedicated limits editor preserves scope for assigned paused goals
+ok 29 - dedicated limits editor preserves scope for assigned paused goals
+  ---
+  duration_ms: 1.782137
+  type: 'test'
+  ...
+# Subtest: recorded waiting is distinct from working; no assignment explanation is rendered
+ok 30 - recorded waiting is distinct from working; no assignment explanation is rendered
+  ---
+  duration_ms: 1.455238
+  type: 'test'
+  ...
+# Subtest: assigned wait diagnostics show recorded deadlines and evidence without inventing missing data
+ok 31 - assigned wait diagnostics show recorded deadlines and evidence without inventing missing data
+  ---
+  duration_ms: 2.687597
+  type: 'test'
+  ...
+# Subtest: stopped questionnaires stay readable but cannot submit or cancel a dead waiter
+ok 32 - stopped questionnaires stay readable but cannot submit or cancel a dead waiter
+  ---
+  duration_ms: 8.847685
+  type: 'test'
+  ...
+# Subtest: task capacity disables Add and preserves an open draft when the final slot fills
+ok 33 - task capacity disables Add and preserves an open draft when the final slot fills
+  ---
+  duration_ms: 1.393953
+  type: 'test'
+  ...
+# Subtest: history renders calendar day and model is only an authenticated child launch value
+ok 34 - history renders calendar day and model is only an authenticated child launch value
+  ---
+  duration_ms: 1.318249
+  type: 'test'
+  ...
+# Subtest: history is bounded, pending questions remain discoverable and context never preselects a recommendation
+ok 35 - history is bounded, pending questions remain discoverable and context never preselects a recommendation
+  ---
+  duration_ms: 6.642239
+  type: 'test'
+  ...
+# Subtest: review registration preserves the opened revision, previews registered IDs and exports only on request
+ok 36 - review registration preserves the opened revision, previews registered IDs and exports only on request
+  ---
+  duration_ms: 4.499577
+  type: 'test'
+  ...
+# Subtest: delegated engine blocker evidence is disclosed without changing goal or task status
+ok 37 - delegated engine blocker evidence is disclosed without changing goal or task status
+  ---
+  duration_ms: 0.912564
+  type: 'test'
+  ...
+# Subtest: review contracts reject arbitrary preview paths, unsafe links and mismatched file metadata
+ok 38 - review contracts reject arbitrary preview paths, unsafe links and mismatched file metadata
+  ---
+  duration_ms: 2.23066
+  type: 'test'
+  ...
+# Subtest: optional public host localization preserves drafts/authored content and old clients stay English
+ok 39 - optional public host localization preserves drafts/authored content and old clients stay English
+  ---
+  duration_ms: 3.359513
+  type: 'test'
+  ...
+# Subtest: planning controls submit exact identities, retain evidence and reject stale open drafts
+ok 40 - planning controls submit exact identities, retain evidence and reject stale open drafts
+  ---
+  duration_ms: 2.926884
+  type: 'test'
+  ...
+# Subtest: planning wire contracts reject cross-goal cycles and mixed-action payloads
+ok 41 - planning wire contracts reject cross-goal cycles and mixed-action payloads
+  ---
+  duration_ms: 2.718859
+  type: 'test'
+  ...
+# Subtest: question attachment controls use exact registered scope and discard late preview content
+ok 42 - question attachment controls use exact registered scope and discard late preview content
+  ---
+  duration_ms: 1.533444
+  type: 'test'
+  ...
+# Subtest: limit RPC schemas require exact policy routing and explicit nullable limits
+ok 43 - limit RPC schemas require exact policy routing and explicit nullable limits
+  ---
+  duration_ms: 1.306397
+  type: 'test'
+  ...
+# [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+# (node:1953041) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: compiled Work uses one workspace tab, source-scoped persistent UI, and UI-only close
+ok 44 - compiled Work uses one workspace tab, source-scoped persistent UI, and UI-only close
+  ---
+  duration_ms: 8535.264406
+  type: 'test'
+  ...
+# Subtest: worktree removal rechecks open Paseo agents including symlinked subdirectories and fails closed on incomplete inventory
+ok 45 - worktree removal rechecks open Paseo agents including symlinked subdirectories and fails closed on incomplete inventory
+  ---
+  duration_ms: 887.064754
+  type: 'test'
+  ...
+# [BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+# Subtest: compiled Worktrees: explicit scope, branch identity, independent path links and unchanged removal gates
+ok 46 - compiled Worktrees: explicit scope, branch identity, independent path links and unchanged removal gates
+  ---
+  duration_ms: 8479.062702
+  type: 'test'
+  ...
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28994.713949
+TAP version 13
+# Subtest: separately compiled host registries isolate stores and fence disconnect/replacement
+ok 1 - separately compiled host registries isolate stores and fence disconnect/replacement
+  ---
+  duration_ms: 927.473596
+  type: 'test'
+  ...
+# (node:1957721) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: compiled Accounts uses native hierarchy and spacing (\#151619, compact=false)
+ok 2 - compiled Accounts uses native hierarchy and spacing (\#151619, compact=false)
+  ---
+  duration_ms: 7.844916
+  type: 'test'
+  ...
+# Subtest: compiled Accounts uses native hierarchy and spacing (\#151619, compact=true)
+ok 3 - compiled Accounts uses native hierarchy and spacing (\#151619, compact=true)
+  ---
+  duration_ms: 2.146548
+  type: 'test'
+  ...
+# Subtest: compiled shared buttons, cards and tabs use host geometry (\#151619)
+ok 4 - compiled shared buttons, cards and tabs use host geometry (\#151619)
+  ---
+  duration_ms: 0.973624
+  type: 'test'
+  ...
+# Subtest: compiled Accounts uses native hierarchy and spacing (\#ffffff, compact=false)
+ok 5 - compiled Accounts uses native hierarchy and spacing (\#ffffff, compact=false)
+  ---
+  duration_ms: 1.593435
+  type: 'test'
+  ...
+# Subtest: compiled Accounts uses native hierarchy and spacing (\#ffffff, compact=true)
+ok 6 - compiled Accounts uses native hierarchy and spacing (\#ffffff, compact=true)
+  ---
+  duration_ms: 1.30582
+  type: 'test'
+  ...
+# Subtest: compiled shared buttons, cards and tabs use host geometry (\#ffffff)
+ok 7 - compiled shared buttons, cards and tabs use host geometry (\#ffffff)
+  ---
+  duration_ms: 0.195063
+  type: 'test'
+  ...
+# Subtest: compiled Pi account setup selects the native provider and never offers Codex API-key login
+ok 8 - compiled Pi account setup selects the native provider and never offers Codex API-key login
+  ---
+  duration_ms: 3.358228
+  type: 'test'
+  ...
+# Subtest: compiled activity, agent and project views retain content and callbacks with native surfaces
+ok 9 - compiled activity, agent and project views retain content and callbacks with native surfaces
+  ---
+  duration_ms: 4.624566
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3247.324495

@@ -1,0 +1,68 @@
+
+ RUN  v4.1.6 /home/theo/.worktrees/paseo/pi-worker-1c9f80763248
+
+Switched to a new branch 'feature/existing'
+Switched to branch 'main'
+Switched to a new branch 'feature/existing'
+Switched to a new branch 'feature/stale-default'
+Switched to branch 'master'
+Cloning into bare repository '/tmp/worktree-test-3XgXuP/remote.git'...
+done.
+Cloning into '/tmp/worktree-test-3XgXuP/remote-clone'...
+done.
+Switched to a new branch 'contributor/feature'
+To /tmp/worktree-test-3XgXuP/remote.git
+ * [new branch]      contributor/feature -> contributor/feature
+Cloning into bare repository '/tmp/worktree-test-B7hcli/remote.git'...
+done.
+Cloning into '/tmp/worktree-test-B7hcli/remote-clone'...
+done.
+Switched to a new branch 'Feature.X'
+To /tmp/worktree-test-B7hcli/remote.git
+ * [new branch]      Feature.X -> Feature.X
+To /tmp/worktree-test-8lbB07/remote.git
+ * [new branch]      main -> main
+Cloning into '/tmp/worktree-test-8lbB07/remote-clone'...
+done.
+warning: remote HEAD refers to nonexistent ref, unable to checkout
+Switched to a new branch 'main'
+To /tmp/worktree-test-8lbB07/remote.git
+   25621f0..3ac3b55  main -> main
+From /tmp/worktree-test-8lbB07/remote
+   25621f0..3ac3b55  main       -> origin/main
+To /tmp/worktree-test-kPj1nD/fork.git
+ * [new branch]      main -> main
+Cloning into '/tmp/worktree-test-kPj1nD/fork-clone'...
+done.
+To /tmp/worktree-test-kPj1nD/fork.git
+   61daee6..265c941  main -> main
+From /tmp/worktree-test-kPj1nD/fork
+   61daee6..265c941  main       -> upstream/main
+To /tmp/worktree-test-kPj1nD/fork.git
+   265c941..dd6ce55  main -> main
+From /tmp/worktree-test-kPj1nD/fork
+   265c941..dd6ce55  main       -> upstream/main
+To /tmp/worktree-test-1XJpCA/upstream.git
+ * [new branch]      main -> release+hotfix
+Cloning into bare repository '/tmp/worktree-test-Ms6bn0/remote.git'...
+done.
+Cloning into '/tmp/worktree-test-Ms6bn0/updater'...
+done.
+To /tmp/worktree-test-Ms6bn0/remote.git
+   5b65a86..65eacc9  main -> main
+From /tmp/worktree-test-Ms6bn0/remote
+ * [new branch]      main       -> origin/main
+Switched to a new branch 'symlink-config'
+Switched to branch 'main'
+Cloning into bare repository '/tmp/worktree-explicit-test-gK5zg9/remote.git'...
+done.
+Everything up-to-date
+To /tmp/worktree-explicit-test-gK5zg9/remote.git
+ * [new branch]      feature/remote-check -> feature/remote-check
+[BABEL] Note: The code generator has deoptimised the styling of undefined as it exceeds the max of 500KB.
+
+ Test Files  4 passed (4)
+      Tests  156 passed | 1 skipped (157)
+   Start at  16:57:42
+   Duration  62.66s (transform 735ms, setup 0ms, import 1.52s, tests 60.60s, environment 0ms)
+

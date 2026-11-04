@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>/nix/store/1nnsca2xfhhz8xkadcpy4hv2kwffs0zy-dejavu-fonts-minimal-2.37/share/fonts/truetype</dir>
+  <cachedir>/home/theo/.worktrees/paseo/pi-worker-1c9f80763248/.dev/migration-validation/font-cache</cachedir>
+</fontconfig>
