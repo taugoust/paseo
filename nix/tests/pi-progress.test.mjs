@@ -46,7 +46,9 @@ test("registered mapper emits native tasks, preserving blocked and completion se
       { text: "Blocked · Approve release", status: "pending", completed: false },
     ],
   );
-  const reversed = todos(host.mapToolCall(call({ ...producerDetails, steps: [...steps].toReversed() })))[0];
+  const reversed = todos(
+    host.mapToolCall(call({ ...producerDetails, steps: [...steps].toReversed() })),
+  )[0];
   assert.deepEqual(
     reversed.items.map((x) => x.id),
     todo.items.map((x) => x.id).toReversed(),

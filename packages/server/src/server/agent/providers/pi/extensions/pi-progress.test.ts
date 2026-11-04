@@ -52,10 +52,10 @@ describe("Pi progress adapter", () => {
     expect(todo?.items.map((item) => item.status)).toEqual(Array(8).fill("in_progress"));
 
     const reversed = createPiExtensionHost().mapToolCall(
-      toolCall({ ...producerDetails, steps: [...steps].reverse() }),
+      toolCall({ ...producerDetails, steps: steps.toReversed() }),
     );
     expect(mappedTodos(reversed)[0]?.items.map((item) => item.id)).toEqual(
-      todo?.items.map((item) => item.id).reverse(),
+      todo?.items.map((item) => item.id).toReversed(),
     );
   });
 
@@ -70,10 +70,22 @@ describe("Pi progress adapter", () => {
     const host = createPiExtensionHost();
     const [todo] = mappedTodos(host.mapToolCall(toolCall(snapshot)));
     expect(todo?.items).toEqual([
-      { id: "pi-progress-goal-stable-done", text: "Finished", status: "completed", completed: true },
-      { id: "pi-progress-goal-stable-blocked", text: "Blocked · Waiting", status: "pending", completed: false },
+      {
+        id: "pi-progress-goal-stable-done",
+        text: "Finished",
+        status: "completed",
+        completed: true,
+      },
+      {
+        id: "pi-progress-goal-stable-blocked",
+        text: "Blocked · Waiting",
+        status: "pending",
+        completed: false,
+      },
     ]);
-    expect(mappedTodos(host.mapToolCall(toolCall({ ...producerDetails, steps: [] })))[0]?.items).toEqual([]);
+    expect(
+      mappedTodos(host.mapToolCall(toolCall({ ...producerDetails, steps: [] })))[0]?.items,
+    ).toEqual([]);
 
     const history = await new PiHistoryMapper("pi").mapMessages([
       {
@@ -85,7 +97,9 @@ describe("Pi progress adapter", () => {
         isError: false,
       },
     ]);
-    expect(history.find((event) => event.type === "timeline" && event.item.type === "todo")).toEqual({
+    expect(
+      history.find((event) => event.type === "timeline" && event.item.type === "todo"),
+    ).toEqual({
       type: "timeline",
       provider: "pi",
       item: todo,

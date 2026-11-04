@@ -399,6 +399,22 @@ function unreviewedPresentationImport(
   return !typeOnly && contract !== undefined && !contract.has(specifier);
 }
 
+async function minifyClientBundle(code: string): Promise<string> {
+  const { transform } = loadEsbuild();
+  // Minify after the eager replace. Whitespace minify rewrites the getter this
+  // replace matches, and identifier minify can delete the helper entirely.
+  const result = await transform(code, {
+    minifyWhitespace: true,
+    minifySyntax: true,
+    minifyIdentifiers: false,
+    target: "es2020",
+    supported: { "async-await": false },
+    charset: "ascii",
+    legalComments: "inline",
+  });
+  return result.code;
+}
+
 function runtimeSpecifierError(
   specifier: string,
   target: PluginBuildTarget | "shared",
@@ -521,19 +537,20 @@ async function compileTarget(entryPath: string, target: PluginBuildTarget): Prom
   checkSharedDependencies(result.metafile.inputs, pluginDirectory);
   let output = result.outputFiles[0]?.text;
   if (!output) throw new Error(`Plugin ${target} compilation produced no output`);
+  let prepared = makeHermesInteropEager(output);
   if (target === "client") {
     const { transformSync } = nodeRequire("@babel/core");
     const classes = nodeRequire("@babel/plugin-transform-classes");
-    const transformed = transformSync(makeHermesInteropEager(output), {
+    const transformed = transformSync(prepared, {
       babelrc: false,
       configFile: false,
       plugins: [classes],
       sourceType: "script",
     });
     if (!transformed?.code) throw new Error("Hermes class lowering produced no output");
-    output = transformed.code;
+    prepared = await minifyClientBundle(transformed.code);
   }
-  return wrapCommonJsBundle(makeHermesInteropEager(output));
+  return wrapCommonJsBundle(prepared);
 }
 
 export async function compilePlugin(entryPaths: {

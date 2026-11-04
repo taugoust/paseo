@@ -65,8 +65,11 @@ import {
   streamPiHistory,
   type PiCapturedUserMessageEntry,
 } from "./history-mapper.js";
-import { materializeProviderImage } from "../provider-image-output.js";
-import { mapPiToolResultImages } from "./tool-result-images.js";
+import {
+  materializeProviderImage,
+  renderProviderImageOutputAsAssistantMarkdown,
+  type ProviderImageOutput,
+} from "../provider-image-output.js";
 import { PiCliRuntime } from "./cli-runtime.js";
 import {
   createPiExtensionHost,
@@ -92,6 +95,7 @@ import {
   mapToolDetail,
   parseToolArgs,
   parseToolResult,
+  splitPiToolResultImages,
   type PiToolResult,
   type PiTrackedToolCall,
 } from "./tool-call-mapper.js";
@@ -1309,6 +1313,7 @@ export class PiRpcAgentSession implements AgentSession {
   private interruptingTurn: { turnId: string | undefined; error: string | null } | null = null;
   private readonly closeController = new AbortController();
   private readonly pendingExtensionHydrations = new Set<Promise<void>>();
+  private pendingOutput: Promise<void> | null = null;
   private readonly usageSessionKey = randomUUID();
 
   usageSession() {
@@ -1850,6 +1855,7 @@ export class PiRpcAgentSession implements AgentSession {
       this.pendingExtensionUiRequests.size ||
       this.pendingExtensionResults.size ||
       this.pendingExtensionHydrations.size ||
+      this.pendingOutput ||
       this.pendingSteerSubmissions.length ||
       this.pendingNoTurnOutputs.length
     )
@@ -1886,7 +1892,7 @@ export class PiRpcAgentSession implements AgentSession {
     try {
       await this.runtimeSession.close();
     } finally {
-      await Promise.all(this.pendingExtensionHydrations);
+      await Promise.all([this.pendingOutput, ...this.pendingExtensionHydrations]);
       this.rejectAllExtensionResults(new Error("Pi session closed"));
       this.cleanup?.();
     }
@@ -1953,9 +1959,31 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   private emit(event: AgentStreamEvent): void {
-    for (const subscriber of this.subscribers) {
-      subscriber(event);
+    if (this.pendingOutput) {
+      this.emitAsync(() => Promise.resolve([event]));
+      return;
     }
+    this.publish(event);
+  }
+
+  private publish(event: AgentStreamEvent): void {
+    for (const subscriber of this.subscribers) subscriber(event);
+  }
+
+  // Keep timeline order while images are materialized, without delaying provider state changes.
+  private emitAsync(render: () => Promise<AgentStreamEvent[]>): void {
+    const pending = (this.pendingOutput ?? Promise.resolve())
+      .then(render)
+      .then((events) => {
+        if (!this.closed) for (const event of events) this.publish(event);
+        return undefined;
+      })
+      .catch((error) => this.logger.error({ err: error }, "Pi output rendering failed"));
+    this.pendingOutput = pending;
+    void pending.then(() => {
+      if (this.pendingOutput === pending) this.pendingOutput = null;
+      return undefined;
+    });
   }
 
   private emitExtensionOutput(output: PiExtensionEventOutput | undefined, turnId?: string): void {
@@ -2660,8 +2688,9 @@ export class PiRpcAgentSession implements AgentSession {
       this.activeToolCalls.get(event.toolCallId) ?? parseToolArgs(event.toolName, null);
     this.activeToolCalls.delete(event.toolCallId);
 
-    const result = parseToolResult(event.result);
-    const error = event.isError ? nativeToolErrorText(event.result, toolCall.toolName) : null;
+    // Extract images before projecting tool details so base64 never reaches tool output.
+    const { images, result } = splitPiToolResultImages(parseToolResult(event.result));
+    const error = event.isError ? nativeToolErrorText(result, toolCall.toolName) : null;
     const status = event.isError ? "failed" : "completed";
     // Terminal answers and tool failures can win before a remote form response.
     // Resolve only this tool's pending questions using the existing client event.
@@ -2683,6 +2712,31 @@ export class PiRpcAgentSession implements AgentSession {
       result,
     });
     this.emitToolCallEvent(event.toolCallId, toolCall, status, result, error);
+    if (images.length === 0) return;
+    const turnId = this.currentTurnIdForEvent();
+    this.emitAsync(() => this.renderToolResultImages(images, turnId, event.toolCallId));
+  }
+
+  private async renderToolResultImages(
+    images: ProviderImageOutput[],
+    turnId: string | undefined,
+    callId: string,
+  ): Promise<AgentStreamEvent[]> {
+    const events: AgentStreamEvent[] = [];
+    for (const [index, image] of images.entries()) {
+      const imageItem = await renderProviderImageOutputAsAssistantMarkdown(image, {
+        materialize: materializeProviderImage,
+      });
+      if (imageItem?.type === "assistant_message" && !this.closed) {
+        events.push({
+          type: "timeline",
+          provider: this.provider,
+          turnId,
+          item: { ...imageItem, messageId: `${callId}-image-${index}` },
+        });
+      }
+    }
+    return events;
   }
 
   private emitCompactionTimeline(input: {
@@ -2888,20 +2942,6 @@ export class PiRpcAgentSession implements AgentSession {
       turnId,
       item,
     });
-    if (status === "completed" || status === "failed") {
-      void mapPiToolResultImages(result, toolCallId)
-        .then((imageItems) => {
-          for (const imageItem of imageItems)
-            this.emit({ type: "timeline", provider: this.provider, turnId, item: imageItem });
-          return undefined;
-        })
-        .catch((projectionError: unknown) => {
-          this.logger.warn(
-            { error: projectionError, toolCallId },
-            "Failed to project Pi tool result images",
-          );
-        });
-    }
     this.emitExtensionOutput(mapping, turnId);
     return true;
   }
