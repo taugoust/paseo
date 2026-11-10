@@ -15,7 +15,12 @@ if (!install) throw new Error("Set PASEO_INSTALL to installed lib/paseo director
 const schema = pathToFileURL(
   path.join(install, "packages/server/dist/server/server/workspace-registry.js"),
 ).href;
-const source = (await fs.readFile(new URL("./tmux-topology.ts", import.meta.url), "utf8"))
+const source = (
+  await fs.readFile(
+    process.env.PASEO_TOPOLOGY_SOURCE ?? new URL("./tmux-topology.ts", import.meta.url),
+    "utf8",
+  )
+)
   .replace('from "./workspace-registry.js";', `from "${schema}";`)
   .replace('from "./workspace-registry.js";', `from "${schema}";`);
 const code = stripTypeScriptTypes(source, { mode: "transform" });
@@ -363,6 +368,7 @@ async function fixture(t) {
       terminals.delete(id);
     },
   };
+  let nextSessionId = 20;
   let current = snapshot();
   current.socket = path.join(home, "socket");
   const options = {
@@ -385,14 +391,20 @@ async function fixture(t) {
         return "@9";
       }
       if (args[0] === "new-session") {
+        const id = nextSessionId++;
         current.sessions.push({
-          id: "$20",
+          id: `$${id}`,
           name: "new session",
           cwd: "/same",
           infrastructure: false,
         });
-        current.panes.push({ ...current.panes[0], sessionId: "$20", windowId: "@20", id: "%20" });
-        return "$20\x1f@20";
+        current.panes.push({
+          ...current.panes[0],
+          sessionId: `$${id}`,
+          windowId: `@${id}`,
+          id: `%${id}`,
+        });
+        return `$${id}\x1f@${id}`;
       }
       return "";
     },
@@ -522,6 +534,67 @@ test("UI terminal creation allocates pane in exact workspace and close alone kil
   assert.equal(await f.topology.closeTerminal(terminal.id), false);
   assert.equal(f.calls.at(-1)[1][0], "kill-pane");
   assert.equal(f.calls.at(-1)[1][2], "%9");
+});
+
+test("first workspace binds a registered project to its tmux session and Pi placement", async (t) => {
+  const f = await fixture(t);
+  await f.topology.start();
+  const project = {
+    projectId: "prj_0123456789abcdef",
+    rootPath: "/new-project",
+    kind: "non_git",
+    displayName: "new-project",
+    projectKey: null,
+    customName: null,
+    customIconRevision: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    archivedAt: null,
+  };
+  await f.projects.upsert(project);
+
+  const workspace = await f.topology.createWorkspace(project.projectId, project.rootPath, "first");
+  assert.equal(f.calls.at(-1)[1][0], "new-session");
+  assert.equal(workspace.projectId, project.projectId);
+  assert.equal((await f.projects.get(project.projectId)).rootPath, project.rootPath);
+  assert.equal((await f.projects.get(project.projectId)).displayName, project.displayName);
+  assert.equal((await f.projects.get(project.projectId)).archivedAt, null);
+  assert.equal(f.topology.placements.get(workspace.workspaceId).projectId, project.projectId);
+  assert.deepEqual(
+    JSON.parse((await f.topology.agentEnv(workspace.workspaceId, "pi-1")).PI_PASEO_TMUX_TARGET),
+    {
+      version: 1,
+      ...f.topology.placements.get(workspace.workspaceId),
+    },
+  );
+  await assert.rejects(f.topology.createWorkspace("prj_missing", "/other"), /Unknown/);
+
+  const siblingProject = { ...project, projectId: "prj_fedcba9876543210" };
+  await f.projects.upsert(siblingProject);
+  const sibling = await f.topology.createWorkspace(siblingProject.projectId, project.rootPath);
+  assert.notEqual(sibling.projectId, workspace.projectId);
+  assert.notEqual(
+    f.topology.placements.get(sibling.workspaceId).tmuxSessionId,
+    f.topology.placements.get(workspace.workspaceId).tmuxSessionId,
+  );
+  assert.equal((await f.projects.get(siblingProject.projectId)).archivedAt, null);
+
+  f.current = {
+    ...f.current,
+    sessions: f.current.sessions.filter((session) => !["$20", "$21"].includes(session.id)),
+    panes: f.current.panes.filter((pane) => !["$20", "$21"].includes(pane.sessionId)),
+  };
+  await f.topology.reconcile();
+  assert.equal((await f.projects.get(project.projectId)).archivedAt, null);
+  assert.equal((await f.projects.get(siblingProject.projectId)).archivedAt, null);
+
+  const archivedProject = {
+    ...project,
+    projectId: "prj_archived",
+    archivedAt: "2026-01-02T00:00:00.000Z",
+  };
+  await f.projects.upsert(archivedProject);
+  await assert.rejects(f.topology.createWorkspace(archivedProject.projectId, "/other"), /Archived/);
 });
 
 test("workspace and root project submissions materialize windows/sessions; Pi env targets real window", async (t) => {
