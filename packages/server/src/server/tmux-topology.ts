@@ -879,6 +879,18 @@ export class TmuxTopology {
     return pending;
   }
 
+  private projectIdForSession(snapshot: Snapshot, sessionId: string): string {
+    for (const [projectId, project] of this.projects) {
+      if (
+        project.socket === snapshot.socket &&
+        project.serverId === snapshot.serverId &&
+        project.sessionId === sessionId
+      )
+        return projectId;
+    }
+    return topologyId("prj", snapshot.socket, snapshot.serverId, sessionId);
+  }
+
   private async projectSessions(
     snapshot: Snapshot,
     sessions: Session[],
@@ -886,12 +898,13 @@ export class TmuxTopology {
   ): Promise<void> {
     const { projectRegistry } = this.options;
     for (const session of sessions) {
-      const projectId = topologyId("prj", snapshot.socket, snapshot.serverId, session.id);
+      const projectId = this.projectIdForSession(snapshot, session.id);
       this.projects.set(projectId, {
         socket: snapshot.socket,
         serverId: snapshot.serverId,
         sessionId: session.id,
       });
+      if (!projectId.startsWith("prj_tmux_")) continue;
       const old = await projectRegistry.get(projectId);
       if (!old || old.displayName !== session.name || old.archivedAt)
         await projectRegistry.upsert({
@@ -1147,11 +1160,11 @@ export class TmuxTopology {
       this.placements.delete(id);
     }
     const projectIds = new Set(
-      sessions.map((session) => topologyId("prj", snapshot.socket, snapshot.serverId, session.id)),
+      sessions.map((session) => this.projectIdForSession(snapshot, session.id)),
     );
     for (const [id, project] of this.projects) {
       if (project.socket !== snapshot.socket || projectIds.has(id)) continue;
-      await projectRegistry.archive(id, now);
+      if (id.startsWith("prj_tmux_")) await projectRegistry.archive(id, now);
       this.projects.delete(id);
     }
   }
@@ -1174,7 +1187,10 @@ export class TmuxTopology {
     created?: { windowId: string; untrustedSource?: PersistedWorkspaceRecord["untrustedSource"] },
   ) {
     const pending = await this.validateAndBindPendingTrust(snapshot);
-    const { sessions, windows } = projectSnapshot(snapshot);
+    const { sessions, windows: projectedWindows } = projectSnapshot(snapshot);
+    for (const window of projectedWindows)
+      window.projectId = this.projectIdForSession(snapshot, window.tmuxSessionId);
+    const windows = projectedWindows;
     const now = new Date().toISOString();
     await this.projectSessions(snapshot, sessions, now);
     const seen = await this.projectWindows(snapshot, windows, pending, created, now);
@@ -1306,6 +1322,28 @@ export class TmuxTopology {
     return { project, windowId: windowId! };
   }
 
+  private async requireRegisteredProject(projectId: string): Promise<void> {
+    const project = await this.options.projectRegistry.get(projectId);
+    if (!project) throw new Error("Unknown tmux session project; refresh projects");
+    if (project.archivedAt) throw new Error(`Archived project: ${projectId}`);
+  }
+
+  private async resolveProjectBinding(projectId: string | undefined): Promise<{
+    placement?: { socket: string; serverId: string; sessionId: string };
+    bindProjectId?: string;
+  }> {
+    if (!projectId) return {};
+    const placement = this.projects.get(projectId);
+    if (placement) {
+      await this.requireRegisteredProject(projectId);
+      return { placement };
+    }
+    if (projectId.startsWith("prj_tmux_"))
+      throw new Error("Unknown tmux session project; refresh projects");
+    await this.requireRegisteredProject(projectId);
+    return { bindProjectId: projectId };
+  }
+
   async createWorkspace(
     projectId: string | undefined,
     cwd: string,
@@ -1313,8 +1351,9 @@ export class TmuxTopology {
     untrustedSource?: PersistedWorkspaceRecord["untrustedSource"],
   ) {
     return this.serial(async () => {
-      let p = projectId ? this.projects.get(projectId) : undefined;
-      if (projectId && !p) throw new Error("Unknown tmux session project; refresh projects");
+      const { placement: initialPlacement, bindProjectId } =
+        await this.resolveProjectBinding(projectId);
+      let p = initialPlacement;
       let id: string;
       const socket =
         p?.socket ??
@@ -1343,6 +1382,7 @@ export class TmuxTopology {
       }
       const allocated = await this.allocateWorkspaceWindow(p, socket, cwd, marker ?? title);
       p = allocated.project;
+      if (bindProjectId) this.projects.set(bindProjectId, p);
       id = allocated.windowId;
       // Keep the initial shell: it is a real user pane, not an idle placeholder/log viewer.
       await this.applySnapshot(await (this.options.snapshot ?? readSnapshot)(p.socket), {

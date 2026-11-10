@@ -174,6 +174,56 @@ test("actual Pi provider creation provisions root first and passes verified JSON
   );
 });
 
+test("worktree provisioning binds a new tmux session to its selected registered project", async (t) => {
+  const f = await fixture(t);
+  const project = {
+    projectId: "prj_0123456789abcdef",
+    rootPath: "/repo",
+    kind: "git",
+    displayName: "repo",
+    projectKey: null,
+    customName: null,
+    customIconRevision: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    archivedAt: null,
+  };
+  await f.projectRegistry.upsert(project);
+  const provisioning = createWorkspaceProvisioningService({
+    serverId: "fixture",
+    projectRegistry: f.projectRegistry,
+    workspaceRegistry: f.workspaceRegistry,
+    isDirectory: async () => true,
+    logger: { warn() {} },
+    workspaceGitService: {
+      getCheckout: async (cwd) => ({
+        cwd,
+        isGit: false,
+        remoteUrl: null,
+        worktreeRoot: null,
+        mainRepoRoot: null,
+      }),
+      getSnapshot: async () => ({}),
+    },
+  });
+
+  const workspace = await provisioning.createWorkspaceForWorktree({
+    sourceCwd: "/repo",
+    projectId: project.projectId,
+    repoRoot: "/repo",
+    cwd: "/repo/worktrees/feature",
+    worktreeRoot: "/repo/worktrees/feature",
+    branch: "feature",
+    baseBranch: "main",
+    title: "feature",
+  });
+  assert.equal(f.commands[0][0], "new-session");
+  assert.equal(f.commands[0][f.commands[0].indexOf("-c") + 1], "/repo/worktrees/feature");
+  assert.equal(workspace.projectId, project.projectId);
+  assert.equal(f.topology.placements.get(workspace.workspaceId).projectId, project.projectId);
+  assert.equal((await f.projectRegistry.get(project.projectId)).archivedAt, null);
+});
+
 test("submitted Pi tab/fork uses explicit workspace, without allocating another session/window", async (t) => {
   const f = await fixture(t);
   const p = [...f.topology.placements.values()][0];
