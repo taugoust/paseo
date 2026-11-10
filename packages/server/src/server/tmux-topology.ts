@@ -1328,6 +1328,22 @@ export class TmuxTopology {
     if (project.archivedAt) throw new Error(`Archived project: ${projectId}`);
   }
 
+  private async resolveProjectBinding(projectId: string | undefined): Promise<{
+    placement?: { socket: string; serverId: string; sessionId: string };
+    bindProjectId?: string;
+  }> {
+    if (!projectId) return {};
+    const placement = this.projects.get(projectId);
+    if (placement) {
+      await this.requireRegisteredProject(projectId);
+      return { placement };
+    }
+    if (projectId.startsWith("prj_tmux_"))
+      throw new Error("Unknown tmux session project; refresh projects");
+    await this.requireRegisteredProject(projectId);
+    return { bindProjectId: projectId };
+  }
+
   async createWorkspace(
     projectId: string | undefined,
     cwd: string,
@@ -1335,10 +1351,9 @@ export class TmuxTopology {
     untrustedSource?: PersistedWorkspaceRecord["untrustedSource"],
   ) {
     return this.serial(async () => {
-      let p = projectId ? this.projects.get(projectId) : undefined;
-      let bindProjectId: string | undefined;
-      if (projectId) await this.requireRegisteredProject(projectId);
-      if (projectId && !p) bindProjectId = projectId;
+      const { placement: initialPlacement, bindProjectId } =
+        await this.resolveProjectBinding(projectId);
+      let p = initialPlacement;
       let id: string;
       const socket =
         p?.socket ??

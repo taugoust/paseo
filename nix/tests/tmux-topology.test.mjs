@@ -569,6 +569,18 @@ test("first workspace binds a registered project to its tmux session and Pi plac
   );
   await assert.rejects(f.topology.createWorkspace("prj_missing", "/other"), /Unknown/);
 
+  const foreignProject = {
+    ...project,
+    projectId: topologyId("prj", f.current.socket, "foreign-server", "$99"),
+  };
+  await f.projects.upsert(foreignProject);
+  const allocationsBeforeForeignProject = f.calls.length;
+  await assert.rejects(
+    f.topology.createWorkspace(foreignProject.projectId, "/foreign"),
+    /Unknown tmux session project/,
+  );
+  assert.equal(f.calls.length, allocationsBeforeForeignProject);
+
   const siblingProject = { ...project, projectId: "prj_fedcba9876543210" };
   await f.projects.upsert(siblingProject);
   const sibling = await f.topology.createWorkspace(siblingProject.projectId, project.rootPath);
