@@ -20,6 +20,23 @@
   npmDepsHash ? lib.fileContents ./npm-deps.hash,
 }:
 
+let
+  # Stable names for installed paths that downstream integration checks load.
+  # Paths are relative to the package output. The install phase fails if any
+  # is missing, so a layout change is fixed here rather than in each consumer.
+  testEntrypoints = {
+    install = "lib/paseo";
+    tests = "lib/paseo/nix/tests";
+    nodeModules = "lib/paseo/node_modules";
+    agentManager = "lib/paseo/packages/server/dist/server/server/agent/agent-manager.js";
+    pluginCompiler = "lib/paseo/packages/server/dist/server/server/plugins/compiler.js";
+    providerSubagentStore = "lib/paseo/packages/server/dist/server/server/agent/provider-subagents/store.js";
+    piSubagentAdapter = "lib/paseo/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/index.js";
+    piNativeSubagentLinks = "lib/paseo/packages/server/dist/server/server/agent/providers/pi/extensions/pi-subagents/native-subagent-links.js";
+    protocolPackage = "lib/paseo/packages/protocol";
+    toolCallDisplay = "lib/paseo/packages/protocol/dist/tool-call-display.js";
+  };
+in
 buildNpmPackage rec {
   pname = "paseo";
   version = (builtins.fromJSON (builtins.readFile ../package.json)).version;
@@ -236,8 +253,18 @@ buildNpmPackage rec {
     PASEO_INSTALL="$out/lib/paseo" \
       node nix/tests/installed-daemon-smoke.mjs "$out/bin/paseo"
 
+    ${lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: path: ''
+        test -e "$out/${path}" || { echo "test entrypoint ${name} is missing: ${path}" >&2; exit 1; }
+      '') testEntrypoints
+    )}
+
     runHook postInstall
   '';
+
+  passthru = {
+    inherit testEntrypoints;
+  };
 
   meta = {
     description = "Self-hosted daemon for Claude Code, Codex, and OpenCode";
