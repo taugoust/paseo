@@ -141,7 +141,7 @@ buildNpmPackage rec {
     node pi-questionnaire-adapter.test.mjs "$PASEO_INSTALL" questionnaire-input.json
     cd "$PASEO_BUILD"
     node packages/server/node_modules/vitest/vitest.mjs run --no-file-parallelism --maxWorkers=1 --exclude "**/*.e2e.test.ts" src/server/agent/providers/pi/agent.test.ts src/server/agent/providers/pi/cli-runtime.test.ts src/server/agent/providers/pi/tool-result-images.test.ts src/server/agent/providers/pi/usage-lifecycle.test.ts -t "permission modes refresh live state|bridge state explicitly|bridge metadata is absent|auto-compaction|extension command|Pi extension errors|extension_error|questionnaire|idle usage|idle refresh|actual final usage|compact|compaction|configured RPC timeout|admission|human command|human input|Pi tool result|tool images|routes native subagent snapshots"
-    npm test --workspace=@getpaseo/builtin-plugins -- codex-usage-source/server
+    npm test --workspace=@getpaseo/builtin-plugins -- codex-usage-source/server claude-usage-source/server
     npm test --workspace=@getpaseo/plugin -- src/shared
     npm test --workspace=@getpaseo/app -- src/components/markdown/renderer.test.ts src/components/synced-loader-state.test.ts
     node packages/server/node_modules/vitest/vitest.mjs run --no-file-parallelism --maxWorkers=1 src/server/plugins/compiler.test.ts
