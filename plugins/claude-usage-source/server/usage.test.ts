@@ -1107,6 +1107,42 @@ it("session discovery reads only its Claude home and excludes foreign sessions",
   }
 });
 
+it("Pi sessions on claude-bridge use the Claude Code login from the session environment", async () => {
+  const home = mkdtempSync(join(tmpdir(), "claude-bridge-session-"));
+  try {
+    writeClaudeCredentials(home, "bridge-token");
+    const scope = {
+      kind: "session" as const,
+      provider: "pi",
+      model: "claude-bridge/claude-opus-5-5",
+      env: { HOME: home, CLAUDE_CONFIG_DIR: home },
+    };
+    const api: typeof fetch = async (_url, init) => {
+      expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer bridge-token");
+      return jsonResponse({
+        account: { uuid: "bridge-account", email: "bridge@example.test" },
+        organization: { uuid: "org" },
+      });
+    };
+    const lookup = { platform: "linux" as const, home: "/unused-default-home", env: {} };
+    expect(await discover(scope, lookup, api)).toEqual([
+      {
+        key: "bridge-account.org",
+        label: "bridge@example.test",
+        harness: "Claude",
+        input: credentialInput(home),
+      },
+    ]);
+    expect(
+      await discover({ ...scope, env: { ...scope.env, ANTHROPIC_BASE_URL: "https://other.test" } }, lookup, api),
+    ).toEqual([]);
+    expect(await discover({ ...scope, model: "openai/gpt-6-luna" }, lookup, api)).toEqual([]);
+    expect(await discover({ ...scope, provider: "omp" }, lookup, api)).toEqual([]);
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
 it("session Keychain input retains the selected config-directory locator through fetch", async () => {
   const reads: string[] = [];
   const scope = {

@@ -437,7 +437,12 @@ async function sessionRoutes(
   scope: Extract<UsageScope, { kind: "session" }>,
   lookup: ClaudeCredentialLookup,
 ): Promise<UsageInput[]> {
-  if (scope.provider === "claude") {
+  // pi-claude-bridge runs Pi turns through Claude Code with Pi's environment, so those sessions
+  // use the same login a Claude Code session with that environment would.
+  if (
+    scope.provider === "claude" ||
+    (scope.provider === "pi" && scope.model?.startsWith("claude-bridge/"))
+  ) {
     const env = scope.env;
     const foreign =
       env.ANTHROPIC_BASE_URL &&
