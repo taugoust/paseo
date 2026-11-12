@@ -549,8 +549,10 @@ export async function fetchUsage(
     });
     if (res.status === 401 || res.status === 403) return res.status;
     if (res.status === 429) {
-      const waitMs = retryAfterMs(res.headers.get("retry-after"), now);
-      if (waitMs !== null) rateLimitedUntil.set(tokenKey, now + waitMs);
+      // Without Retry-After, still wait before calling again: the limit is shared with Claude Code.
+      const waitMs =
+        retryAfterMs(res.headers.get("retry-after"), now) ?? DEFAULT_RATE_LIMIT_WAIT_MS;
+      rateLimitedUntil.set(tokenKey, now + waitMs);
       throw rateLimitedError(waitMs);
     }
     if (!res.ok) throw new Error(`Claude usage API returned ${res.status}`);
@@ -620,6 +622,7 @@ export async function fetchUsage(
 // A 429 from the usage endpoint carries Retry-After, observed in the tens of minutes. Until it
 // passes, a fetch (including a forced Refresh) answers from here instead of calling again.
 const rateLimitedUntil = new Map<string, number>();
+const DEFAULT_RATE_LIMIT_WAIT_MS = 300_000;
 
 function retryAfterMs(header: string | null, now: number): number | null {
   if (!header) return null;
@@ -629,9 +632,8 @@ function retryAfterMs(header: string | null, now: number): number | null {
   return Number.isNaN(at) ? null : Math.max(0, at - now);
 }
 
-function rateLimitedError(waitMs: number | null): Error {
-  const when = waitMs === null ? "later" : `in ${formatWait(waitMs)}`;
-  return new Error(`Rate limited by Claude. Try again ${when}.`);
+function rateLimitedError(waitMs: number): Error {
+  return new Error(`Rate limited by Claude. Try again in ${formatWait(waitMs)}.`);
 }
 
 function formatWait(ms: number): string {

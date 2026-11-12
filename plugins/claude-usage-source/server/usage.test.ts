@@ -1004,6 +1004,30 @@ it.each([
   },
 );
 
+it("waits five minutes after a rate limit without Retry-After", async () => {
+  let now = Date.parse("2026-10-04T21:00:00Z");
+  const lookup = { ...tokenLookup("rate-limited-no-header-token"), now: () => now };
+  const input = credentialInput(lookup.claudeHome);
+  let usageCalls = 0;
+  const api: typeof fetch = async () => {
+    usageCalls += 1;
+    if (usageCalls > 1) return jsonResponse(makeClaudeResponse());
+    return jsonResponse({ error: { type: "rate_limit_error", message: "Rate limited." } }, 429);
+  };
+
+  await expect(fetchUsage(input, api, lookup)).rejects.toThrow(
+    "Rate limited by Claude. Try again in 5m.",
+  );
+  now += 4 * 60_000;
+  await expect(fetchUsage(input, api, lookup)).rejects.toThrow(
+    "Rate limited by Claude. Try again in 1m.",
+  );
+  expect(usageCalls).toBe(1);
+  now += 60_000;
+  expect((await fetchUsage(input, api, lookup)).status).toBe("available");
+  expect(usageCalls).toBe(2);
+});
+
 it("says when a rate-limited login can retry and does not call the API before then", async () => {
   let now = Date.parse("2026-10-04T21:00:00Z");
   const lookup = { ...tokenLookup("rate-limited-token"), now: () => now };
