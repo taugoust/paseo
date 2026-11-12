@@ -326,6 +326,12 @@ type DeleteFencedAgentStorage = AgentStorage & {
   beginDelete(agentId: string): void;
 };
 
+function endAgentDeleteIfSupported(agentStorage: AgentStorage, agentId: string): void {
+  if ("endDelete" in agentStorage && typeof agentStorage.endDelete === "function") {
+    agentStorage.endDelete(agentId);
+  }
+}
+
 function beginAgentDeleteIfSupported(agentStorage: AgentStorage, agentId: string): void {
   if ("beginDelete" in agentStorage && typeof agentStorage.beginDelete === "function") {
     (agentStorage as DeleteFencedAgentStorage).beginDelete(agentId);
@@ -3380,6 +3386,22 @@ export class Session {
         { err: error, agentId },
         `Failed to close agent ${agentId} during delete`,
       );
+      // A live agent that could not be closed keeps its stored state; reporting the delete
+      // as done would leave a blank live entry with nothing behind it.
+      if (this.agentManager.getAgent(agentId)) {
+        endAgentDeleteIfSupported(this.agentStorage, agentId);
+        this.emit({
+          type: "rpc_error",
+          payload: {
+            requestId,
+            requestType: "delete_agent_request",
+            error: `Could not close agent ${agentId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        });
+        return;
+      }
     }
 
     // Drain queued persistence from the just-closed agent before removing its

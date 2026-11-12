@@ -269,6 +269,14 @@ export async function classifyBackgroundJobPane(
     !!owner && owner.startToken.endsWith(`:${token[1]}`) && !["Z", "X", "x"].includes(owner.state)
   );
 }
+/** Whether the tmux server with this identity (pid:start:inode) has verifiably exited. */
+async function serverConfirmedGone(serverId: string): Promise<boolean> {
+  const [pid, start] = serverId.split(":");
+  if (!pid || !/^\d+$/.test(pid) || !/^\d+$/.test(start ?? "")) return false;
+  const owner = await readPiProcessIdentity(pid);
+  const alive = owner && !["Z", "X", "x"].includes(owner.state);
+  return !(alive && owner.startToken.endsWith(`:${start}`));
+}
 export async function readSnapshot(
   socket: string,
   run: Run = runTmux,
@@ -1411,17 +1419,9 @@ export class TmuxTopology {
     try {
       after = await this.verify(before.socket, before.serverId);
     } catch (error) {
-      const [pid, start] = before.serverId.split(":");
-      const owner = pid && /^\d+$/.test(pid) ? await readPiProcessIdentity(pid) : undefined;
-      if (
-        !pid ||
-        !/^\d+$/.test(pid) ||
-        !/^\d+$/.test(start ?? "") ||
-        (owner && owner.startToken.endsWith(`:${start}`) && !["Z", "X", "x"].includes(owner.state))
-      )
-        throw error;
       // Only verified death of the old server permits an empty snapshot. A
       // socket error alone must not retire unrelated live panes.
+      if (!(await serverConfirmedGone(before.serverId))) throw error;
       after = { ...before, sessions: [], panes: [] };
     }
     await this.applySnapshot(after);
@@ -1501,7 +1501,24 @@ export class TmuxTopology {
       if (servers.size !== 1)
         throw new Error("Ambiguous tmux agent placement; refresh before closing the Pi tab");
       const p = [...servers.values()][0]!;
-      const snapshot = await this.verify(p.socket, p.serverId);
+      let snapshot: Snapshot;
+      try {
+        snapshot = await (this.options.snapshot ?? readSnapshot)(p.socket);
+      } catch (error) {
+        // Nothing answers on the socket and the agent's server has verifiably exited, so its
+        // pane is gone with it. Any other failure stays an uncertain close.
+        if (!(await serverConfirmedGone(p.serverId))) throw error;
+        for (const [key, value] of this.paneAgents)
+          if (value.agentId === agentId) this.paneAgents.delete(key);
+        this.retiredAgents.delete(agentId);
+        const gone = { socket: p.socket, serverId: p.serverId, sessions: [], panes: [] };
+        await this.applySnapshot(gone);
+        await this.persist();
+        return true;
+      }
+      // A different server on the same socket is a restart, not absence.
+      if (snapshot.serverId !== p.serverId)
+        throw new Error("Stale tmux server placement; refresh projects");
       const panes = new Set(
         snapshot.panes
           .filter((pane) => pane.agent && pane.agentId === agentId)

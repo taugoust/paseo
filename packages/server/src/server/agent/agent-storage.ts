@@ -212,6 +212,11 @@ export class AgentStorage {
     this.deleting.add(agentId);
   }
 
+  /** Lifts the write fence of a delete that was abandoned before removing anything. */
+  endDelete(agentId: string): void {
+    this.deleting.delete(agentId);
+  }
+
   async remove(agentId: string): Promise<void> {
     await this.load();
     this.beginDelete(agentId);

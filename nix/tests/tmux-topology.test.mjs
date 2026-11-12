@@ -1071,6 +1071,41 @@ test("Clara B->A same-pane ghost retires once, persisted restart and explicit cl
   assert.deepEqual(f.detaches, []);
 });
 
+test("closing an agent of an exited tmux server needs proof the server is gone", async (t) => {
+  // This test process stands in for a live tmux server; a free pid stands in for an exited one.
+  const stat = await fs.readFile("/proc/self/stat", "utf8");
+  const start = stat.slice(stat.lastIndexOf(")") + 2).split(" ")[19];
+  for (const [serverId, gone] of [
+    [`${process.pid}:${start}:456`, false],
+    ["4194301:123:456", true],
+  ]) {
+    const f = await fixture(t);
+    f.current.serverId = serverId;
+    f.current.panes[1].agentId = currentA;
+    const topology = f.topology;
+    await topology.start();
+    topology.stop();
+    const workspace = [...topology.placements.values()].find((p) => p.tmuxWindowId === "@2")
+      .workspaceId;
+    const live = f.options.snapshot;
+    f.options.snapshot = async () => {
+      throw new Error("no server running on /fake/socket");
+    };
+    try {
+      if (!gone) {
+        await assert.rejects(topology.closeAgent(currentA, workspace), /no server running/);
+        assert.deepEqual(await savedAgents(f), [currentA], "uncertain close kept the agent");
+      } else {
+        assert.equal(await topology.closeAgent(currentA, workspace), true);
+        assert.deepEqual(await savedAgents(f), [], "exited server's agent was retired");
+      }
+      assert.deepEqual(f.calls.filter(([, args]) => args[0] === "kill-pane"), []);
+    } finally {
+      f.options.snapshot = live;
+    }
+  }
+});
+
 test("metadata-only retirement probe handles known successor but never closes live, missing or unknown owners", async (t) => {
   const f = await ghostFixture(t);
   f.current.panes[1].agentId = ghostB;
