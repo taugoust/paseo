@@ -53,6 +53,8 @@
           license = (builtins.fromJSON (builtins.readFile ./package.json)).license;
         in
         {
+          # The package with its behavioral test suites, which the package itself skips.
+          paseo = packages.paseo.override { runTests = true; };
           license-metadata =
             assert packages.paseo.meta.license.spdxId == license;
             assert packages.desktop.meta.license.spdxId == license;
