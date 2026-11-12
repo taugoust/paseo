@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 const root = process.env.PASEO_SOURCE ?? fileURLToPath(new URL("../..", import.meta.url));
-const packageFilter = readFileSync(join(root, "nix/package.nix"), "utf8");
+const packageFilter = readFileSync(join(root, "nix/source-filter.nix"), "utf8");
 const expected = [
   "packages/server/src/server/agent/providers/pi/agent.test.ts",
   "packages/server/src/server/agent/providers/pi/cli-runtime.test.ts",
