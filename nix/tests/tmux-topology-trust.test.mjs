@@ -33,7 +33,8 @@ async function fixture(t) {
     panes: [],
   };
   const journal = path.join(home, "tmux-pending-trust.json");
-  const records = new Map(),
+  const projects = new Map(),
+    records = new Map(),
     writes = [],
     commands = [],
     instances = [];
@@ -58,7 +59,15 @@ async function fixture(t) {
     paseoHome: home,
     launchDirectory: path.join(home, "launches"),
     workspaceRegistry,
-    projectRegistry: { get: async () => null, upsert: async () => {}, archive: async () => {} },
+    // Keeps what the topology publishes: creating a window checks its project is registered.
+    projectRegistry: {
+      get: async (id) => projects.get(id) ?? null,
+      upsert: async (record) => void projects.set(record.projectId, structuredClone(record)),
+      archive: async (id, archivedAt) => {
+        const record = projects.get(id);
+        if (record) projects.set(id, { ...record, archivedAt });
+      },
+    },
     terminalManager: {
       createTerminal: async (input) => input,
       getTerminal: () => undefined,
