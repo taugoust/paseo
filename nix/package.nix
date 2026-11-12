@@ -2,6 +2,7 @@
   lib,
   stdenv,
   buildNpmPackage,
+  fetchNpmDeps,
   nodejs_22,
   python3,
   makeWrapper,
@@ -14,15 +15,29 @@
   # destructured from `buildNpmPackage`'s args, so `overrideAttrs` cannot reach it. The default
   # lives in a sidecar file so the CI auto-updater can replace it with a single file write.
   npmDepsHash ? lib.fileContents ./npm-deps.hash,
+  # The behavioral test suites. Off for the package itself so deploys only build; the flake's
+  # `checks.paseo` builds with them on.
+  runTests ? false,
 }:
 
 let
+  version = (builtins.fromJSON (builtins.readFile ../package.json)).version;
+  webUi = import ./web-ui.nix {
+    inherit
+      lib
+      buildNpmPackage
+      fetchNpmDeps
+      nodejs_22
+      npmDepsHash
+      version
+      ;
+  };
   testEntrypoints = import ./test-entrypoints.nix;
   procpsPath = lib.optionalString stdenv.hostPlatform.isLinux "--prefix PATH : ${procps}/bin";
 in
 buildNpmPackage rec {
   pname = "paseo";
-  version = (builtins.fromJSON (builtins.readFile ../package.json)).version;
+  inherit version;
 
   src = lib.cleanSourceWith {
     src = ./..;
@@ -63,7 +78,8 @@ buildNpmPackage rec {
   # checks after building the daemon workspaces. Live tmux integration belongs to the downstream
   # bridge/topology check, not this package's build or test dependencies.
   dontNpmBuild = true;
-  doCheck = true;
+  doCheck = runTests;
+  doInstallCheck = runTests;
 
   checkPhase = ''
     runHook preCheck
@@ -75,8 +91,6 @@ buildNpmPackage rec {
   # dependency patches explicitly, matching development and retaining parser fixes.
   preBuild = ''
     npm run postinstall
-    grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/src/index.ts
-    grep -F 'BottomSheetModalInternalProvider' node_modules/@gorhom/bottom-sheet/lib/module/index.js
   '';
 
   buildPhase = ''
@@ -89,7 +103,10 @@ buildNpmPackage rec {
 
     # Build all server packages in dependency order (defined in package.json)
     npm run build:server
-    npm run build:daemon-web-ui
+    # The web UI is its own derivation, rebuilt only when the app or its packages change.
+    mkdir -p packages/server/dist/server
+    cp -r ${webUi} packages/server/dist/server/web-ui
+    chmod -R u+w packages/server/dist/server/web-ui
 
     runHook postBuild
   '';
@@ -128,18 +145,23 @@ buildNpmPackage rec {
       ${procpsPath}
 
     bash nix/scripts/install-extras.sh "$out/lib/paseo"
+
+    runHook postInstall
+  '';
+
+  installCheckPhase = ''
+    runHook preInstallCheck
     ${lib.optionalString (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isx86_64) ''
       export HERMESC="$PWD/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc"
     ''}
     bash nix/scripts/install-checks.sh "$out" ${
       lib.escapeShellArgs (lib.mapAttrsToList (name: path: "${name}=${path}") testEntrypoints)
     }
-
-    runHook postInstall
+    runHook postInstallCheck
   '';
 
   passthru = {
-    inherit testEntrypoints;
+    inherit testEntrypoints webUi;
   };
 
   meta = {

@@ -61,7 +61,8 @@ async function compressFile(filePath) {
       createReadStream(filePath),
       createBrotliCompress({
         params: {
-          [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY,
+          // Quality 9 is about 25x faster than the maximum for ~12% larger files, served locally.
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 9,
         },
       }),
       createWriteStream(brotliPath),
