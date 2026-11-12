@@ -51,6 +51,9 @@ interface AgentReports {
   reports: Map<string, KnownReport>;
 }
 
+/** Failed fetches are retried sooner than successful ones, so a passing error doesn't linger. */
+const ERROR_TTL_MS = 60_000;
+
 /** Owns account identity, ordered logins for each account, and the five-minute fetch cache. */
 export class UsageSourceRegistry {
   private readonly sources = new Map<string, UsageSource>();
@@ -306,7 +309,7 @@ export class UsageSourceRegistry {
     // Account identity groups cards; the ordered login set identifies a fetch result.
     const cacheKey = cacheIdentity(id, known);
     const cached = this.cache.get(cacheKey);
-    if (!forceRefresh && cached && this.now() - cached.at < this.ttlMs)
+    if (!forceRefresh && cached && this.now() - cached.at < this.cacheTtl(cached.entry))
       return Promise.resolve(cached.entry);
     const pending = this.pending.get(cacheKey);
     if (pending) return pending;
@@ -352,9 +355,13 @@ export class UsageSourceRegistry {
   private writeCache(id: string, entry: UsageReportEntry): void {
     const at = this.now();
     for (const [cachedId, cached] of this.cache) {
-      if (at - cached.at >= this.ttlMs) this.cache.delete(cachedId);
+      if (at - cached.at >= this.cacheTtl(cached.entry)) this.cache.delete(cachedId);
     }
     this.cache.set(id, { at, entry });
+  }
+
+  private cacheTtl(entry: UsageReportEntry): number {
+    return entry.report.status === "error" ? Math.min(this.ttlMs, ERROR_TTL_MS) : this.ttlMs;
   }
 
   private async fetchBeforeDeadline(source: UsageSource, input: unknown): Promise<UsageReport> {

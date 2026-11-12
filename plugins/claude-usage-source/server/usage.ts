@@ -3,7 +3,7 @@ import type { UsageInput } from "../shared/input.js";
 import { execFile } from "node:child_process";
 import { existsSync, promises as fs } from "node:fs";
 import { homedir, userInfo } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { z } from "zod";
 import {
@@ -549,8 +549,10 @@ export async function fetchUsage(
     });
     if (res.status === 401 || res.status === 403) return res.status;
     if (res.status === 429) {
-      const waitMs = retryAfterMs(res.headers.get("retry-after"), now);
-      if (waitMs !== null) rateLimitedUntil.set(tokenKey, now + waitMs);
+      // Without Retry-After, still wait before calling again: the limit is shared with Claude Code.
+      const waitMs =
+        retryAfterMs(res.headers.get("retry-after"), now) ?? DEFAULT_RATE_LIMIT_WAIT_MS;
+      rateLimitedUntil.set(tokenKey, now + waitMs);
       throw rateLimitedError(waitMs);
     }
     if (!res.ok) throw new Error(`Claude usage API returned ${res.status}`);
@@ -581,7 +583,20 @@ export async function fetchUsage(
 
   const { oauth } = credentials;
   const plan = buildClaudePlan(oauth.subscriptionType, oauth.rateLimitTier);
-  const resp = await callClaudeApi(oauth.accessToken, (credentialLookup.now ?? Date.now)());
+  let resp: ClaudeUsageResponse | number;
+  try {
+    resp = await callClaudeApi(oauth.accessToken, (credentialLookup.now ?? Date.now)());
+  } catch (error) {
+    // The usage endpoint's limit is shared with Claude Code and often exhausted. Fall back to
+    // the limits pi-claude-bridge saw on its own Claude responses for this login.
+    if (!(error instanceof RateLimitedError)) throw error;
+    const configDir = claudeConfigDir(input, credentialLookup);
+    const bridge = configDir
+      ? await readBridgeRateLimits(configDir, (credentialLookup.now ?? Date.now)())
+      : null;
+    if (!bridge) throw error;
+    return { status: "available", planLabel: plan ?? undefined, ...bridge, balances: [] };
+  }
 
   if (typeof resp === "number") return unavailable({ kind: "rejected", status: resp, refreshedBy });
 
@@ -620,6 +635,7 @@ export async function fetchUsage(
 // A 429 from the usage endpoint carries Retry-After, observed in the tens of minutes. Until it
 // passes, a fetch (including a forced Refresh) answers from here instead of calling again.
 const rateLimitedUntil = new Map<string, number>();
+const DEFAULT_RATE_LIMIT_WAIT_MS = 300_000;
 
 function retryAfterMs(header: string | null, now: number): number | null {
   if (!header) return null;
@@ -629,9 +645,92 @@ function retryAfterMs(header: string | null, now: number): number | null {
   return Number.isNaN(at) ? null : Math.max(0, at - now);
 }
 
-function rateLimitedError(waitMs: number | null): Error {
-  const when = waitMs === null ? "later" : `in ${formatWait(waitMs)}`;
-  return new Error(`Rate limited by Claude. Try again ${when}.`);
+class RateLimitedError extends Error {}
+
+function rateLimitedError(waitMs: number): Error {
+  return new RateLimitedError(`Rate limited by Claude. Try again in ${formatWait(waitMs)}.`);
+}
+
+/** The Claude config directory a login lives in, when the route identifies one. */
+function claudeConfigDir(input: UsageInput, lookup: ClaudeCredentialLookup): string | null {
+  if (input.route.store === "claude") return dirname(input.route.path);
+  if (input.route.store !== "keychain") return null;
+  const env = lookup.env ?? process.env;
+  return lookup.claudeHome ?? env.CLAUDE_CONFIG_DIR ?? join(lookup.home ?? homedir(), ".claude");
+}
+
+// pi-claude-bridge records the rate_limit_event Claude Code reports on every response here,
+// one entry per limit type. utilization is a fraction and resetsAt is in Unix seconds.
+export const BRIDGE_RATE_LIMITS_FILE = "pi-claude-bridge-rate-limits.json";
+const BRIDGE_MAX_AGE_MS = 6 * 3_600_000;
+const BridgeLimitSchema = z.object({
+  utilization: z.number().finite().optional(),
+  resetsAt: z.number().finite().optional(),
+  observedAt: z.string(),
+});
+const BridgeRateLimitsSchema = z.object({
+  version: z.literal(1),
+  limits: z.record(z.string(), BridgeLimitSchema),
+});
+type BridgeWindow = { type: string; id: string; label: string; shortLabel: string };
+const BRIDGE_WINDOWS: ReadonlyArray<BridgeWindow> = [
+  { type: "five_hour", id: "five_hour", label: "Session", shortLabel: "5h" },
+  { type: "seven_day", id: "weekly", label: "Weekly", shortLabel: "wk" },
+  { type: "seven_day_opus", id: "weekly_opus", label: "Weekly \u00b7 Opus", shortLabel: "wk Opus" },
+  {
+    type: "seven_day_sonnet",
+    id: "weekly_sonnet",
+    label: "Weekly \u00b7 Sonnet",
+    shortLabel: "wk Sonnet",
+  },
+];
+
+export async function readBridgeRateLimits(
+  configDir: string,
+  now: number,
+): Promise<{ windows: UsageWindow[]; details: UsageDetail[] } | null> {
+  let parsed: z.infer<typeof BridgeRateLimitsSchema>;
+  try {
+    const text = await fs.readFile(join(configDir, BRIDGE_RATE_LIMITS_FILE), "utf8");
+    parsed = BridgeRateLimitsSchema.parse(JSON.parse(text));
+  } catch {
+    return null;
+  }
+  const windows: UsageWindow[] = [];
+  let newest = 0;
+  for (const spec of BRIDGE_WINDOWS) {
+    const limit = parsed.limits[spec.type];
+    if (!limit || limit.utilization === undefined) continue;
+    const observedAt = Date.parse(limit.observedAt);
+    if (!Number.isFinite(observedAt) || now - observedAt > BRIDGE_MAX_AGE_MS) continue;
+    // A window that has reset since the reading says nothing about usage now.
+    if (limit.resetsAt !== undefined && limit.resetsAt * 1000 <= now) continue;
+    const usedPct = Math.round(limit.utilization * 1000) / 10;
+    newest = Math.max(newest, observedAt);
+    windows.push(
+      windowFromUsedPct({
+        id: spec.id,
+        label: spec.label,
+        shortLabel: spec.shortLabel,
+        summary: spec.type === "five_hour" || spec.type === "seven_day",
+        utilizationPct: usedPct,
+        resetsAt:
+          limit.resetsAt === undefined ? null : new Date(limit.resetsAt * 1000).toISOString(),
+        tone: toneFromUsedPct(usedPct),
+      }),
+    );
+  }
+  if (windows.length === 0) return null;
+  return {
+    windows,
+    details: [
+      {
+        id: "source",
+        label: "Source",
+        value: `Claude Code responses, ${new Date(newest).toISOString()}`,
+      },
+    ],
+  };
 }
 
 function formatWait(ms: number): string {

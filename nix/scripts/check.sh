@@ -84,4 +84,4 @@ npm test --workspace=@getpaseo/builtin-plugins -- \
 npm test --workspace=@getpaseo/plugin -- src/shared
 npm test --workspace=@getpaseo/app -- \
   src/components/markdown/renderer.test.ts src/components/synced-loader-state.test.ts
-vitest src/server/plugins/compiler.test.ts
+vitest src/server/plugins/compiler.test.ts src/server/plugins/usage-sources/index.test.ts

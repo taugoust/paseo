@@ -134,6 +134,11 @@ test("coalesces per account, caches errors, and refreshes only requested IDs", a
   expect(refreshed[0]?.fetchedAt).not.toBe(first[0]?.fetchedAt);
   expect(counts.get("a")).toBe(2);
   expect(counts.get("b")).toBe(1);
+  // An error is cached for a minute, a success for the full five.
+  now = 61_000;
+  await registry.listReports();
+  expect(counts.get("a")).toBe(2);
+  expect(counts.get("b")).toBe(2);
   now = 301_001;
   await registry.listReports({ reportIds: ["source:a"] });
   expect(counts.get("a")).toBe(3);

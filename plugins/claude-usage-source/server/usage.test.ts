@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchUsage, discover } from "./usage.js";
+import { BRIDGE_RATE_LIMITS_FILE, fetchUsage, discover } from "./usage.js";
 import { inputSchema, type UsageInput } from "../shared/input.js";
 import { hashAccountKey, type UsageReport } from "@getpaseo/plugin/server/usage";
 
@@ -1003,6 +1003,65 @@ it.each([
     await expect(fetchUsage(accounts[0]!.input as UsageInput, api, lookup)).rejects.toThrow(error);
   },
 );
+
+it("falls back to what pi-claude-bridge saw when the endpoint is rate limited", async () => {
+  const now = Date.parse("2026-10-04T21:00:00Z");
+  const lookup = { ...tokenLookup("bridge-fallback-token"), now: () => now };
+  const input = credentialInput(lookup.claudeHome);
+  const seconds = (ms: number) => Math.floor(ms / 1000);
+  const file = join(lookup.claudeHome, BRIDGE_RATE_LIMITS_FILE);
+  const write = (limits: Record<string, unknown>) =>
+    writeFileSync(file, JSON.stringify({ version: 1, limits }));
+  const seen = (utilization: number, resetsIn: number, ago: number) => ({
+    utilization,
+    resetsAt: seconds(now + resetsIn),
+    observedAt: new Date(now - ago).toISOString(),
+  });
+  // The weekly window reset since it was seen, so it no longer says anything.
+  write({ five_hour: seen(0.42, 3_600_000, 60_000), seven_day: seen(0.9, -60_000, 7_200_000) });
+  let usageCalls = 0;
+  const api: typeof fetch = async () => {
+    usageCalls += 1;
+    return jsonResponse({ error: { type: "rate_limit_error" } }, 429, { "Retry-After": "60" });
+  };
+
+  const report = await fetchUsage(input, api, lookup);
+  expect(report.status).toBe("available");
+  if (report.status !== "available") return;
+  expect(report.windows.map((window) => window.id)).toEqual(["five_hour"]);
+  expect(report.windows[0]).toMatchObject({ label: "Session" });
+  expect(JSON.stringify(report.windows[0])).toContain("42");
+  expect(report.details[0]).toMatchObject({ id: "source" });
+
+  // Too old to trust: the rate limit error comes through.
+  write({ five_hour: seen(0.42, 3_600_000, 7 * 3_600_000) });
+  await expect(fetchUsage(input, api, lookup)).rejects.toThrow("Rate limited by Claude");
+  expect(usageCalls).toBe(1);
+});
+
+it("waits five minutes after a rate limit without Retry-After", async () => {
+  let now = Date.parse("2026-10-04T21:00:00Z");
+  const lookup = { ...tokenLookup("rate-limited-no-header-token"), now: () => now };
+  const input = credentialInput(lookup.claudeHome);
+  let usageCalls = 0;
+  const api: typeof fetch = async () => {
+    usageCalls += 1;
+    if (usageCalls > 1) return jsonResponse(makeClaudeResponse());
+    return jsonResponse({ error: { type: "rate_limit_error", message: "Rate limited." } }, 429);
+  };
+
+  await expect(fetchUsage(input, api, lookup)).rejects.toThrow(
+    "Rate limited by Claude. Try again in 5m.",
+  );
+  now += 4 * 60_000;
+  await expect(fetchUsage(input, api, lookup)).rejects.toThrow(
+    "Rate limited by Claude. Try again in 1m.",
+  );
+  expect(usageCalls).toBe(1);
+  now += 60_000;
+  expect((await fetchUsage(input, api, lookup)).status).toBe("available");
+  expect(usageCalls).toBe(2);
+});
 
 it("says when a rate-limited login can retry and does not call the API before then", async () => {
   let now = Date.parse("2026-10-04T21:00:00Z");
