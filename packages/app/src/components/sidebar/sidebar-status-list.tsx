@@ -40,7 +40,7 @@ import {
   CircleX,
 } from "lucide-react-native";
 import { useToast } from "@/contexts/toast-context";
-import { WorkspaceRenameModal } from "@/components/workspace-rename-modal";
+import { useSidebarWorkspaceRename } from "@/workspace-rename";
 import { useWorkspaceClipboardActions } from "@/hooks/use-workspace-clipboard-actions";
 import { redirectIfArchivingActiveWorkspace } from "@/utils/sidebar-workspace-archive-redirect";
 import { useWorkspaceArchive } from "@/workspace/use-workspace-archive";
@@ -637,7 +637,7 @@ function StatusWorkspaceRowWithMenu({
   const { t } = useTranslation();
   const toast = useToast();
   const [isHidingWorkspace, setIsHidingWorkspace] = useState(false);
-  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const rename = useSidebarWorkspaceRename(workspace);
   const isArchiving = workspace.archivingAt !== null || isHidingWorkspace;
 
   const redirectAfterArchive = useCallback(() => {
@@ -674,8 +674,6 @@ function StatusWorkspaceRowWithMenu({
     clipboard.copyBranchName(workspace);
   }, [clipboard, workspace]);
 
-  const handleOpenRename = useCallback(() => setIsRenameOpen(true), []);
-  const handleCloseRename = useCallback(() => setIsRenameOpen(false), []);
   const isPinned = workspace.pinnedAt != null;
   const handleTogglePin = useCallback(() => {
     onToggleWorkspacePin(workspace);
@@ -728,7 +726,8 @@ function StatusWorkspaceRowWithMenu({
         onArchive={handleArchive}
         onCopyBranchName={workspace.projectKind === "git" ? handleCopyBranchName : undefined}
         onCopyPath={handleCopyPath}
-        onRename={handleOpenRename}
+        onRename={rename.begin}
+        titleEditor={rename.titleEditor}
         onMarkAsRead={hasClearableAttention ? handleMarkAsRead : undefined}
         onMarkAsUnread={canMarkUnread ? handleMarkAsUnread : undefined}
         archiveShortcutKeys={selected ? archiveShortcutKeys : null}
@@ -740,12 +739,7 @@ function StatusWorkspaceRowWithMenu({
         isDragging={isDragging}
         dragHandleProps={dragHandleProps}
       />
-      <WorkspaceRenameModal
-        visible={isRenameOpen}
-        workspace={workspace}
-        onClose={handleCloseRename}
-        testID={`sidebar-workspace-rename-modal-${workspace.workspaceKey}`}
-      />
+      {rename.modal}
     </>
   );
 }
@@ -767,6 +761,8 @@ interface StatusWorkspaceRowInnerProps {
   onCopyBranchName?: () => void;
   onCopyPath?: () => void;
   onRename?: () => void;
+  /** Present while the row is renamed in place: the row stops pressing, dragging and hovering. */
+  titleEditor?: ReactNode;
   onMarkAsRead?: () => void;
   onMarkAsUnread?: () => void;
   archiveShortcutKeys?: ShortcutKey[][] | null;
@@ -814,6 +810,7 @@ function StatusWorkspaceRowInnerContent({
   onCopyBranchName,
   onCopyPath,
   onRename,
+  titleEditor = null,
   onMarkAsRead,
   onMarkAsUnread,
   archiveShortcutKeys,
@@ -842,6 +839,7 @@ function StatusWorkspaceRowInnerContent({
   const serviceSummary = isDesktop ? selectWorkspaceServiceSummary(workspace.scripts) : null;
 
   const accessibilityState = useMemo(() => ({ selected }), [selected]);
+  const isEditingTitle = titleEditor !== null;
   const didLongPressRef = dragInteraction?.didLongPressRef;
   const startDragPress = dragInteraction?.handlePressIn;
   const moveDragPress = dragInteraction?.handleTouchMove;
@@ -866,12 +864,17 @@ function StatusWorkspaceRowInnerContent({
   }, [endDragPress]);
 
   return (
-    <SidebarWorkspaceRowFrame workspace={workspace} isDragging={isDragging}>
+    <SidebarWorkspaceRowFrame
+      workspace={workspace}
+      isDragging={isDragging}
+      isEditingTitle={isEditingTitle}
+    >
       {({ isHovered, contextMenuOpen, onContextMenuOpenChange, hoverHandlers }) => {
         const showShortcut = showShortcutBadge && shortcutNumber !== null;
         const {
           trailingPresentation,
           showKebab: showKebabInSlot,
+          showArchiveButton,
           showScrim,
           renderSlot,
           reserveSlotWidth,
@@ -894,7 +897,7 @@ function StatusWorkspaceRowInnerContent({
         return (
           <View
             {...dragAttributes}
-            {...dragHandleProps?.listeners}
+            {...(isEditingTitle ? null : dragHandleProps?.listeners)}
             ref={dragHandleProps?.setActivatorNodeRef as unknown as Ref<View>}
             style={styles.workspaceRowContainer}
             {...hoverHandlers}
@@ -921,14 +924,15 @@ function StatusWorkspaceRowInnerContent({
               onTogglePin={onTogglePin}
               openInFileManagerPath={workspace.workspaceDirectory}
               disabled={isArchiving}
+              enabled={!isEditingTitle}
               accessibilityRole="button"
               accessibilityState={accessibilityState}
               style={workspaceRowStyle}
               highlightStyle={styles.workspaceRowPressed}
-              onPressIn={handlePressIn}
-              onTouchMove={moveDragPress}
-              onPressOut={handlePressOut}
-              onPress={handlePress}
+              onPressIn={isEditingTitle ? undefined : handlePressIn}
+              onTouchMove={isEditingTitle ? undefined : moveDragPress}
+              onPressOut={isEditingTitle ? undefined : handlePressOut}
+              onPress={isEditingTitle ? undefined : handlePress}
               testID={`sidebar-workspace-row-${workspace.workspaceKey}`}
             >
               <SidebarWorkspaceRowContent
@@ -943,6 +947,7 @@ function StatusWorkspaceRowInnerContent({
                 shortcutNumber={shortcutNumber}
                 showShortcutBadge={showShortcutBadge}
                 reserveIdleStatusIndicatorSpace={reserveIdleStatusIndicatorSpace}
+                titleEditor={titleEditor}
               >
                 {renderSlot ? (
                   <StatusWorkspaceActionSlot
@@ -951,6 +956,7 @@ function StatusWorkspaceRowInnerContent({
                     trailing={trailing}
                     trailingPresentation={trailingPresentation}
                     showKebab={showKebabInSlot}
+                    showArchiveButton={showArchiveButton}
                     showScrim={showScrim}
                     reserveSlotWidth={reserveSlotWidth}
                     isPinned={isPinned}
@@ -982,6 +988,7 @@ function StatusWorkspaceActionSlot({
   trailing,
   trailingPresentation,
   showKebab,
+  showArchiveButton,
   showScrim,
   reserveSlotWidth,
   isPinned,
@@ -1002,6 +1009,7 @@ function StatusWorkspaceActionSlot({
   trailing: SidebarWorkspaceTrailing;
   trailingPresentation: SidebarWorkspaceTrailingPresentation;
   showKebab: boolean;
+  showArchiveButton: boolean;
   showScrim: boolean;
   reserveSlotWidth: boolean;
   isPinned?: boolean;
@@ -1026,6 +1034,8 @@ function StatusWorkspaceActionSlot({
       <SidebarWorkspaceTrailingActionOverlay
         visible={kebab.showKebab}
         scrimBackdrop={showScrim ? backdrop : undefined}
+        workspaceKey={workspace.workspaceKey}
+        onArchiveButtonPress={showArchiveButton ? onArchive : undefined}
       >
         {kebab.showKebab && onArchive ? (
           <SidebarWorkspaceMenu
