@@ -6,6 +6,15 @@ import { projectSubagentToolPresentation } from "./presentation.js";
 import type { PiExtension, PiExtensionToolCall, PiExtensionToolMapping } from "../contract.js";
 import { createNativeSubagentMapper } from "./native-subagent-links.js";
 
+const Args = z
+  .object({
+    agent: z.string().trim().min(1).optional(),
+    task: z.string().trim().min(1).optional(),
+    async: z.boolean().optional(),
+    action: z.unknown().optional(),
+    message: z.string().optional(),
+  })
+  .passthrough();
 const Row = z
   .object({
     index: z.number().int().nonnegative().optional(),
@@ -66,6 +75,13 @@ export const piSubagents: PiExtension = {
     const callsByRun = new Map<string, string>();
     const readSessions = new Set<string>();
     const mapNativeRuntimeNotification = createNativeSubagentMapper(readSessions);
+    // Pi resumes append to the source transcript, but each attempt has its own timeline reader.
+    const rememberSession = (id: string, file: string) => {
+      const key = JSON.stringify([id, file]);
+      if (readSessions.has(key)) return false;
+      readSessions.add(key);
+      return true;
+    };
     /** Keyed by async directory, which both status.json and the completion notice carry. */
     const asyncRuns = new Map<string, { owner: string; polling: boolean }>();
     const rememberAsyncRun = (details: z.infer<typeof Details>, call: PiExtensionToolCall) => {
@@ -94,8 +110,7 @@ export const piSubagents: PiExtension = {
               ? "failed"
               : "completed",
         });
-        if (row.sessionFile && !readSessions.has(row.sessionFile)) {
-          readSessions.add(row.sessionFile);
+        if (row.sessionFile && rememberSession(id, row.sessionFile)) {
           childSessions.push({ id, file: row.sessionFile });
         }
       }
@@ -118,7 +133,40 @@ export const piSubagents: PiExtension = {
       }
       return subagents.length ? { subagents, childSessions } : undefined;
     };
+    const mapResume = (call: PiExtensionToolCall, description?: string) => {
+      // A resume can reject or only reattach to existing work. Declare a new attempt only once
+      // Pi confirms it launched an async single run; its new directory owns all later signals.
+      if (call.status !== "completed") return undefined;
+      const details = Details.safeParse(
+        typeof call.result === "object" ? call.result?.details : null,
+      );
+      if (
+        !details.success ||
+        details.data.mode !== "single" ||
+        !details.data.asyncId ||
+        !details.data.asyncDir ||
+        details.data.results.length !== 0
+      )
+        return undefined;
+      callsByRun.set(details.data.runId ?? details.data.asyncId, call.callId);
+      rememberAsyncRun(details.data, call);
+      return {
+        subagents: [
+          {
+            type: "upsert" as const,
+            id: call.callId,
+            title: "Subagent",
+            description,
+            toolCallId: call.callId,
+            status: "running" as const,
+          },
+        ],
+      };
+    };
     const mapSpawn = (call: PiExtensionToolCall) => {
+      const resume = Args.safeParse(call.args);
+      if (resume.success && resume.data.action === "resume")
+        return mapResume(call, resume.data.message ?? resume.data.task);
       const projected = projectSubagentToolPresentation(call);
       if (!projected || projected.managed) return undefined;
       const args = { data: projected.args };
@@ -200,8 +248,7 @@ export const piSubagents: PiExtension = {
           }
           const file = owner ? line.match(/^Session file: (.+)$/)?.[1] : undefined;
           if (!owner || !file) continue;
-          if (!readSessions.has(file)) {
-            readSessions.add(file);
+          if (rememberSession(owner, file)) {
             childSessions.push({ id: owner, file });
           }
           owner = undefined;
@@ -226,8 +273,7 @@ export const piSubagents: PiExtension = {
             const id = parsed.data.steps.length === 1 ? run.owner : `${run.owner}:${index}`;
             const status = asyncChildStatus(parsed.data.state, step.status);
             subagents.push({ type: "upsert", id, title: step.agent, status });
-            if (step.sessionFile && !readSessions.has(step.sessionFile)) {
-              readSessions.add(step.sessionFile);
+            if (step.sessionFile && rememberSession(id, step.sessionFile)) {
               childSessions.push({ id, file: step.sessionFile });
             }
           }

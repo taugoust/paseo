@@ -168,6 +168,7 @@ test("live agent snapshot projection clears badge attention only for exact manag
   const { agent } = await fixture(t);
   const session = Object.create(Session.prototype);
   session.agentStorage = { get: async () => null };
+  session.agentManager = { getAgentBackgroundWorkSummary: () => undefined };
   const child = attentionSnapshot(agent.persistence.nativeHandle);
   const parent = attentionSnapshot(agent.persistence.nativeHandle, { id: "agent-parent" });
   const projectedChild = await session.enrichAgentPayload(child);
@@ -189,7 +190,7 @@ test("persisted agent list projection removes stale child badge without mutating
   const record = { id: agent.id, provider: "pi", internal: false, archivedAt: null };
   const payload = attentionSnapshot(agent.persistence.nativeHandle);
   session.agentDirectory = { list: async () => [payload] };
-  session.agentManager = { listAgents: () => [] };
+  session.agentManager = { listAgents: () => [], getAgentBackgroundWorkSummary: () => undefined };
   session.agentStorage = { list: async () => [record] };
   session.providerSnapshotManager = { listRegisteredProviderIds: () => new Set(["pi"]) };
   session.isProviderVisibleToClient = () => true;
@@ -244,7 +245,11 @@ test("persisted agent list projection removes stale child badge without mutating
         },
       ],
     },
-    workspaceRegistry: { list: async () => [workspace] },
+    workspaceRegistry: {
+      list: async () => [workspace],
+      listActive: async () => [workspace],
+      get: async (id) => (id === workspace.workspaceId ? workspace : null),
+    },
     listAgentPayloads: async () => [listed],
     workspaceLastUserMessageTimes: async () => new Map(),
     listProviderSubagentActivity: async () => [],

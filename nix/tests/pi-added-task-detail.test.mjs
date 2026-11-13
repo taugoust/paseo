@@ -89,6 +89,8 @@ function mountCard(initialProps) {
       ],
       useMemo: (fn) => fn(),
       useCallback: (fn) => fn,
+      // Outside a timeline row, the real hook applies the change in place.
+      useDisclosureHold: () => (apply) => apply(),
       View: "View",
       Text: "Text",
       TaskListRow: "TaskListRow",

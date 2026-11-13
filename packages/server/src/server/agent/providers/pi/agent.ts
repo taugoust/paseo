@@ -3,15 +3,16 @@ import { nativeToolErrorText } from "./native-tool-error.js";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join, resolve as resolvePath } from "node:path";
+import { basename, join, resolve as resolvePath } from "node:path";
 import type { Logger } from "pino";
 import stripAnsi from "strip-ansi";
 import { z } from "zod";
+import type { ProviderOptions } from "@getpaseo/protocol/agent-types";
 
 import {
   type AgentCapabilityFlags,
   type AgentClient,
-  type AgentFeature,
+  type AgentDraftControls,
   type AgentLaunchContext,
   type AgentMetadata,
   type AgentMode,
@@ -23,9 +24,11 @@ import {
   type AgentPersistenceHandle,
   type AgentPromptInput,
   type AgentProvider,
+  type AgentResumeSessionOptions,
   type AgentRunOptions,
   type AgentRunResult,
   type AgentRuntimeInfo,
+  type AgentOptionControl,
   type AgentSelectOption,
   type AgentSession,
   type AgentSessionConfig,
@@ -77,8 +80,13 @@ import {
   type PiExtensionEventOutput,
 } from "./extensions/index.js";
 import { NATIVE_SUBAGENTS_PREFIX } from "./extensions/pi-subagents/native-subagent-links.js";
+import { resolveResumeProcessCwd } from "../resume-process-cwd.js";
 import { revertPiConversation } from "./rewind.js";
-import { listPiImportableSessions, readPiImportSessionConfig } from "./session-descriptor.js";
+import {
+  copyPiSessionFileWithCwd,
+  listPiImportableSessions,
+  readPiImportSessionConfig,
+} from "./session-descriptor.js";
 import type { PiRuntime, PiRuntimeSession, PiStartSessionInput } from "./runtime.js";
 import type {
   PiAgentSessionEvent,
@@ -119,6 +127,60 @@ const DEFAULT_PI_EXTENSION_RESULT_TIMEOUT_MS = 30_000;
 const DEFAULT_PI_RPC_TIMEOUT_MS = 60_000;
 const QUESTION_RESPONSE_HEADER = "Response";
 
+/** A setting the Pi process reports through `get_pi_features`. */
+type PiNativeFeature =
+  | { id: "fast_mode"; type: "toggle"; label: string; icon: string; value: boolean }
+  | {
+      id: "review_edits";
+      type: "select";
+      label: string;
+      icon: string;
+      value: "on" | "off";
+      options: Array<{ id: "on" | "off"; label: string }>;
+    };
+
+function validPiNativeFeatures(value: unknown): PiNativeFeature[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item: unknown): item is PiNativeFeature => {
+    if (
+      !isRecord(item) ||
+      typeof item.label !== "string" ||
+      typeof item.icon !== "string" ||
+      !["zap", "shield-check"].includes(item.icon)
+    )
+      return false;
+    if (item.id === "fast_mode") return item.type === "toggle" && typeof item.value === "boolean";
+    if (
+      item.id !== "review_edits" ||
+      item.type !== "select" ||
+      typeof item.value !== "string" ||
+      !["on", "off"].includes(item.value) ||
+      !Array.isArray(item.options) ||
+      item.options.length !== 2
+    )
+      return false;
+    return item.options.every(
+      (option: unknown) =>
+        isRecord(option) &&
+        typeof option.id === "string" &&
+        ["on", "off"].includes(option.id) &&
+        typeof option.label === "string",
+    );
+  });
+}
+
+function piFeatureControl(feature: PiNativeFeature): AgentOptionControl {
+  if (feature.type === "toggle")
+    return { type: "toggle", key: feature.id, label: feature.label, icon: feature.icon };
+  return {
+    type: "select",
+    key: feature.id,
+    label: feature.label,
+    icon: feature.icon,
+    choices: feature.options.map((option) => ({ value: option.id, label: option.label })),
+  };
+}
+
 export const PiProviderOptionsSchema = z
   .object({
     independentHistoryId: z
@@ -128,6 +190,9 @@ export const PiProviderOptionsSchema = z
     sessionDir: z.string().min(1).optional(),
     rpcTimeoutMs: z.number().int().positive().default(DEFAULT_PI_RPC_TIMEOUT_MS),
     extensionTimeoutMs: z.number().int().positive().default(DEFAULT_PI_EXTENSION_RESULT_TIMEOUT_MS),
+    // Composer controls. Pi owns their values; these mirror what Pi last reported.
+    fast_mode: z.boolean().optional(),
+    review_edits: z.enum(["on", "off"]).optional(),
   })
   .strict();
 
@@ -257,7 +322,9 @@ interface PiRpcAgentSessionOptions {
   initialState: PiSessionState;
   capabilities: AgentCapabilityFlags;
   currentModeId?: string | null;
+  persistedSessionFile?: string;
   cleanup?: () => void;
+  closeAfterHistory?: boolean;
   extensionTimeoutMs?: number;
   logger: Logger;
   usagePollScheduler?: PiUsagePollScheduler;
@@ -504,13 +571,14 @@ function buildResumeConfig(
 
 function buildResumeStartInput(input: {
   resumeConfig: PiResumeConfig;
+  processCwd: string;
   sessionFile: string;
   launchContext: AgentLaunchContext | undefined;
   mcpConfigFile: PiTempFile | null;
   paseoExtension: PiTempFile | null;
 }): PiStartSessionInput {
   return {
-    cwd: input.resumeConfig.cwd,
+    cwd: input.processCwd,
     env: input.launchContext?.env,
     session: input.sessionFile,
     thinkingOptionId: normalizePiThinkingOption(input.resumeConfig.thinkingOptionId) ?? undefined,
@@ -630,6 +698,19 @@ function createPiMcpConfigFile(
   };
 }
 
+async function createPiSessionCopy(sessionFile: string, cwd: string): Promise<PiTempFile> {
+  const dir = mkdtempSync(join(tmpdir(), "paseo-pi-session-"));
+  const cleanup = () => rmSync(dir, { recursive: true, force: true });
+  const filePath = join(dir, basename(sessionFile));
+  try {
+    await copyPiSessionFileWithCwd({ sourceFile: sessionFile, targetFile: filePath, cwd });
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
+  return { path: filePath, cleanup };
+}
+
 function createPiPaseoExtensionFile({
   systemPrompt,
   mcpServers = {},
@@ -678,8 +759,6 @@ function createPiPaseoExtensionFile({
 	        requestId,
 	        // Rewind targets: rows can still show entries that a rewind or compaction left off the branch.
 	        treeEntries: toCapturedUserEntries(ctx.sessionManager.getEntries()),
-	        // The entries getMessages() replays, so the nth one is the nth replayed user message.
-	        contextEntries: toCapturedUserEntries(ctx.sessionManager.buildContextEntries()),
 	      }),
 	    "info",
 	  );
@@ -1211,7 +1290,6 @@ export class PiRpcAgentSession implements AgentSession {
   private readonly pendingPromptResults = new Map<string, boolean>();
   private readonly pendingSteerSubmissions: PiPendingSteerSubmission[] = [];
   currentLeafOverrideId: string | null | undefined;
-  private readonly contextUserEntries: PiCapturedEntry[] = [];
   private readonly treeUserEntriesById = new Map<string, PiCapturedEntry>();
   private readonly pendingExtensionResults = new Map<string, PendingExtensionResult>();
   private compactionPromise: Promise<void> | null = null;
@@ -1221,41 +1299,16 @@ export class PiRpcAgentSession implements AgentSession {
   private commandCache: AgentSlashCommand[] | null = null;
   private state: PiSessionState;
   private currentModeId: string | null;
-  private nativeFeatures: AgentFeature[] = [];
-  get features(): AgentFeature[] {
-    return this.nativeFeatures.map((feature) => ({ ...feature }));
+  /** Settings the Pi process owns, shown as composer controls. Pi's value is the truth. */
+  private nativeFeatures: PiNativeFeature[] = [];
+  get controls(): AgentOptionControl[] {
+    return this.nativeFeatures.map(piFeatureControl);
   }
 
-  private validNativeFeatures(value: unknown): AgentFeature[] {
-    if (!Array.isArray(value)) return [];
-    return value.filter((item: unknown): item is AgentFeature => {
-      if (
-        !isRecord(item) ||
-        typeof item.label !== "string" ||
-        typeof item.icon !== "string" ||
-        !["zap", "shield-check"].includes(item.icon)
-      )
-        return false;
-      if (item.id === "fast_mode") return item.type === "toggle" && typeof item.value === "boolean";
-      if (
-        item.id !== "review_edits" ||
-        item.type !== "select" ||
-        typeof item.value !== "string" ||
-        !["on", "off"].includes(item.value) ||
-        !Array.isArray(item.options) ||
-        item.options.length !== 2
-      )
-        return false;
-      return item.options.every(
-        (option: unknown) =>
-          isRecord(option) &&
-          typeof option.id === "string" &&
-          ["on", "off"].includes(option.id) &&
-          typeof option.label === "string",
-      );
-    });
-  }
-
+  /**
+   * Reads Pi's settings. Returns whether the set of controls changed. When Pi's values differ
+   * from the agent's stored options, the stored options follow Pi and Paseo is told.
+   */
   private async readNativeFeatures(): Promise<boolean> {
     const before = JSON.stringify(this.nativeFeatures);
     try {
@@ -1264,15 +1317,46 @@ export class PiRpcAgentSession implements AgentSession {
         isRecord(data) &&
         data.sessionId === this.state.sessionId &&
         typeof data.runtimeEpoch === "string"
-          ? this.validNativeFeatures(data.features)
+          ? validPiNativeFeatures(data.features)
           : [];
     } catch {
       this.nativeFeatures = [];
     }
+    const patch: Record<string, unknown> = {};
+    for (const feature of this.nativeFeatures) {
+      if (this.config.providerOptions?.[feature.id] !== feature.value) patch[feature.id] = feature.value;
+    }
+    if (Object.keys(patch).length > 0) {
+      this.config.providerOptions = { ...this.config.providerOptions, ...patch };
+      this.emit({ type: "options_changed", provider: this.provider, patch });
+    }
     return before !== JSON.stringify(this.nativeFeatures);
   }
 
-  async setFeature(featureId: string, value: unknown): Promise<void> {
+  /**
+   * Changes Pi's settings. Every other Pi option is read only when Pi starts. `null` keeps
+   * Pi's current value, since Pi has no separate default to go back to.
+   */
+  async applyOptions(options: ProviderOptions): Promise<Record<string, unknown> | void> {
+    const kept: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(options)) {
+      if (key !== "fast_mode" && key !== "review_edits")
+        throw new Error(`Pi reads '${key}' only when it starts`);
+      if (value === null || value === undefined) {
+        const current = this.nativeFeatures.find((feature) => feature.id === key);
+        if (current) kept[key] = current.value;
+        continue;
+      }
+      await this.setNativeFeature(key, value);
+    }
+    this.config.providerOptions = {
+      ...this.config.providerOptions,
+      ...Object.fromEntries(this.nativeFeatures.map((feature) => [feature.id, feature.value])),
+    };
+    return Object.keys(kept).length > 0 ? kept : undefined;
+  }
+
+  private async setNativeFeature(featureId: string, value: unknown): Promise<void> {
     if (
       !(
         (featureId === "fast_mode" && typeof value === "boolean") ||
@@ -1286,7 +1370,7 @@ export class PiRpcAgentSession implements AgentSession {
       before.sessionId !== this.state.sessionId ||
       typeof before.runtimeEpoch !== "string" ||
       !before.runtimeEpoch ||
-      !this.validNativeFeatures(before.features).some((item) => item.id === featureId)
+      !validPiNativeFeatures(before.features).some((item) => item.id === featureId)
     )
       throw new Error("Pi feature unavailable");
     const after: unknown = await this.runtimeSession.request({
@@ -1297,7 +1381,7 @@ export class PiRpcAgentSession implements AgentSession {
       runtimeEpoch: before.runtimeEpoch,
     });
     if (!isRecord(after)) throw new Error("Pi feature change could not be verified");
-    const features = this.validNativeFeatures(after.features);
+    const features = validPiNativeFeatures(after.features);
     if (
       after.sessionId !== before.sessionId ||
       after.runtimeEpoch !== before.runtimeEpoch ||
@@ -1311,6 +1395,7 @@ export class PiRpcAgentSession implements AgentSession {
   private readonly usagePoller: PiUsagePoller;
   private closed = false;
   private interruptingTurn: { turnId: string | undefined; error: string | null } | null = null;
+  private runtimeDead = false;
   private readonly closeController = new AbortController();
   private readonly pendingExtensionHydrations = new Set<Promise<void>>();
   private pendingOutput: Promise<void> | null = null;
@@ -1339,7 +1424,9 @@ export class PiRpcAgentSession implements AgentSession {
         : options.capabilities;
     this.provider = PI_PROVIDER;
     this.currentModeId = options.currentModeId ?? null;
+    this.persistedSessionFile = options.persistedSessionFile;
     this.cleanup = options.cleanup;
+    this.closeAfterHistory = options.closeAfterHistory ?? false;
     this.extensionTimeoutMs = options.extensionTimeoutMs ?? DEFAULT_PI_EXTENSION_RESULT_TIMEOUT_MS;
     this.logger = options.logger;
     this.extensionHost = createPiExtensionHost(this.logger);
@@ -1369,7 +1456,9 @@ export class PiRpcAgentSession implements AgentSession {
 
   private readonly runtimeSession: PiRuntimeSession;
   private readonly config: AgentSessionConfig;
+  private readonly persistedSessionFile?: string;
   private readonly cleanup?: () => void;
+  private readonly closeAfterHistory: boolean;
   private readonly extensionTimeoutMs: number;
 
   get id(): string | null {
@@ -1389,6 +1478,9 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   async startTurn(prompt: AgentPromptInput, options?: AgentRunOptions): Promise<StartTurnResult> {
+    if (this.runtimeDead) {
+      throw new Error("Pi process exited. Reload agent before sending another message.");
+    }
     if (this.activeTurnId) {
       throw new Error("A Pi turn is already active");
     }
@@ -1560,16 +1652,21 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
-    await this.requestEntryCapture("history");
-    yield* streamPiHistory(
-      this.provider,
-      await this.runtimeSession.getMessages(),
-      this.contextUserEntries,
-      {},
-      // At most eight 2 MiB child files per replay; later cards retain their summaries.
-      createPiExtensionHost(this.logger, undefined, 16 * 1024 * 1024),
-      this.closeController.signal,
-    );
+    try {
+      await this.requestEntryCapture("history");
+      const history = await this.runtimeSession.getHistory();
+      yield* streamPiHistory(
+        this.provider,
+        history.messages,
+        history.userEntries,
+        {},
+        // At most eight 2 MiB child files per replay; later cards retain their summaries.
+        createPiExtensionHost(this.logger, undefined, 16 * 1024 * 1024),
+        this.closeController.signal,
+      );
+    } finally {
+      if (this.closeAfterHistory) await this.close();
+    }
   }
 
   async getRuntimeInfo(): Promise<AgentRuntimeInfo> {
@@ -1715,7 +1812,7 @@ export class PiRpcAgentSession implements AgentSession {
     return {
       provider: this.provider,
       sessionId: this.state.sessionId,
-      nativeHandle: this.state.sessionFile,
+      nativeHandle: this.persistedSessionFile ?? this.state.sessionFile,
       metadata: {
         cwd: this.config.cwd,
         ...(this.config.model ? { model: this.config.model } : {}),
@@ -1937,10 +2034,10 @@ export class PiRpcAgentSession implements AgentSession {
     return null;
   }
 
-  async setModel(modelId: string | null): Promise<void> {
+  async setModel(modelId: string | null): Promise<{ model: string | null }> {
     const parsedReference = parseModelReference(modelId);
     if (!parsedReference) {
-      return;
+      return { model: modelToId(this.state.model) };
     }
     if (!parsedReference.provider) {
       throw new Error(`Pi model id must include a provider: ${modelId}`);
@@ -1950,6 +2047,7 @@ export class PiRpcAgentSession implements AgentSession {
     await this.refreshState();
     this.config.model = `${model.provider}/${model.id}`;
     void this.usagePoller.refreshIdle();
+    return { model: modelToId(this.state.model) };
   }
 
   async setThinkingOption(thinkingOptionId: string | null): Promise<void> {
@@ -2254,13 +2352,9 @@ export class PiRpcAgentSession implements AgentSession {
     }
   }
 
-  private recordCapturedUserEntries(input: {
-    treeEntries: PiCapturedEntry[];
-    contextEntries: PiCapturedEntry[];
-  }): void {
-    this.contextUserEntries.splice(0, this.contextUserEntries.length, ...input.contextEntries);
+  private recordCapturedUserEntries(entries: PiCapturedEntry[]): void {
     this.treeUserEntriesById.clear();
-    for (const entry of input.treeEntries) {
+    for (const entry of entries) {
       this.treeUserEntriesById.set(entry.id, entry);
     }
   }
@@ -2297,10 +2391,7 @@ export class PiRpcAgentSession implements AgentSession {
     if (!payload) {
       return false;
     }
-    this.recordCapturedUserEntries({
-      treeEntries: parseCapturedEntries(payload.treeEntries),
-      contextEntries: parseCapturedEntries(payload.contextEntries),
-    });
+    this.recordCapturedUserEntries(parseCapturedEntries(payload.treeEntries));
     if (typeof payload.requestId === "string") {
       this.resolveExtensionResult(payload.requestId, undefined);
     }
@@ -2485,6 +2576,7 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   private handleProcessExit(error: string): void {
+    this.runtimeDead = true;
     this.interruptingTurn = null;
     this.rejectAllExtensionResults(new Error(error));
     if (!this.activeTurnId && !this.activeTurnStarted) {
@@ -3097,6 +3189,7 @@ export class PiRpcAgentClient implements AgentClient {
     handle: AgentPersistenceHandle,
     overrides?: Partial<AgentSessionConfig>,
     launchContext?: AgentLaunchContext,
+    options?: AgentResumeSessionOptions,
   ): Promise<AgentSession> {
     const sessionFile = handle.nativeHandle;
     if (!sessionFile) {
@@ -3119,6 +3212,7 @@ export class PiRpcAgentClient implements AgentClient {
         persistence: handle,
         resume: (nextHandle, next, context) => this.resumeSession(nextHandle, next, context),
       });
+    const processCwd = await resolveResumeProcessCwd(resumeConfig.cwd, options?.purpose);
 
     const providerOptions = PiProviderOptionsSchema.parse(
       resumeConfig.config.providerOptions ?? {},
@@ -3129,7 +3223,7 @@ export class PiRpcAgentClient implements AgentClient {
       ...launchContext?.env,
     };
     const mcp = await this.prepareMcpInjection(
-      resumeConfig.cwd,
+      processCwd,
       resumeConfig.config.mcpServers,
       mcpEnv,
       runtime,
@@ -3142,17 +3236,31 @@ export class PiRpcAgentClient implements AgentClient {
       ),
       mcpServers: mcp?.kind === "builtin" ? mcp.servers : undefined,
     });
-    const runtimeSession = await startSessionWithCleanup(
-      runtime,
-      buildResumeStartInput({
-        resumeConfig,
-        sessionFile,
-        launchContext,
-        mcpConfigFile,
-        paseoExtension,
-      }),
-      [mcpConfigFile?.cleanup, paseoExtension?.cleanup],
-    );
+    const tempFiles = mcpConfigFile ? [mcpConfigFile, paseoExtension] : [paseoExtension];
+    const cleanupTempFiles = () => {
+      for (const tempFile of tempFiles) tempFile.cleanup();
+    };
+    let sessionCopy: PiTempFile | null = null;
+    let runtimeSession: PiRuntimeSession;
+    try {
+      if (processCwd !== resumeConfig.cwd) {
+        sessionCopy = await createPiSessionCopy(sessionFile, processCwd);
+        tempFiles.push(sessionCopy);
+      }
+      runtimeSession = await runtime.startSession(
+        buildResumeStartInput({
+          resumeConfig,
+          processCwd,
+          sessionFile: sessionCopy?.path ?? sessionFile,
+          launchContext,
+          mcpConfigFile,
+          paseoExtension,
+        }),
+      );
+    } catch (error) {
+      cleanupTempFiles();
+      throw error;
+    }
     try {
       const initialState = await this.applyResumeModel(runtimeSession, resumeConfig.model);
       return new PiRpcAgentSession({
@@ -3163,15 +3271,16 @@ export class PiRpcAgentClient implements AgentClient {
         },
         initialState,
         capabilities: capabilitiesForSession(mcp !== null),
-        cleanup: combineCleanup([mcpConfigFile?.cleanup, paseoExtension?.cleanup]),
+        persistedSessionFile: sessionCopy ? sessionFile : undefined,
+        cleanup: cleanupTempFiles,
+        closeAfterHistory: options?.purpose === "history",
         extensionTimeoutMs: providerOptions.extensionTimeoutMs,
         logger: this.logger,
         usagePollScheduler: this.usagePollScheduler,
       });
     } catch (error) {
       await runtimeSession.close().catch(() => undefined);
-      mcpConfigFile?.cleanup();
-      paseoExtension?.cleanup();
+      cleanupTempFiles();
       throw error;
     }
   }
@@ -3255,8 +3364,8 @@ export class PiRpcAgentClient implements AgentClient {
     }
   }
 
-  async listFeatures(_config: AgentSessionConfig): Promise<AgentFeature[]> {
-    return [];
+  async listControls(config: AgentSessionConfig): Promise<AgentDraftControls> {
+    return { controls: [], options: config.providerOptions ?? {} };
   }
 
   async listImportableSessions(
