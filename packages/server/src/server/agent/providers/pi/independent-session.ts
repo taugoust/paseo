@@ -384,8 +384,8 @@ export async function createIndependentPiSession(input: {
     get capabilities() {
       return actual?.capabilities ?? input.capabilities;
     },
-    get features() {
-      return actual?.features ?? [];
+    get controls() {
+      return actual?.controls ?? [];
     },
     initialTimeline,
     subscribe(callback) {
@@ -457,9 +457,9 @@ export async function createIndependentPiSession(input: {
       if (starting) throw new Error("Wait for startup before changing thinking");
       config.thinkingOptionId = value ?? undefined;
     },
-    async setFeature(featureId, value) {
-      if (!actual?.setFeature) throw new Error("Runtime feature unavailable before startup");
-      return actual.setFeature(featureId, value);
+    async applyOptions(options) {
+      if (!actual?.applyOptions) throw new Error("Pi settings are unavailable before startup");
+      return actual.applyOptions(options);
     },
     async startTurn(prompt, options) {
       if (dispatching) throw new Error("Independent conversation startup is already in progress");

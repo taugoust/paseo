@@ -177,7 +177,7 @@ class PiCliRuntimeSession implements PiRuntimeSession {
   async abort(): Promise<void> {
     // Abort is idle-gated: observation deadlines do not mean refusal. The
     // manager bounds UI latency; process death/close still rejects this RPC.
-    await this.process.requestStopWork({ type: "abort" }, JSONL_RPC_NO_TIMEOUT);
+    await this.options.process.requestStopWork({ type: "abort" }, JSONL_RPC_NO_TIMEOUT);
   }
 
   async getState(): Promise<PiSessionState> {

@@ -156,7 +156,7 @@ export async function archiveByScope(
     const workspaceId = request.scope.workspaceId;
     // tmux owns the entire window. Do not recursively archive agent descendants
     // outside it, run worktree teardown, or delete the working directory.
-    await dependencies.archiveWorkspaceRecord(workspaceId);
+    await dependencies.archiveWorkspaceRecord(workspaceId, new Date().toISOString());
     await dependencies.emitWorkspaceUpdatesForWorkspaceIds([workspaceId]);
     return { archivedAgentIds: [], archivedWorkspaceIds: [workspaceId], removedDirectory: false };
   }

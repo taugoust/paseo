@@ -7,6 +7,7 @@ import { basename, join, resolve as resolvePath } from "node:path";
 import type { Logger } from "pino";
 import stripAnsi from "strip-ansi";
 import { z } from "zod";
+import type { ProviderOptions } from "@getpaseo/protocol/agent-types";
 
 import {
   type AgentCapabilityFlags,
@@ -27,6 +28,7 @@ import {
   type AgentRunOptions,
   type AgentRunResult,
   type AgentRuntimeInfo,
+  type AgentOptionControl,
   type AgentSelectOption,
   type AgentSession,
   type AgentSessionConfig,
@@ -125,6 +127,60 @@ const DEFAULT_PI_EXTENSION_RESULT_TIMEOUT_MS = 30_000;
 const DEFAULT_PI_RPC_TIMEOUT_MS = 60_000;
 const QUESTION_RESPONSE_HEADER = "Response";
 
+/** A setting the Pi process reports through `get_pi_features`. */
+type PiNativeFeature =
+  | { id: "fast_mode"; type: "toggle"; label: string; icon: string; value: boolean }
+  | {
+      id: "review_edits";
+      type: "select";
+      label: string;
+      icon: string;
+      value: "on" | "off";
+      options: Array<{ id: "on" | "off"; label: string }>;
+    };
+
+function validPiNativeFeatures(value: unknown): PiNativeFeature[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item: unknown): item is PiNativeFeature => {
+    if (
+      !isRecord(item) ||
+      typeof item.label !== "string" ||
+      typeof item.icon !== "string" ||
+      !["zap", "shield-check"].includes(item.icon)
+    )
+      return false;
+    if (item.id === "fast_mode") return item.type === "toggle" && typeof item.value === "boolean";
+    if (
+      item.id !== "review_edits" ||
+      item.type !== "select" ||
+      typeof item.value !== "string" ||
+      !["on", "off"].includes(item.value) ||
+      !Array.isArray(item.options) ||
+      item.options.length !== 2
+    )
+      return false;
+    return item.options.every(
+      (option: unknown) =>
+        isRecord(option) &&
+        typeof option.id === "string" &&
+        ["on", "off"].includes(option.id) &&
+        typeof option.label === "string",
+    );
+  });
+}
+
+function piFeatureControl(feature: PiNativeFeature): AgentOptionControl {
+  if (feature.type === "toggle")
+    return { type: "toggle", key: feature.id, label: feature.label, icon: feature.icon };
+  return {
+    type: "select",
+    key: feature.id,
+    label: feature.label,
+    icon: feature.icon,
+    choices: feature.options.map((option) => ({ value: option.id, label: option.label })),
+  };
+}
+
 export const PiProviderOptionsSchema = z
   .object({
     independentHistoryId: z
@@ -134,6 +190,9 @@ export const PiProviderOptionsSchema = z
     sessionDir: z.string().min(1).optional(),
     rpcTimeoutMs: z.number().int().positive().default(DEFAULT_PI_RPC_TIMEOUT_MS),
     extensionTimeoutMs: z.number().int().positive().default(DEFAULT_PI_EXTENSION_RESULT_TIMEOUT_MS),
+    // Composer controls. Pi owns their values; these mirror what Pi last reported.
+    fast_mode: z.boolean().optional(),
+    review_edits: z.enum(["on", "off"]).optional(),
   })
   .strict();
 
@@ -1240,41 +1299,16 @@ export class PiRpcAgentSession implements AgentSession {
   private commandCache: AgentSlashCommand[] | null = null;
   private state: PiSessionState;
   private currentModeId: string | null;
-  private nativeFeatures: AgentFeature[] = [];
-  get features(): AgentFeature[] {
-    return this.nativeFeatures.map((feature) => ({ ...feature }));
+  /** Settings the Pi process owns, shown as composer controls. Pi's value is the truth. */
+  private nativeFeatures: PiNativeFeature[] = [];
+  get controls(): AgentOptionControl[] {
+    return this.nativeFeatures.map(piFeatureControl);
   }
 
-  private validNativeFeatures(value: unknown): AgentFeature[] {
-    if (!Array.isArray(value)) return [];
-    return value.filter((item: unknown): item is AgentFeature => {
-      if (
-        !isRecord(item) ||
-        typeof item.label !== "string" ||
-        typeof item.icon !== "string" ||
-        !["zap", "shield-check"].includes(item.icon)
-      )
-        return false;
-      if (item.id === "fast_mode") return item.type === "toggle" && typeof item.value === "boolean";
-      if (
-        item.id !== "review_edits" ||
-        item.type !== "select" ||
-        typeof item.value !== "string" ||
-        !["on", "off"].includes(item.value) ||
-        !Array.isArray(item.options) ||
-        item.options.length !== 2
-      )
-        return false;
-      return item.options.every(
-        (option: unknown) =>
-          isRecord(option) &&
-          typeof option.id === "string" &&
-          ["on", "off"].includes(option.id) &&
-          typeof option.label === "string",
-      );
-    });
-  }
-
+  /**
+   * Reads Pi's settings. Returns whether the set of controls changed. When Pi's values differ
+   * from the agent's stored options, the stored options follow Pi and Paseo is told.
+   */
   private async readNativeFeatures(): Promise<boolean> {
     const before = JSON.stringify(this.nativeFeatures);
     try {
@@ -1283,15 +1317,46 @@ export class PiRpcAgentSession implements AgentSession {
         isRecord(data) &&
         data.sessionId === this.state.sessionId &&
         typeof data.runtimeEpoch === "string"
-          ? this.validNativeFeatures(data.features)
+          ? validPiNativeFeatures(data.features)
           : [];
     } catch {
       this.nativeFeatures = [];
     }
+    const patch: Record<string, unknown> = {};
+    for (const feature of this.nativeFeatures) {
+      if (this.config.providerOptions?.[feature.id] !== feature.value) patch[feature.id] = feature.value;
+    }
+    if (Object.keys(patch).length > 0) {
+      this.config.providerOptions = { ...this.config.providerOptions, ...patch };
+      this.emit({ type: "options_changed", provider: this.provider, patch });
+    }
     return before !== JSON.stringify(this.nativeFeatures);
   }
 
-  async setFeature(featureId: string, value: unknown): Promise<void> {
+  /**
+   * Changes Pi's settings. Every other Pi option is read only when Pi starts. `null` keeps
+   * Pi's current value, since Pi has no separate default to go back to.
+   */
+  async applyOptions(options: ProviderOptions): Promise<Record<string, unknown> | void> {
+    const kept: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(options)) {
+      if (key !== "fast_mode" && key !== "review_edits")
+        throw new Error(`Pi reads '${key}' only when it starts`);
+      if (value === null || value === undefined) {
+        const current = this.nativeFeatures.find((feature) => feature.id === key);
+        if (current) kept[key] = current.value;
+        continue;
+      }
+      await this.setNativeFeature(key, value);
+    }
+    this.config.providerOptions = {
+      ...this.config.providerOptions,
+      ...Object.fromEntries(this.nativeFeatures.map((feature) => [feature.id, feature.value])),
+    };
+    return Object.keys(kept).length > 0 ? kept : undefined;
+  }
+
+  private async setNativeFeature(featureId: string, value: unknown): Promise<void> {
     if (
       !(
         (featureId === "fast_mode" && typeof value === "boolean") ||
@@ -1305,7 +1370,7 @@ export class PiRpcAgentSession implements AgentSession {
       before.sessionId !== this.state.sessionId ||
       typeof before.runtimeEpoch !== "string" ||
       !before.runtimeEpoch ||
-      !this.validNativeFeatures(before.features).some((item) => item.id === featureId)
+      !validPiNativeFeatures(before.features).some((item) => item.id === featureId)
     )
       throw new Error("Pi feature unavailable");
     const after: unknown = await this.runtimeSession.request({
@@ -1316,7 +1381,7 @@ export class PiRpcAgentSession implements AgentSession {
       runtimeEpoch: before.runtimeEpoch,
     });
     if (!isRecord(after)) throw new Error("Pi feature change could not be verified");
-    const features = this.validNativeFeatures(after.features);
+    const features = validPiNativeFeatures(after.features);
     if (
       after.sessionId !== before.sessionId ||
       after.runtimeEpoch !== before.runtimeEpoch ||
