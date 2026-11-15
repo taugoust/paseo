@@ -691,8 +691,24 @@ test("reads complete persisted history instead of compacted RPC context", async 
       contents + '\n{"type":"custom","id":"rewind","parentId":null,"customType":"paseo_rewind"}',
     );
     expect((await runtime.getHistory()).messages).toEqual([]);
-    await writeFile(file, contents + '\n{"type":"custom","id":"bad","parentId":"missing"}');
-    await expect(runtime.getHistory()).rejects.toThrow("Missing Pi transcript ancestor");
+    // A missing parent starts the branch, as in Pi, instead of rejecting it.
+    const orphan = {
+      type: "message",
+      id: "orphan-user",
+      parentId: "missing",
+      message: { role: "user", content: "after a lost entry" },
+    };
+    const reply = {
+      type: "message",
+      id: "orphan-reply",
+      parentId: "orphan-user",
+      message: { role: "assistant", content: [{ type: "text", text: "still here" }] },
+    };
+    await writeFile(file, [contents, JSON.stringify(orphan), JSON.stringify(reply)].join("\n"));
+    expect(await runtime.getHistory()).toEqual({
+      messages: [orphan.message, reply.message],
+      userEntries: [{ id: "orphan-user", text: "after a lost entry" }],
+    });
   } finally {
     await runtime.close();
     await rm(root, { recursive: true, force: true });

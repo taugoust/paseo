@@ -367,7 +367,6 @@ test("preserves native custom entries and legacy linear messages without inventi
 
 test.each([
   [{ type: "message", id: "x", parentId: "x", message: { role: "user", content: "cycle" } }],
-  [{ type: "message", id: "x", parentId: "missing", message: { role: "user", content: "orphan" } }],
   [
     { type: "custom", id: "x", parentId: null },
     { type: "custom", id: "x", parentId: null },
