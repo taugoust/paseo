@@ -126,8 +126,9 @@ function activeBranch(records: z.infer<typeof record>[]): z.infer<typeof record>
     seen.add(id);
     branch.push(entry);
     if (entry.parentId === null) break;
+    // Like Pi's own getBranch, an entry whose parent is missing starts the
+    // branch. Pi keeps using such a session, so Paseo must still load it.
     entry = byId.get(entry.parentId!);
-    if (!entry) throw new Error("Missing Pi transcript ancestor");
   }
   branch.reverse();
   return branch;
