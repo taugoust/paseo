@@ -29,6 +29,7 @@ const PI_PRESENTATION_RUNTIME_IMPORTS = new Set([
   "zod",
   "@getpaseo/protocol/generic-tool-presentation",
   "@getpaseo/protocol/tool-name-normalization",
+  "../tool-call-args.js",
 ]);
 
 /** Fail closed if bundled presentation gains ambient I/O or dynamic loading. */
@@ -184,6 +185,10 @@ function createRuntimeBoundaryPlugin(target: PluginBuildTarget, pluginDirectory:
     [
       realpathSync.native(path.join(path.dirname(piPresentation), "tool-call-mapper.js")),
       PI_PRESENTATION_RUNTIME_IMPORTS,
+    ],
+    [
+      realpathSync.native(path.join(path.dirname(piPresentation), "../tool-call-args.js")),
+      new Set<string>(),
     ],
     [
       realpathSync.native(path.join(path.dirname(piPresentation), "native-tool-error.js")),
