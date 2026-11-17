@@ -77,12 +77,22 @@ const record = z
   })
   .passthrough();
 
+/** Parse one JSONL line. Blank and unreadable lines are skipped, as in Pi. */
+function parseLine(line: string): unknown {
+  if (!line.trim()) return undefined;
+  try {
+    return JSON.parse(line);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Select the persisted active ancestry, retaining structural links across compaction. */
 export function readPiTranscript(contents: string): PiTranscript {
-  const records = contents
-    .split("\n")
-    .filter((line) => line.trim())
-    .map((line) => record.parse(JSON.parse(line)));
+  const records = contents.split("\n").flatMap((line) => {
+    const parsed = parseLine(line);
+    return parsed === undefined ? [] : [record.parse(parsed)];
+  });
   const header = records.shift();
   if (header?.type !== "session") throw new Error("Pi transcript is missing its session header");
   const legacy = header.version === 1;
