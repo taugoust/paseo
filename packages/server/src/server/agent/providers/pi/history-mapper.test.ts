@@ -383,6 +383,42 @@ test.each([
   ).toThrow();
 });
 
+test("skips unreadable lines like Pi", () => {
+  const lost = {
+    type: "message",
+    id: "lost",
+    parentId: "a1",
+    message: { role: "user", content: "lost question" },
+  };
+  const rows = [
+    JSON.stringify({ type: "session", version: 3 }),
+    JSON.stringify({
+      type: "message",
+      id: "u1",
+      parentId: null,
+      message: { role: "user", content: "before" },
+    }),
+    JSON.stringify({
+      type: "message",
+      id: "a1",
+      parentId: "u1",
+      message: { role: "assistant", content: [{ type: "text", text: "answer" }] },
+    }),
+    // A lost write can leave zero bytes in front of a record
+    "\0".repeat(64) + JSON.stringify(lost),
+    "{not json",
+    JSON.stringify({
+      type: "message",
+      id: "u2",
+      parentId: "lost",
+      message: { role: "user", content: "after" },
+    }),
+  ];
+  const history = readPiTranscript(rows.join("\n"));
+  expect(history.userEntries.map((entry) => entry.id)).toEqual(["u2"]);
+  expect(history.messages).toHaveLength(1);
+});
+
 test("Fork chat stops at a restored pre-compaction reply on the active branch", async () => {
   const entries = [
     { type: "session", version: 3 },
