@@ -7,6 +7,7 @@ import { isPaseoToolName } from "@getpaseo/protocol/tool-name-normalization";
 
 // Keep this pure presentation entry's declaration closure on public wire types.
 import type { ToolCallDetail } from "@getpaseo/protocol/agent-types";
+import { omitNullArgs } from "../tool-call-args.js";
 
 interface BashToolInput {
   command: string;
@@ -477,11 +478,7 @@ export function parseToolArgs(toolName: string, rawArgs: unknown): PiTrackedTool
   const schema = SIMPLE_TOOL_SCHEMAS[toolName as SimpleToolKind];
   if (schema) {
     // Pi/MCP nullable optional arguments mean "unspecified", not malformed.
-    const record = piToolRecord(rawArgs);
-    const displayArgs = record
-      ? Object.fromEntries(Object.entries(record).filter(([, value]) => value !== null))
-      : rawArgs;
-    const parsed = schema.safeParse(displayArgs);
+    const parsed = schema.safeParse(omitNullArgs(rawArgs));
     if (parsed.success) {
       return { kind: toolName as SimpleToolKind, toolName, args: parsed.data } as PiTrackedToolCall;
     }

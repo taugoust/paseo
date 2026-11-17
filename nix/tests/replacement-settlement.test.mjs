@@ -17,9 +17,13 @@ function fixture(provider, interruption = Promise.resolve()) {
   const run = { token: "original-run", settled: false, settledPromise: terminal.promise };
   let current = run,
     interrupts = 0,
-    deadlines = 0;
+    deadlines = 0,
+    forced = 0;
   const errors = [];
+  // The deadline a replacement waits on after the interrupt is acknowledged.
+  const replacementDeadline = deferred();
   const agent = {
+    id: "agent",
     provider,
     lifecycle: "running",
     session: {
@@ -30,19 +34,41 @@ function fixture(provider, interruption = Promise.resolve()) {
     },
   };
   const manager = Object.create(AgentManager.prototype);
+  const settle = () => {
+    run.settled = true;
+    current = null;
+    agent.lifecycle = "idle";
+    terminal.resolve();
+  };
   Object.assign(manager, {
     requireSessionAgent: () => agent,
     hasInFlightRun: () => Boolean(current && !current.settled),
     runs: {
       getRun: () => current,
+      getPendingRun: () => null,
       trackAutonomousRun: () => assert.fail("unexpected new autonomous run"),
     },
     runInterrupts: new WeakMap(),
+    foregroundMutationTails: new Map(),
+    replacementMutationTails: new Map(),
     rescueTimeouts: { interruptSessionMs: 2000 },
-    waitWithTimeout: async ({ timeoutMs }) => {
+    waitWithTimeout: async ({ operation, timeoutMs }) => {
       assert.equal(timeoutMs, 2000);
       deadlines++;
+      // A replacement waits on the old run itself until its deadline passes.
+      // Stop's bounded response always reaches its deadline here.
+      if (operation === run.settledPromise) {
+        return Promise.race([
+          operation.then(() => "completed"),
+          replacementDeadline.promise.then(() => "timed_out"),
+        ]);
+      }
       return "timed_out";
+    },
+    // A provider that acknowledged the interrupt but never settled the run.
+    forceCancelStuckRun: async () => {
+      forced++;
+      settle();
     },
     logger: { error: (...args) => errors.push(args) },
   });
@@ -56,11 +82,12 @@ function fixture(provider, interruption = Promise.resolve()) {
     get deadlines() {
       return deadlines;
     },
-    settle() {
-      run.settled = true;
-      current = null;
-      agent.lifecycle = "idle";
-      terminal.resolve();
+    get forced() {
+      return forced;
+    },
+    settle,
+    expireReplacementDeadline() {
+      replacementDeadline.resolve();
     },
     successor() {
       current = { token: "successor", settled: false, settledPromise: deferred().promise };
@@ -87,7 +114,6 @@ for (const provider of ["pi", "codex", "claude"]) {
     await tick();
     await tick();
     assert.equal(f.interrupts, 1);
-    assert.equal(f.deadlines, 0, "a user send must not use Stop's two-second response deadline");
     assert.equal(admitted, false);
     assert.equal(failure, undefined);
     assert.equal(f.run.settled, false);
@@ -95,8 +121,25 @@ for (const provider of ["pi", "codex", "claude"]) {
     await replacement;
     assert.equal(failure, undefined);
     assert.equal(admitted, true);
+    assert.equal(f.forced, 0, "a run that settles in time is not force-canceled");
   });
 }
+
+test("an acknowledged run that never settles is force-canceled after the deadline", async () => {
+  const f = fixture("pi");
+  let admitted = false;
+  const replacement = f.manager.cancelAgentRunBefore("agent", "replace").then(() => {
+    admitted = true;
+  });
+  await tick();
+  await tick();
+  assert.equal(admitted, false);
+  assert.equal(f.forced, 0);
+  f.expireReplacementDeadline();
+  await replacement;
+  assert.equal(f.forced, 1);
+  assert.equal(admitted, true);
+});
 
 test("replacement can settle before a late interrupt acknowledgment without blocking a successor", async () => {
   const interruption = deferred(),

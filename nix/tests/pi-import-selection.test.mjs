@@ -28,6 +28,10 @@ for (const descriptor of [null, { provider: "openai", modelId: "stale-model" }])
     const calls = [];
     const session = {
       async *streamHistory() {},
+      // Like PiRpcAgentSession attached without a requested model.
+      describePersistence() {
+        return { provider: "pi", sessionId: "child", nativeHandle: file, metadata: { cwd: dir } };
+      },
       async getRuntimeInfo() {
         return { provider: "pi", model: "openai/gpt-6-luna", thinkingOptionId: "high" };
       },

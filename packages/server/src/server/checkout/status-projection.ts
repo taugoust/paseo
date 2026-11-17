@@ -49,54 +49,55 @@ export function buildCheckoutStatusPayloadFromSnapshot({
     throw new Error("Workspace git snapshot is missing required checkout status fields");
   }
 
-  if (snapshot.git.isPaseoOwnedWorktree) {
-    if (snapshot.git.mainRepoRoot === null || snapshot.git.baseRef === null) {
+  const { git } = snapshot;
+  if (git.isPaseoOwnedWorktree) {
+    if (git.mainRepoRoot === null || git.baseRef === null) {
       throw new Error("Workspace git snapshot is missing required worktree status fields");
     }
 
     return {
+      ...gitStatusFields(snapshot, snapshot.git.repoRoot, snapshot.git.isDirty),
       cwd,
-      isGit: true,
-      diffStat: snapshot.git.diffStat ?? null,
-      repoRoot: snapshot.git.repoRoot,
-      mainRepoRoot: snapshot.git.mainRepoRoot,
-      currentBranch: snapshot.git.currentBranch ?? null,
-      isDirty: snapshot.git.isDirty,
-      baseRef: snapshot.git.baseRef,
-      baseRefExact: snapshot.git.baseRefExact,
-      comparisonBaseRef: snapshot.git.comparisonBaseRef,
-      aheadBehind: snapshot.git.aheadBehind ?? null,
-      upstreamRef: snapshot.git.upstreamRef ?? null,
-      aheadOfOrigin: snapshot.git.aheadOfOrigin ?? null,
-      behindOfOrigin: snapshot.git.behindOfOrigin ?? null,
-      hasRemote: snapshot.git.hasRemote,
-      remoteUrl: snapshot.git.remoteUrl,
+      mainRepoRoot: git.mainRepoRoot,
+      baseRef: git.baseRef,
       isPaseoOwnedWorktree: true,
-      error: null,
       requestId,
     };
   }
 
   return {
+    ...gitStatusFields(snapshot, snapshot.git.repoRoot, snapshot.git.isDirty),
     cwd,
-    isGit: true,
-    diffStat: snapshot.git.diffStat ?? null,
-    repoRoot: snapshot.git.repoRoot,
-    mainRepoRoot: snapshot.git.mainRepoRoot,
-    currentBranch: snapshot.git.currentBranch ?? null,
-    isDirty: snapshot.git.isDirty,
-    baseRef: snapshot.git.baseRef ?? null,
-    baseRefExact: snapshot.git.baseRefExact,
-    comparisonBaseRef: snapshot.git.comparisonBaseRef,
-    aheadBehind: snapshot.git.aheadBehind ?? null,
-    upstreamRef: snapshot.git.upstreamRef ?? null,
-    aheadOfOrigin: snapshot.git.aheadOfOrigin ?? null,
-    behindOfOrigin: snapshot.git.behindOfOrigin ?? null,
-    hasRemote: snapshot.git.hasRemote,
-    remoteUrl: snapshot.git.remoteUrl,
+    mainRepoRoot: git.mainRepoRoot,
+    baseRef: git.baseRef ?? null,
     isPaseoOwnedWorktree: false,
-    error: null,
     requestId,
+  };
+}
+
+/** The checkout status fields shared by plain checkouts and Paseo worktrees. */
+function gitStatusFields(
+  snapshot: WorkspaceGitRuntimeSnapshot,
+  repoRoot: string,
+  isDirty: boolean,
+) {
+  const { git } = snapshot;
+  return {
+    isGit: true as const,
+    diffStat: git.diffStat ?? null,
+    repoRoot,
+    currentBranch: git.currentBranch ?? null,
+    isDirty,
+    baseRefExact: git.baseRefExact,
+    comparisonBaseRef: git.comparisonBaseRef,
+    aheadBehind: git.aheadBehind ?? null,
+    upstreamRef: git.upstreamRef ?? null,
+    aheadOfOrigin: git.aheadOfOrigin ?? null,
+    behindOfOrigin: git.behindOfOrigin ?? null,
+    hasRemote: git.hasRemote,
+    remoteUrl: git.remoteUrl,
+    ...(snapshot.forgeWeb ? { forgeWeb: snapshot.forgeWeb } : {}),
+    error: null,
   };
 }
 

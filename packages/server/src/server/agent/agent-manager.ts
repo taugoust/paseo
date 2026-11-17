@@ -8,7 +8,7 @@ import { ProviderOptionsValidationError } from "./provider-options.js";
 import type { AgentToolResult } from "@getpaseo/plugin/server";
 import type { RuntimeCleanupCandidate } from "./idle-runtime-cleanup/index.js";
 import { AgentNotFoundError, ensureAgentLoaded } from "./agent-loading.js";
-import { projectTimelineRows } from "./timeline-projection.js";
+import { continuesAssistantMessage, projectTimelineRows } from "./timeline-projection.js";
 import type { PluginLifecycle } from "../plugins/lifecycle/index.js";
 import { describeHookAgent, publishAgentStream } from "../plugins/lifecycle/index.js";
 import { applyRecordPatch } from "../record-patch.js";
@@ -97,6 +97,7 @@ import {
 import { limitAgentTimelineItemContent } from "./agent-timeline-content.js";
 import {
   AgentRunState,
+  type TrackedAgentRun,
   type ForegroundTurnWaiter,
   type PendingForegroundRun,
 } from "./agent-run-state.js";
@@ -864,6 +865,7 @@ export class AgentManager {
   private readonly sessionEventTails = new Map<string, Promise<void>>();
   private readonly steerEventBarriers = new Map<string, SteerEventBarrier>();
   private readonly foregroundMutationTails = new Map<string, Promise<void>>();
+  private readonly replacementMutationTails = new Map<string, Promise<void>>();
   private readonly runs = new AgentRunState();
   // The settled promise is unique to a run token. Weak ownership retains late
   // failures for repeated Stop without leaking completed runs indefinitely.
@@ -878,7 +880,10 @@ export class AgentManager {
   private readonly inFlightAgentCloses = new Map<string, Promise<void>>();
   private readonly historySessions = new WeakSet<AgentSession>();
   private readonly reloadedSessionCloses = new WeakMap<AgentSession, Promise<void>>();
-  private readonly runtimeCleanupIdentities = new WeakMap<AgentSession, object>();
+  private readonly runtimeCleanupIdentities = new WeakMap<
+    AgentSession,
+    { readonly openedAt: number }
+  >();
   private readonly collectingRuntimes = new Set<string>();
   private readonly lifecycleMutationTails = new Map<string, Promise<void>>();
   private readonly agentStreamCoalescer: AgentStreamCoalescer;
@@ -1754,9 +1759,9 @@ export class AgentManager {
     return this.registerSession(session, storedConfig, resolvedAgentId, {
       launchedOptions,
       ...options,
-      // The caller read its metadata before this turn in the lane; a setMetadata queued ahead of
-      // it has saved a newer record, the one the open hooks saw.
-      ...(record ? { metadata: record.metadata } : {}),
+      // The caller read its metadata and attention before this turn in the lane; a setMetadata
+      // or attention clear queued ahead of it has saved a newer record, the one the open hooks saw.
+      ...(record ? { metadata: record.metadata, attention: extractAttention(record) } : {}),
       workspaceId,
       launchEnv,
       persistence: handle,
@@ -2103,7 +2108,7 @@ export class AgentManager {
       const updatedAt = agent.updatedAt;
       let identity = this.runtimeCleanupIdentities.get(agent.session);
       if (!identity) {
-        identity = Object.freeze({});
+        identity = Object.freeze({ openedAt: Date.now() });
         this.runtimeCleanupIdentities.set(agent.session, identity);
       }
       const isEligible = () =>
@@ -2116,7 +2121,7 @@ export class AgentManager {
         parentAgentId: getParentAgentIdFromLabels(agent.labels) ?? undefined,
         provider: agent.provider,
         sessionId: agent.persistence?.sessionId ?? null,
-        lastActivityAt: updatedAt.getTime(),
+        lastActivityAt: Math.max(updatedAt.getTime(), identity.openedAt),
         isEligible,
         canStopRuntime: agent.session.canStopRuntime?.bind(agent.session),
         closeIfEligible: async (revalidate) => {
@@ -2148,6 +2153,7 @@ export class AgentManager {
       agent.inFlightPermissionResponses.size === 0 &&
       (this.collectingRuntimes.has(agent.id) || !this.lifecycleMutationTails.has(agent.id)) &&
       !this.foregroundMutationTails.has(agent.id) &&
+      !this.replacementMutationTails.has(agent.id) &&
       !this.sessionEventTails.has(agent.id) &&
       !this.providerSubagents.list(agent.id).some((child) => child.status === "running")
     );
@@ -2795,6 +2801,10 @@ export class AgentManager {
   }
 
   async clearAgentAttention(agentId: string): Promise<void> {
+    return this.runLifecycleMutation(agentId, () => this.clearAgentAttentionUnlocked(agentId));
+  }
+
+  private async clearAgentAttentionUnlocked(agentId: string): Promise<void> {
     const agent = this.agents.get(agentId);
     if (agent) {
       if (agent.attention.requiresAttention) {
@@ -3500,31 +3510,8 @@ export class AgentManager {
     prompt: AgentPromptInput,
     options?: AgentRunOptions,
   ): Promise<AsyncGenerator<AgentStreamEvent>> {
-    const snapshot = this.requireAgent(agentId);
-    if (
-      snapshot.lifecycle !== "running" &&
-      !snapshot.activeForegroundTurnId &&
-      !this.runs.hasRun(agentId)
-    ) {
-      return this.streamAgent(agentId, prompt, options);
-    }
-
-    const agent = this.requireSessionAgent(agentId);
-    agent.pendingReplacement = true;
-    agent.lifecycle = "running";
-    this.touchUpdatedAt(agent);
-    this.emitState(agent);
-
-    try {
-      await this.cancelAgentRunBefore(agentId, "replace");
-      return this.streamAgent(agentId, prompt, options);
-    } catch (error) {
-      const latest = this.agents.get(agentId);
-      if (latest) {
-        latest.pendingReplacement = false;
-      }
-      throw error;
-    }
+    this.requireSessionAgent(agentId);
+    return this.replaceRunInForegroundLane(agentId, prompt, options);
   }
 
   async steerAgentRun(
@@ -3648,18 +3635,26 @@ export class AgentManager {
   }
 
   private async runForegroundMutation<T>(agentId: string, operation: () => Promise<T>): Promise<T> {
-    const previous = this.foregroundMutationTails.get(agentId) ?? Promise.resolve();
+    return this.runQueuedMutation(this.foregroundMutationTails, agentId, operation);
+  }
+
+  private async runQueuedMutation<T>(
+    tails: Map<string, Promise<void>>,
+    agentId: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    const previous = tails.get(agentId) ?? Promise.resolve();
     const run = previous.catch(() => undefined).then(operation);
     const tail = run.then(
       () => undefined,
       () => undefined,
     );
-    this.foregroundMutationTails.set(agentId, tail);
+    tails.set(agentId, tail);
     try {
       return await run;
     } finally {
-      if (this.foregroundMutationTails.get(agentId) === tail) {
-        this.foregroundMutationTails.delete(agentId);
+      if (tails.get(agentId) === tail) {
+        tails.delete(agentId);
       }
     }
   }
@@ -3671,20 +3666,82 @@ export class AgentManager {
     options?: AgentRunOptions,
   ): Promise<AsyncGenerator<AgentStreamEvent>> {
     this.assertSteerAdmissionOwnsTurn(agent, expectedTurnId);
-    agent.pendingReplacement = true;
-    agent.lifecycle = "running";
-    this.touchUpdatedAt(agent);
-    this.emitState(agent);
+    return this.replaceRunInForegroundLane(agent.id, prompt, options, (live) =>
+      this.assertSteerAdmissionOwnsTurn(live, expectedTurnId),
+    );
+  }
 
-    try {
-      await this.cancelAgentRunBefore(agent.id, "replace");
-      return this.streamAgent(agent.id, prompt, options);
-    } catch (error) {
-      const latest = this.agents.get(agent.id);
-      if (latest) {
-        latest.pendingReplacement = false;
+  /**
+   * Cancels the current run and reserves its replacement in one foreground mutation, so a
+   * concurrent replacement or Stop cannot land between the cancel and the new run's start.
+   */
+  private async replaceRunInForegroundLane(
+    agentId: string,
+    prompt: AgentPromptInput,
+    options: AgentRunOptions | undefined,
+    assertAdmission?: (agent: ActiveManagedAgent) => void,
+  ): Promise<AsyncGenerator<AgentStreamEvent>> {
+    // Replacements queue in arrival order; each one holds the foreground lane only while
+    // it cancels and reserves, so Stop is never stuck behind a replacement that is waiting.
+    return this.runQueuedMutation(this.replacementMutationTails, agentId, () =>
+      this.replaceRunWhenAdmitted(agentId, prompt, options, assertAdmission),
+    );
+  }
+
+  private async replaceRunWhenAdmitted(
+    agentId: string,
+    prompt: AgentPromptInput,
+    options: AgentRunOptions | undefined,
+    assertAdmission?: (agent: ActiveManagedAgent) => void,
+  ): Promise<AsyncGenerator<AgentStreamEvent>> {
+    let stalledStart: PendingForegroundRun | null = null;
+    for (;;) {
+      const admission = await this.runForegroundMutation(agentId, async () => {
+        // Resolve the agent inside the lane: a reload while this send waited replaces it.
+        const agent = this.requireSessionAgent(agentId);
+        // A run that is still starting has no turn to interrupt yet. Canceling it would drop
+        // its prompt, so wait for it outside the lane, where Stop can still reach it. A start
+        // that outlasts the rescue timeout is canceled like any other run.
+        const starting = this.runs.getPendingRun(agent.id);
+        if (starting && starting.start.status !== "started" && starting !== stalledStart) {
+          return { status: "starting" as const, run: starting };
+        }
+        assertAdmission?.(agent);
+        if (!this.hasInFlightRun(agent.id)) {
+          return {
+            status: "reserved" as const,
+            iterator: this.streamAgent(agent.id, prompt, options),
+          };
+        }
+        agent.pendingReplacement = true;
+        agent.lifecycle = "running";
+        this.touchUpdatedAt(agent);
+        this.emitState(agent);
+        try {
+          // A replacement waits until the old run has really settled.
+          const result = await this.cancelAgentRunNow(agent.id, true);
+          if (result.status !== "settled" && result.status !== "not_running") {
+            throw new AgentRunCancellationError(agent.id, "replace", result);
+          }
+          return {
+            status: "reserved" as const,
+            iterator: this.streamAgent(agent.id, prompt, options),
+          };
+        } catch (error) {
+          agent.pendingReplacement = false;
+          throw error;
+        }
+      });
+      if (admission.status === "reserved") {
+        return admission.iterator;
       }
-      throw error;
+      const started = await this.waitWithTimeout({
+        operation: Promise.race([admission.run.turnStartedPromise, admission.run.settledPromise]),
+        timeoutMs: this.rescueTimeouts.interruptSessionMs,
+      });
+      if (started === "timed_out") {
+        stalledStart = admission.run;
+      }
     }
   }
 
@@ -3858,7 +3915,13 @@ export class AgentManager {
     }
   }
 
-  async cancelAgentRun(
+  // Stop does not take the foreground lane: a replacement may already hold it
+  // while it waits for this same run to settle.
+  async cancelAgentRun(agentId: string): Promise<AgentRunCancellationResult> {
+    return this.cancelAgentRunNow(agentId);
+  }
+
+  private async cancelAgentRunNow(
     agentId: string,
     waitForSettlement = false,
   ): Promise<AgentRunCancellationResult> {
@@ -3918,8 +3981,22 @@ export class AgentManager {
     // Sending a replacement stays pending until the old run really settles.
     // Stop and destructive lifecycle operations retain their bounded response.
     // An interrupt failure still resolves this race and is reported below.
-    if (waitForSettlement) await settlement;
-    else
+    if (waitForSettlement) {
+      // Wait for the run to settle or for the provider to answer the interrupt.
+      await Promise.race([run.settledPromise, request.promise]);
+      // The provider acknowledged the interrupt but the run never settled,
+      // e.g. a turn whose start never finishes. Cancel it ourselves after a
+      // bounded wait rather than blocking the replacement forever.
+      if (!run.settled && request.status === "acknowledged") {
+        const waited = await this.waitWithTimeout({
+          operation: run.settledPromise,
+          timeoutMs: INTERRUPT_SESSION_TIMEOUT_MS,
+        });
+        if (waited === "timed_out" && !run.settled) {
+          await this.forceCancelStuckRun(agent, run);
+        }
+      }
+    } else
       await this.waitWithTimeout({
         operation: settlement,
         timeoutMs: this.rescueTimeouts.interruptSessionMs,
@@ -3941,9 +4018,56 @@ export class AgentManager {
     action: "reload" | "replace" | "rewind" | "archive",
   ): Promise<void> {
     if (!this.hasInFlightRun(agentId)) return;
-    const result = await this.cancelAgentRun(agentId, action === "replace");
+    const result = await this.cancelAgentRunNow(agentId, action === "replace");
     if (result.status !== "settled" && result.status !== "not_running") {
       throw new AgentRunCancellationError(agentId, action, result);
+    }
+  }
+
+  /** Cancel a run whose provider acknowledged the interrupt but never settled it. */
+  private async forceCancelStuckRun(
+    agent: ActiveManagedAgent,
+    run: TrackedAgentRun,
+  ): Promise<void> {
+    const agentId = agent.id;
+    const runTurnId = this.runs.getTurnId(agentId);
+    if (runTurnId) {
+      this.logger.warn(
+        { agentId, turnId: runTurnId, kind: run.kind },
+        "cancelAgentRun: acknowledged turn still active after timeout, force-canceling",
+      );
+      await this.dispatchSessionEvent(agent, {
+        type: "turn_canceled",
+        provider: agent.provider,
+        reason: "interrupted",
+        turnId: runTurnId,
+      });
+    } else if (run.kind === "foreground") {
+      this.logger.warn(
+        { agentId, kind: run.kind },
+        "cancelAgentRun: acknowledged pending turn still active after timeout, clearing it",
+      );
+      this.runs.settleForegroundRun(agentId, run.token);
+      if (!agent.pendingReplacement) {
+        agent.lifecycle = "idle";
+        this.touchUpdatedAt(agent);
+        this.emitState(agent);
+      }
+    } else {
+      this.logger.warn(
+        { agentId, kind: run.kind },
+        "cancelAgentRun: acknowledged turn still active after timeout, force-canceling",
+      );
+      await this.dispatchSessionEvent(agent, {
+        type: "turn_canceled",
+        provider: agent.provider,
+        reason: "interrupted",
+      });
+    }
+    if (agent.pendingPermissions.size > 0) {
+      this.resolvePendingPermissionsForAgent(agent, agent.provider, undefined, "Interrupted");
+      this.touchUpdatedAt(agent);
+      this.emitState(agent);
     }
   }
 
@@ -4063,23 +4187,25 @@ export class AgentManager {
   private getLastAssistantMessageFromTimeline(
     timeline: readonly AgentTimelineItem[],
   ): string | null {
-    return this.getLastAssistantMessageSegmentFromTimeline(timeline)?.text ?? null;
+    return (
+      this.getLastAssistantMessageSegmentFromTimeline(timeline.map((item) => ({ item })))?.text ??
+      null
+    );
   }
 
   private getLastAssistantMessageSegmentFromTimeline(
-    timeline: readonly AgentTimelineItem[],
+    timeline: readonly Pick<AgentTimelineRow, "item" | "turnId">[],
   ): { text: string; startsAtBeginning: boolean } | null {
-    // Collect the last contiguous assistant messages (Claude streams chunks)
+    // Collect the chunks of the last assistant message (Claude streams chunks). A turn the
+    // provider starts on its own has no user message before its reply.
     const chunks: string[] = [];
     let startsAtBeginning = false;
     for (let i = timeline.length - 1; i >= 0; i--) {
-      const item = timeline[i];
-      if (item.type !== "assistant_message") {
-        if (chunks.length) {
-          break;
-        }
-        continue;
+      const { item } = timeline[i];
+      if (chunks.length > 0 && !continuesAssistantMessage(timeline[i], timeline[i + 1])) {
+        break;
       }
+      if (item.type !== "assistant_message") continue;
       chunks.push(item.text);
       startsAtBeginning = i === 0;
     }
@@ -4095,8 +4221,9 @@ export class AgentManager {
   }
 
   private async getLastAssistantMessageFromStores(agentId: string): Promise<string | null> {
-    const liveTimeline = this.timelineStore.getItems(agentId);
-    const liveSegment = this.getLastAssistantMessageSegmentFromTimeline(liveTimeline);
+    const liveSegment = this.getLastAssistantMessageSegmentFromTimeline(
+      this.timelineStore.getRows(agentId),
+    );
     if (!this.durableTimelineStore) {
       return liveSegment?.text ?? null;
     }
@@ -4363,6 +4490,7 @@ export class AgentManager {
       }
 
       this.assertAcceptingAgentRegistrations();
+      this.runtimeCleanupIdentities.set(session, Object.freeze({ openedAt: Date.now() }));
       this.agents.set(resolvedAgentId, managed);
       registered = true;
       // Initialize previousStatus to track transitions
