@@ -105,7 +105,8 @@ test("production expanded generic component uses readable fields within bounded 
   assert.doesNotMatch(text, /"question_text"|\{"complete"/);
   const scroll = nodes.find((n) => n.type === "ScrollView");
   assert.ok(scroll);
-  assert.ok(scroll.props.style.some((s) => s?.maxHeight === 240));
+  // The cap may be a style object or part of a style array.
+  assert.ok([scroll.props.style].flat(Infinity).some((s) => s?.maxHeight === 240));
 });
 test("production expanded native helper keeps future metadata and prose", () => {
   const text = render(
