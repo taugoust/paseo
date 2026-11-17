@@ -87,6 +87,7 @@ import {
   listPiImportableSessions,
   readPiImportSessionConfig,
 } from "./session-descriptor.js";
+import { modelDisplayLabel } from "../model-label.js";
 import type { PiRuntime, PiRuntimeSession, PiStartSessionInput } from "./runtime.js";
 import type {
   PiAgentSessionEvent,
@@ -383,36 +384,6 @@ interface PiSlashCommandInvocation {
 }
 
 type AutoCompactMode = boolean | "toggle" | "unknown";
-
-function normalizePiModelLabel(label: string): string {
-  const normalizedLabel = label.trim().replace(/[_\s]+/g, " ");
-  const vendorSeparatorIndex = normalizedLabel.indexOf(": ");
-  if (vendorSeparatorIndex === -1) {
-    return normalizedLabel;
-  }
-
-  return normalizedLabel.slice(vendorSeparatorIndex + 2).trim();
-}
-
-export function transformPiModels(models: AgentModelDefinition[]): AgentModelDefinition[] {
-  return models.map((model) => {
-    if (!model.label.includes("/")) {
-      return model;
-    }
-
-    const segments = model.label.split("/").filter((segment) => segment.length > 0);
-    const rawLabel = segments.at(-1);
-    if (!rawLabel) {
-      return model;
-    }
-
-    return {
-      ...model,
-      label: normalizePiModelLabel(rawLabel),
-      description: model.description ?? model.label,
-    };
-  });
-}
 
 function isPiThinkingLevel(value: string | null | undefined): value is PiThinkingLevel {
   return (
@@ -1237,7 +1208,7 @@ function mapPiModel(model: PiModel, provider: AgentProvider): AgentModelDefiniti
   return {
     provider,
     id: `${model.provider}/${model.id}`,
-    label: `${model.provider}/${model.name ?? model.id}`,
+    label: modelDisplayLabel(model),
     description: `${model.provider}/${model.id}`,
     metadata: {
       provider: model.provider,
@@ -1324,7 +1295,8 @@ export class PiRpcAgentSession implements AgentSession {
     }
     const patch: Record<string, unknown> = {};
     for (const feature of this.nativeFeatures) {
-      if (this.config.providerOptions?.[feature.id] !== feature.value) patch[feature.id] = feature.value;
+      if (this.config.providerOptions?.[feature.id] !== feature.value)
+        patch[feature.id] = feature.value;
     }
     if (Object.keys(patch).length > 0) {
       this.config.providerOptions = { ...this.config.providerOptions, ...patch };
@@ -3185,6 +3157,28 @@ export class PiRpcAgentClient implements AgentClient {
     }
   }
 
+  /** Resumes a session with independent history, or returns null for a normal Pi session. */
+  private resumeIndependentHistory(
+    handle: AgentPersistenceHandle,
+    config: ReturnType<typeof buildResumeConfig>["config"],
+    launchContext: AgentLaunchContext | undefined,
+  ): Promise<AgentSession> | null {
+    const independentId = handle.metadata?.independentHistoryId;
+    if (typeof independentId === "string")
+      config.providerOptions = {
+        ...config.providerOptions,
+        independentHistoryId: independentId,
+      };
+    if (!hasIndependentHistory(config)) return null;
+    return createIndependentPiSession({
+      config,
+      launchContext,
+      capabilities: this.capabilities,
+      persistence: handle,
+      resume: (nextHandle, next, context) => this.resumeSession(nextHandle, next, context),
+    });
+  }
+
   async resumeSession(
     handle: AgentPersistenceHandle,
     overrides?: Partial<AgentSessionConfig>,
@@ -3198,20 +3192,8 @@ export class PiRpcAgentClient implements AgentClient {
 
     const persistenceMetadata = parsePersistenceMetadata(handle.metadata);
     const resumeConfig = buildResumeConfig(persistenceMetadata, overrides, this.provider);
-    const independentId = handle.metadata?.independentHistoryId;
-    if (typeof independentId === "string")
-      resumeConfig.config.providerOptions = {
-        ...resumeConfig.config.providerOptions,
-        independentHistoryId: independentId,
-      };
-    if (hasIndependentHistory(resumeConfig.config))
-      return createIndependentPiSession({
-        config: resumeConfig.config,
-        launchContext,
-        capabilities: this.capabilities,
-        persistence: handle,
-        resume: (nextHandle, next, context) => this.resumeSession(nextHandle, next, context),
-      });
+    const independent = this.resumeIndependentHistory(handle, resumeConfig.config, launchContext);
+    if (independent) return independent;
     const processCwd = await resolveResumeProcessCwd(resumeConfig.cwd, options?.purpose);
 
     const providerOptions = PiProviderOptionsSchema.parse(
@@ -3348,15 +3330,13 @@ export class PiRpcAgentClient implements AgentClient {
         "get_state",
         () => catalogSession.getState(),
       );
-      const models = transformPiModels(
-        piModels.map((model) => {
-          const mapped = mapPiModel(model, PI_PROVIDER);
-          const isConfigured =
-            model.provider === configuredModel?.provider && model.id === configuredModel?.id;
-          if (isConfigured) mapped.isDefault = true;
-          return mapped;
-        }),
-      );
+      const models = piModels.map((model) => {
+        const mapped = mapPiModel(model, PI_PROVIDER);
+        const isConfigured =
+          model.provider === configuredModel?.provider && model.id === configuredModel?.id;
+        if (isConfigured) mapped.isDefault = true;
+        return mapped;
+      });
       return { models, modes: [] };
     } finally {
       context?.signal.removeEventListener("abort", handleAbort);
