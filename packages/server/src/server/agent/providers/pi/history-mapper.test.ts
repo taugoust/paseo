@@ -224,6 +224,48 @@ describe("Pi history mapper", () => {
   });
 });
 
+describe("Pi tool calls in interrupted turns", () => {
+  async function toolCallStatus(stopReason: string, errorMessage?: string) {
+    const events = await collectHistory([
+      {
+        role: "assistant",
+        stopReason,
+        ...(errorMessage ? { errorMessage } : {}),
+        content: [
+          { type: "toolCall", id: "tool-1", name: "read", arguments: { path: "note.txt" } },
+        ],
+      },
+    ]);
+    const call = events.find(
+      (event) => event.type === "timeline" && event.item.type === "tool_call",
+    );
+    if (call?.type !== "timeline" || call.item.type !== "tool_call") {
+      throw new Error("no tool call was replayed");
+    }
+    return { status: call.item.status, error: call.item.error };
+  }
+
+  test("an aborted turn shows its unanswered tool calls as canceled", async () => {
+    await expect(toolCallStatus("aborted")).resolves.toEqual({
+      status: "canceled",
+      error: null,
+    });
+  });
+
+  test("a failed turn shows its unanswered tool calls as failed with the turn's error", async () => {
+    const result = await toolCallStatus("error", "content was flagged");
+    expect(result.status).toBe("failed");
+    expect(result.error).toBeTruthy();
+  });
+
+  test("a tool call in a normal turn stays running until its result arrives", async () => {
+    await expect(toolCallStatus("toolUse")).resolves.toEqual({
+      status: "running",
+      error: null,
+    });
+  });
+});
+
 describe("Pi tool-result image replay", () => {
   test("recreates an image from native tool-result history without its source file", async () => {
     const events = await collectHistory([
