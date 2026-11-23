@@ -2,7 +2,7 @@ import { highlightCode } from "./highlighter.js";
 import type { HighlightToken } from "./types.js";
 
 // Shared, theme-independent tokenization + cache for syntax highlighting.
-// Colors are applied at render time, so the cache key is just (extension, code).
+// Colors are applied at render time, so the cache key is just (filename, code).
 
 export interface KeyedToken {
   key: string;
@@ -43,14 +43,14 @@ class LRUCache<K, V> {
 const tokenizationCache = new LRUCache<string, HighlightToken[][]>(200);
 
 // Returns null when highlighting is unavailable; callers then render plain text.
-export function tokenizeToLines(code: string, ext: string | null): HighlightToken[][] | null {
-  if (!ext || code.length > MAX_HIGHLIGHT_CHARS) return null;
-  const cacheKey = `${ext}:${code}`;
+export function tokenizeToLines(code: string, filename: string | null): HighlightToken[][] | null {
+  if (!filename || code.length > MAX_HIGHLIGHT_CHARS) return null;
+  const cacheKey = `${filename.length}:${filename}${code}`;
   const cached = tokenizationCache.get(cacheKey);
   if (cached) return cached;
   let lines: HighlightToken[][];
   try {
-    lines = highlightCode(code, `x.${ext}`);
+    lines = highlightCode(code, filename);
   } catch {
     return null;
   }
@@ -65,8 +65,8 @@ function toKeyedLine(tokens: HighlightToken[], lineIndex: number): KeyedLine {
   };
 }
 
-export function highlightToKeyedLines(code: string, ext: string | null): KeyedLine[] | null {
-  const lines = tokenizeToLines(code, ext);
+export function highlightToKeyedLines(code: string, filename: string | null): KeyedLine[] | null {
+  const lines = tokenizeToLines(code, filename);
   return lines ? lines.map(toKeyedLine) : null;
 }
 

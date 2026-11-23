@@ -1,6 +1,6 @@
 import { isLanguageSupported } from "./parsers.js";
 import type { HighlightToken } from "./types.js";
-import { extensionFromPath, tokenizeToLines } from "./highlight-cache.js";
+import { tokenizeToLines } from "./highlight-cache.js";
 
 export interface HighlightDiffLine {
   type: "add" | "remove" | "context" | "header" | "hunk";
@@ -25,8 +25,7 @@ export function highlightDiffLines<T extends HighlightDiffLine>(
   diffLines: T[],
   filePath: string | null | undefined,
 ): (T & { tokens?: HighlightToken[] })[] {
-  const ext = extensionFromPath(filePath);
-  if (!ext || diffLines.length === 0 || !isLanguageSupported(`x.${ext}`)) return diffLines;
+  if (!filePath || diffLines.length === 0 || !isLanguageSupported(filePath)) return diffLines;
 
   const oldCode: string[] = [];
   const newCode: string[] = [];
@@ -51,8 +50,8 @@ export function highlightDiffLines<T extends HighlightDiffLine>(
     return { oldIndex: -1, newIndex: -1 };
   });
 
-  const oldTokens = oldCode.length > 0 ? tokenizeToLines(oldCode.join("\n"), ext) : null;
-  const newTokens = newCode.length > 0 ? tokenizeToLines(newCode.join("\n"), ext) : null;
+  const oldTokens = oldCode.length > 0 ? tokenizeToLines(oldCode.join("\n"), filePath) : null;
+  const newTokens = newCode.length > 0 ? tokenizeToLines(newCode.join("\n"), filePath) : null;
   if (!oldTokens && !newTokens) return diffLines;
 
   return diffLines.map((line, index) => {
