@@ -1471,6 +1471,38 @@ export class TmuxTopology {
     return true;
   }
 
+  private collectAgentCloseServers(
+    candidates: AgentPane[],
+    receipt: AgentPane | undefined,
+    placement: Placement | undefined,
+  ): Map<string, Pick<Snapshot, "socket" | "serverId">> {
+    const servers = new Map<string, Pick<Snapshot, "socket" | "serverId">>();
+    const records = receipt ? [...candidates, receipt] : candidates;
+    for (const record of records) {
+      const key = JSON.stringify([record.socket, record.serverId]);
+      servers.set(key, { socket: record.socket, serverId: record.serverId });
+    }
+    if (placement) {
+      const key = JSON.stringify([placement.tmuxSocket, placement.tmuxServerId]);
+      servers.set(key, { socket: placement.tmuxSocket, serverId: placement.tmuxServerId });
+    }
+    return servers;
+  }
+
+  private async retireAgentFromExitedServer(
+    agentId: string,
+    server: Pick<Snapshot, "socket" | "serverId">,
+  ): Promise<void> {
+    for (const [key, record] of this.paneAgents) {
+      if (record.agentId === agentId) {
+        this.paneAgents.delete(key);
+      }
+    }
+    this.retiredAgents.delete(agentId);
+    await this.applySnapshot({ ...server, sessions: [], panes: [] });
+    await this.persist();
+  }
+
   // true means handled (pane closed OR proven ghost metadata retired). Callers
   // must not then cancel/archive recursively through a dead provider session.
   closeAgent(agentId: string, workspaceId?: string, historyOnly = false): Promise<boolean> {
@@ -1478,17 +1510,7 @@ export class TmuxTopology {
       const candidates = [...this.paneAgents.values()].filter((p) => p.agentId === agentId);
       const receipt = this.retiredAgents.get(agentId);
       const placement = workspaceId ? this.placements.get(workspaceId) : undefined;
-      const servers = new Map(
-        [...candidates, ...(receipt ? [receipt] : [])].map((p) => [
-          JSON.stringify([p.socket, p.serverId]),
-          { socket: p.socket, serverId: p.serverId },
-        ]),
-      );
-      if (placement)
-        servers.set(JSON.stringify([placement.tmuxSocket, placement.tmuxServerId]), {
-          socket: placement.tmuxSocket,
-          serverId: placement.tmuxServerId,
-        });
+      const servers = this.collectAgentCloseServers(candidates, receipt, placement);
       if (!servers.size) {
         // A history copy can retain a tmux workspace id without owning a pane.
         // Only that history-only record may fall through to archive; unknown
@@ -1508,12 +1530,7 @@ export class TmuxTopology {
         // Nothing answers on the socket and the agent's server has verifiably exited, so its
         // pane is gone with it. Any other failure stays an uncertain close.
         if (!(await serverConfirmedGone(p.serverId))) throw error;
-        for (const [key, value] of this.paneAgents)
-          if (value.agentId === agentId) this.paneAgents.delete(key);
-        this.retiredAgents.delete(agentId);
-        const gone = { socket: p.socket, serverId: p.serverId, sessions: [], panes: [] };
-        await this.applySnapshot(gone);
-        await this.persist();
+        await this.retireAgentFromExitedServer(agentId, p);
         return true;
       }
       // A different server on the same socket is a restart, not absence.
