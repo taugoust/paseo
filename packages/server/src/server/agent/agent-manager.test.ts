@@ -15,6 +15,7 @@ import { createTestLogger } from "../../test-utils/test-logger.js";
 import {
   AgentManager,
   AgentManagerShuttingDownError,
+  AgentRunCancellationError,
   commandMayHaveChangedExternalState,
   type AgentManagerEvent,
   type ManagedAgent,
@@ -3412,7 +3413,7 @@ test("cancelAgentRun preserves running state when the provider interrupt hangs",
     await running;
 
     await expect(fixture.manager.cancelAgentRun(fixture.agentId)).resolves.toEqual({
-      status: "refused",
+      status: "in_progress",
     });
     expect(fixture.session.interruptCalled).toBe(true);
     expect(fixture.manager.getAgent(fixture.agentId)?.lifecycle).toBe("running");
@@ -3422,12 +3423,13 @@ test("cancelAgentRun preserves running state when the provider interrupt hangs",
 });
 
 test("cancelAgentRun preserves the active turn when the provider rejects the interrupt", async () => {
+  const interruptError = new Error("A foreground turn is already active");
   const fixture = await createControlledInterruptFixture({
     name: "interrupt-rejected",
     agentId: "00000000-0000-4000-8000-000000000304",
     turnId: "provider-still-active-turn",
     interrupt: async () => {
-      throw new Error("A foreground turn is already active");
+      throw interruptError;
     },
   });
 
@@ -3436,6 +3438,7 @@ test("cancelAgentRun preserves the active turn when the provider rejects the int
 
     await expect(fixture.manager.cancelAgentRun(fixture.agentId)).resolves.toEqual({
       status: "refused",
+      error: interruptError,
     });
     expect(fixture.manager.getAgent(fixture.agentId)).toMatchObject({
       lifecycle: "running",
@@ -8611,6 +8614,13 @@ test("failed replacement cancellation preserves an autonomous running state", as
   const storage = new AgentStorage(join(workdir, "agents"), logger);
 
   class RejectingLiveInterruptSession extends TestAgentSession {
+    startTurnCalls = 0;
+
+    override async startTurn(): Promise<{ turnId: string }> {
+      this.startTurnCalls++;
+      return super.startTurn();
+    }
+
     override async interrupt(): Promise<void> {
       throw new Error("provider still owns the autonomous turn");
     }
@@ -8650,8 +8660,9 @@ test("failed replacement cancellation preserves an autonomous running state", as
     await running;
 
     await expect(manager.replaceAgentRun(agent.id, "replacement prompt")).rejects.toThrow(
-      `Cannot replace agent ${agent.id} because its active run cancellation was not acknowledged`,
+      AgentRunCancellationError,
     );
+    expect(client.session.startTurnCalls).toBe(0);
     expect(manager.getAgent(agent.id)).toMatchObject({
       lifecycle: "running",
       activeForegroundTurnId: null,
@@ -10508,7 +10519,7 @@ test("a sender's start wait never adopts an unlinked run after a stale start", a
   }
 });
 
-test("acknowledged cancellation settles a pending run before it has a turn id", async () => {
+test("Stop retains a pending run until cancellation actually settles", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "agent-manager-cancel-pending-start-"));
   const startEntered = deferred<void>();
   let rejectStart!: (error: Error) => void;
@@ -10536,6 +10547,7 @@ test("acknowledged cancellation settles a pending run before it has a turn id", 
     registry: new AgentStorage(join(workdir, "agents"), logger),
     logger,
     idFactory: () => "00000000-0000-4000-8000-000000000132",
+    rescueTimeouts: { interruptSessionMs: 10 },
   });
 
   try {
@@ -10549,12 +10561,13 @@ test("acknowledged cancellation settles a pending run before it has a turn id", 
     expect(manager.getAgent(agent.id)?.lifecycle).toBe("idle");
     expect(manager.hasInFlightRun(agent.id)).toBe(true);
 
-    await expect(manager.cancelAgentRun(agent.id)).resolves.toEqual({ status: "settled" });
-    expect(manager.hasInFlightRun(agent.id)).toBe(false);
+    await expect(manager.cancelAgentRun(agent.id)).resolves.toEqual({ status: "in_progress" });
+    expect(manager.hasInFlightRun(agent.id)).toBe(true);
     expect(manager.getAgent(agent.id)?.lifecycle).toBe("idle");
 
-    rejectStart(new Error("released canceled start"));
-    await expect(firstRun).rejects.toThrow("released canceled start");
+    rejectStart(new AgentTurnStartCanceledError());
+    await expect(firstRun).resolves.toMatchObject({ canceled: true });
+    expect(manager.hasInFlightRun(agent.id)).toBe(false);
     expect(manager.getAgent(agent.id)?.lifecycle).toBe("idle");
   } finally {
     rejectStart(new Error("test cleanup"));
@@ -11163,6 +11176,10 @@ test("archiveAgent cascade closes a running child runtime", async () => {
       return { turnId };
     }
 
+    override async interrupt(): Promise<void> {
+      finishRun.resolve();
+    }
+
     override async close(): Promise<void> {
       this.closeCalled = true;
     }
@@ -11224,7 +11241,6 @@ test("archiveAgent cascade closes a running child runtime", async () => {
   await manager.waitForAgentRunStart(child.id);
 
   await manager.archiveAgent(parent.id);
-  finishRun.resolve();
   await drainChildRun;
   unsubscribe();
 
