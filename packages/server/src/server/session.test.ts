@@ -4190,6 +4190,7 @@ describe("session checkout status handling", () => {
         isDirty: true,
         baseRef: "main",
         aheadBehind: { ahead: 2, behind: 1 },
+        diffStat: { additions: 3, deletions: 1 },
         aheadOfOrigin: 2,
         behindOfOrigin: 1,
         upstreamRef: null,
