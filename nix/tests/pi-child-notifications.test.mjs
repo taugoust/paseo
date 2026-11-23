@@ -83,6 +83,7 @@ function broadcaster(agent, present, selective, modern) {
     agentManager: { getAgent: () => agent, getLastAssistantMessage: async () => "Done" },
     sessions: new Map([[{}, { session }]]),
     serverId: "server",
+    notifiedUnreadFinishAt: new Map(),
     pushNotificationSender: {
       send: async (payload) => {
         pushes.push(payload);
@@ -102,7 +103,12 @@ for (const managed of [false, true])
           const before = structuredClone(agent);
           for (const reason of ["finished", "error", "permission"]) {
             const f = broadcaster(agent, present, selective, modern);
-            await f.server.broadcastAgentAttention({ agentId: agent.id, provider: "pi", reason });
+            await f.server.broadcastAgentAttention({
+              agentId: agent.id,
+              provider: "pi",
+              reason,
+              attentionTimestamp: new Date("2025-01-01T00:00:00.000Z"),
+            });
             assert.equal(
               f.messages.length,
               1,
@@ -252,6 +258,7 @@ test("persisted agent list projection removes stale child badge without mutating
     },
     listAgentPayloads: async () => [listed],
     workspaceLastUserMessageTimes: async () => new Map(),
+    getArchivingAt: () => null,
     listProviderSubagentActivity: async () => [],
     listTerminalActivityContributions: async () => [],
     isProviderVisibleToClient: () => true,

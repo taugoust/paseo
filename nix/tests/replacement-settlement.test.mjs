@@ -49,6 +49,8 @@ function fixture(provider, interruption = Promise.resolve()) {
       trackAutonomousRun: () => assert.fail("unexpected new autonomous run"),
     },
     runInterrupts: new WeakMap(),
+    pendingCancellations: new Map(),
+    stopListeners: new Set(),
     foregroundMutationTails: new Map(),
     replacementMutationTails: new Map(),
     rescueTimeouts: { interruptSessionMs: 2000 },
@@ -130,6 +132,7 @@ test("an acknowledged run that never settles is force-canceled after the deadlin
   let admitted = false;
   const replacement = f.manager.cancelAgentRunBefore("agent", "replace").then(() => {
     admitted = true;
+    return undefined;
   });
   await tick();
   await tick();

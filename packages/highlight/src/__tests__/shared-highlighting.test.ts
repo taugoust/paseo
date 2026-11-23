@@ -37,6 +37,19 @@ describe("shared highlighting helpers", () => {
     expect(result[0].tokens).toBeUndefined();
   });
 
+  it("uses full filenames for extensionless Dockerfiles and keeps bare language keys", () => {
+    const source = "FROM node:22\nRUN npm ci";
+    const dockerfile = tokenizeToLines(source, "/repo/Dockerfile");
+    expect(dockerfile).toEqual(tokenizeToLines(source, "Dockerfile"));
+    expect(dockerfile?.flat().some((token) => token.style !== null)).toBe(true);
+    expect(tokenizeToLines("const a = 1;", "/repo/source.ts")).toEqual(
+      tokenizeToLines("const a = 1;", "ts"),
+    );
+    const diff = [{ type: "add" as const, content: "+FROM node:22" }];
+    const highlighted = highlightDiffLines(diff, "/repo/Dockerfile");
+    expect(highlighted[0].tokens).toEqual(dockerfile?.[0]);
+  });
+
   it("returns unsupported diffs unchanged", () => {
     const diff = [{ type: "add" as const, content: "+one" }];
     expect(highlightDiffLines(diff, "file.unknownext")).toBe(diff);
