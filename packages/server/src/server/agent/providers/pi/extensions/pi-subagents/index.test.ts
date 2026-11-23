@@ -391,15 +391,16 @@ describe("pi-subagents adapter", () => {
       agent: "reviewer",
       task: "Review the Pi mapper change",
     });
+    const summary = "The mapper change preserves provider status.";
     const result = parseToolResult({
-      content: [{ type: "text", text: "The mapper change preserves provider status." }],
+      content: [{ type: "text", text: summary }],
     });
 
     expect(mapToolDetail(toolCall, result)).toEqual({
       type: "sub_agent",
       subAgentType: "reviewer",
       description: "Review the Pi mapper change",
-      log: "",
+      log: summary,
     });
   });
 

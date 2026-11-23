@@ -196,7 +196,8 @@ describe("Pi extension host", () => {
   test("claims a tool, declines an unrelated one, and maps history like live events", async () => {
     const host = createPiExtensionHost();
     const args = { agent: "scout", task: "Inspect files" };
-    const result = parseToolResult({ content: [{ type: "text", text: "Found two files" }] });
+    const summary = "Found two files";
+    const result = parseToolResult({ content: [{ type: "text", text: summary }] });
     const live = host.mapToolCall({
       callId: "call-1",
       toolName: "subagent",
@@ -210,7 +211,7 @@ describe("Pi extension host", () => {
           type: "sub_agent",
           subAgentType: "scout",
           description: "Inspect files",
-          log: "",
+          log: summary,
         },
       }),
     );
@@ -234,7 +235,7 @@ describe("Pi extension host", () => {
         role: "toolResult",
         toolCallId: "call-1",
         toolName: "subagent",
-        content: [{ type: "text", text: "Found two files" }],
+        content: [{ type: "text", text: summary }],
       },
     ]);
     const completed = events.find(
