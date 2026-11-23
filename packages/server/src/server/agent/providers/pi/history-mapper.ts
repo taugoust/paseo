@@ -38,6 +38,22 @@ export interface PiHistoryMapperHooks {
   ) => ToolCallDetail | null;
 }
 
+type ClosedToolCallState =
+  | { status: "canceled"; error: null }
+  | { status: "failed"; error: string };
+
+/**
+ * A turn that was aborted or ended with an error never runs its tool calls, so
+ * no result will follow. They are closed here instead of staying "running".
+ */
+function closedToolCallState(
+  message: Extract<PiAgentMessage, { role: "assistant" }>,
+): ClosedToolCallState | null {
+  if (message.stopReason === "aborted") return { status: "canceled", error: null };
+  if (message.stopReason !== "error") return null;
+  return { status: "failed", error: message.errorMessage?.trim() || "Pi turn failed" };
+}
+
 function isTextContentBlock(block: unknown): block is PiTextContent {
   return (
     typeof block === "object" &&
@@ -163,6 +179,7 @@ export class PiHistoryMapper {
     this.assistantIndex += 1;
     const messageId =
       message.responseId || `${this.provider}-history-assistant-${this.assistantIndex}`;
+    const closed = closedToolCallState(message);
     for (const content of message.content) {
       if (content.type === "text" && content.text) {
         events.push({
@@ -198,7 +215,7 @@ export class PiHistoryMapper {
           callId: content.id,
           toolName: tracked.toolName,
           args: tracked.args,
-          status: "running",
+          status: closed ? "failed" : "running",
           result: null,
         });
         const detail = this.mapToolDetail(content.id, tracked, null, mapping?.detail);
@@ -212,9 +229,8 @@ export class PiHistoryMapper {
             type: "tool_call",
             callId: this.resolveToolCallId(content.id, tracked),
             name: mapping?.name ?? tracked.toolName,
-            status: "running",
             detail,
-            error: null,
+            ...(closed ?? { status: "running", error: null }),
           },
         });
         events.push(...this.extensionEvents(mapping));
