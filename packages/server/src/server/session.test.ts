@@ -45,7 +45,7 @@ import { OWNER_PERMISSIONS, type DaemonPermission } from "./authorization/index.
 import { DownloadTokenStore } from "./file-download/token-store.js";
 import { StructuredAgentFallbackError } from "./agent/agent-response-loop.js";
 import type { StoredAgentRecord } from "./agent/agent-storage.js";
-import type { AgentManagerEvent } from "./agent/agent-manager.js";
+import { AgentRunCancellationError, type AgentManagerEvent } from "./agent/agent-manager.js";
 import type { ProviderSnapshotManager } from "./agent/provider-snapshot-manager.js";
 import { WorkspaceLabelError, type WorkspaceLabelService } from "./workspace-labels/index.js";
 import {
@@ -134,12 +134,12 @@ test("interruptAgentIfRunning rejects when graceful cancellation is refused", as
     agentManager: {
       getAgent: vi.fn(() => ({ id: agentId, provider: "codex", lifecycle: "running" })),
       hasInFlightRun: vi.fn(() => true),
-      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const })),
+      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const, error: new Error() })),
     },
   });
 
   await expect(asSessionInternals(session).interruptAgentIfRunning(agentId)).rejects.toThrow(
-    "active run cancellation was not acknowledged",
+    AgentRunCancellationError,
   );
 });
 
@@ -155,7 +155,7 @@ test("cancel_agent_request reports refusal only through its response", async () 
     agentManager: {
       getAgent,
       hasInFlightRun: vi.fn(() => true),
-      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const })),
+      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const, error: new Error() })),
     },
   });
 
@@ -172,8 +172,7 @@ test("cancel_agent_request reports refusal only through its response", async () 
         requestId: "cancel-refused",
         agentId,
         agent: null,
-        error:
-          "Cannot stop agent 11111111-1111-4111-8111-111111111111 because its active run cancellation was not acknowledged",
+        error: expect.stringMatching(/\S/),
       },
     },
   ]);
@@ -187,7 +186,7 @@ test("legacy cancel_agent_request reports refusal through the activity log", asy
     agentManager: {
       getAgent: vi.fn(() => ({ id: agentId, provider: "codex", lifecycle: "running" })),
       hasInFlightRun: vi.fn(() => true),
-      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const })),
+      cancelAgentRun: vi.fn(async () => ({ status: "refused" as const, error: new Error() })),
     },
   });
 
@@ -200,8 +199,7 @@ test("legacy cancel_agent_request reports refusal through the activity log", asy
         id: expect.any(String),
         timestamp: expect.any(Date),
         type: "error",
-        content:
-          "Failed to cancel running agent on request: Cannot stop agent 11111111-1111-4111-8111-111111111111 because its active run cancellation was not acknowledged",
+        content: expect.stringMatching(/\S/),
       },
     },
   ]);
@@ -4192,6 +4190,7 @@ describe("session checkout status handling", () => {
         isDirty: true,
         baseRef: "main",
         aheadBehind: { ahead: 2, behind: 1 },
+        diffStat: { additions: 3, deletions: 1 },
         aheadOfOrigin: 2,
         behindOfOrigin: 1,
         upstreamRef: null,

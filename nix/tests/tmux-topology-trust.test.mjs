@@ -41,6 +41,7 @@ async function fixture(t) {
   const fault = { snapshot: false, allocation: false, registry: false, rename: false };
   const workspaceRegistry = {
     get: async (id) => records.get(id) ?? null,
+    listAll: async () => [...records.values()],
     upsert: async (record) => {
       if (fault.registry) throw new Error("registry fault");
       writes.push(structuredClone(record));

@@ -391,15 +391,16 @@ describe("pi-subagents adapter", () => {
       agent: "reviewer",
       task: "Review the Pi mapper change",
     });
+    const summary = "The mapper change preserves provider status.";
     const result = parseToolResult({
-      content: [{ type: "text", text: "The mapper change preserves provider status." }],
+      content: [{ type: "text", text: summary }],
     });
 
     expect(mapToolDetail(toolCall, result)).toEqual({
       type: "sub_agent",
       subAgentType: "reviewer",
       description: "Review the Pi mapper change",
-      log: "",
+      log: summary,
     });
   });
 
@@ -430,6 +431,63 @@ describe("pi-subagents adapter", () => {
         .map((event) => (event.event.type === "upsert" ? event.event.status : null)),
     ).toContain("completed");
     expect(events.filter((event) => event.event.type === "timeline").length).toBeGreaterThan(0);
+  });
+
+  test("hidden completion updates a child without ending its parent's pending turn", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "paseo-pi-hidden-completion-"));
+    const pi = new FakePi();
+    const client = new PiRpcAgentClient({ logger: pino({ level: "silent" }), runtime: pi });
+    const session = await client.createSession({ provider: "pi", cwd: dir });
+    const events: AgentStreamEvent[] = [];
+    session.subscribe((event) => events.push(event));
+    try {
+      const { turnId } = await session.startTurn("Delegate work");
+      const runtime = pi.latestSession();
+      runtime.emit({
+        type: "tool_execution_start",
+        toolCallId: "child-launch",
+        toolName: "subagent",
+        args: { agent: "scout", task: "Inspect", async: true },
+      });
+      runtime.emit({
+        type: "tool_execution_end",
+        toolCallId: "child-launch",
+        toolName: "subagent",
+        isError: false,
+        result: {
+          details: { mode: "single", asyncId: "child-run", asyncDir: dir, results: [] },
+        },
+      });
+      const beforeNotice = events.length;
+      const content = [
+        "Background task completed: **scout**",
+        `Retention-managed async directory: ${dir}`,
+      ].join("\n");
+      runtime.emit({
+        type: "message_end",
+        message: {
+          role: "custom",
+          customType: "subagent-notify",
+          content,
+          display: false,
+        },
+      });
+      expect(events.slice(beforeNotice)).toEqual([
+        {
+          type: "provider_subagent",
+          provider: "pi",
+          event: { type: "upsert", id: "child-launch", status: "completed" },
+        },
+      ]);
+      expect(events.filter((event) => event.type === "turn_completed")).toEqual([]);
+      runtime.finishTurn();
+      expect(events.filter((event) => event.type === "turn_completed")).toEqual([
+        expect.objectContaining({ turnId }),
+      ]);
+    } finally {
+      await session.close();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   test("settles captured async runs from the completion notice live and on replay", async () => {

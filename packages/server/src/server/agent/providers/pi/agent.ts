@@ -2996,11 +2996,12 @@ export class PiRpcAgentSession implements AgentSession {
       return;
     }
     if (event.message.role === "custom") {
+      // Hidden completion notices still carry structured child lifecycle updates.
+      const customMapping = this.extensionHost.mapCustomMessage(event.message);
+      this.emitExtensionOutput(customMapping, turnId);
       // Hidden extension state is model context, not a user-facing report or
       // a signal that the current model turn has finished.
       if (event.message.display === false) return;
-      const customMapping = this.extensionHost.mapCustomMessage(event.message);
-      this.emitExtensionOutput(customMapping, turnId);
       const text = getUserMessageText(event.message.content);
       if (text) {
         this.emit({

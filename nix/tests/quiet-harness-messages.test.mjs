@@ -11,7 +11,7 @@ const { PiRpcAgentSession } = await import(
     ),
   ).href
 );
-function fixture(activeTurnStarted) {
+function fixture(activeTurnStarted, extensionOutput) {
   const session = Object.create(PiRpcAgentSession.prototype),
     events = [],
     completions = [],
@@ -24,7 +24,7 @@ function fixture(activeTurnStarted) {
     extensionHost: {
       mapCustomMessage(message) {
         mapped.push(message);
-        return undefined;
+        return extensionOutput;
       },
       mapRuntimeNotification() {
         return undefined;
@@ -51,7 +51,27 @@ for (const active of [false, true]) {
     );
     assert.deepEqual(f.events, []);
     assert.deepEqual(f.completions, []);
-    assert.deepEqual(f.mapped, []);
+    assert.deepEqual(f.mapped, [
+      { role: "custom", display: false, content: "Internal task update" },
+    ]);
+  });
+  test(`hidden notices deliver child state without parent output (active=${active})`, () => {
+    const childEvent = {
+      type: "provider_subagent",
+      provider: "pi",
+      event: { type: "upsert", id: "child", status: "completed" },
+    };
+    const f = fixture(active, { events: [childEvent] });
+    const message = {
+      role: "custom",
+      customType: "subagent-notify",
+      display: false,
+      content: "Background task completed: **scout**",
+    };
+    f.session.handleMessageEnd({ type: "message_end", message }, "turn");
+    assert.deepEqual(f.events, [childEvent]);
+    assert.deepEqual(f.completions, []);
+    assert.deepEqual(f.mapped, [message]);
   });
   test(`visible custom output remains visible without prematurely settling active turns (active=${active})`, () => {
     const f = fixture(active);
