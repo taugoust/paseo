@@ -15,6 +15,7 @@ let
     "highlight"
     "plugin"
     "expo-two-way-audio"
+    "react-native-enriched-markdown"
   ];
   bundledPrefixes = map (name: "/packages/${name}/") bundled;
   rootFiles = [
