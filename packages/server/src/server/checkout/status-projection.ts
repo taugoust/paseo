@@ -96,6 +96,8 @@ function gitStatusFields(
     behindOfOrigin: git.behindOfOrigin ?? null,
     upstreamState: git.upstreamState,
     hasRemote: git.hasRemote,
+    pullRemote: git.pullRemote,
+    pushRemote: git.pushRemote,
     firstPushRemote: git.firstPushRemote,
     remoteUrl: git.remoteUrl,
     ...(snapshot.forgeWeb ? { forgeWeb: snapshot.forgeWeb } : {}),
