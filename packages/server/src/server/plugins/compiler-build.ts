@@ -382,11 +382,12 @@ function wrapCommonJsBundle(code: string): string {
   return `(function(require) {\nconst module = { exports: {} };\nconst exports = module.exports;\n${code}\nreturn module.exports;\n})`;
 }
 
-function makeHermesInteropEager(code: string): string {
-  // Hermes evaluates esbuild's lazy CommonJS interop getters from a string with
+function fixHermesInteropLoopBinding(code: string): string {
+  // Hermes evaluates esbuild's CommonJS interop getters from a string with
   // the final loop binding, so every named import can resolve to the last export.
-  // Plugin bundles execute once and do not need live bindings from host modules.
-  return code.replaceAll(/get:\s*\(\)\s*=>\s*(from\d*)\[(key\d*)\]/g, "value: $1[$2]");
+  // Bind each key in its own closure while keeping host module getters lazy so
+  // enumerating a host namespace (such as react-native) never triggers unrelated getters.
+  return code.replaceAll("get: () => from[key]", "get: ((k) => () => from[k])(key)");
 }
 
 function presentationSourceError(
@@ -406,8 +407,8 @@ function unreviewedPresentationImport(
 
 async function minifyClientBundle(code: string): Promise<string> {
   const { transform } = loadEsbuild();
-  // Minify after the eager replace. Whitespace minify rewrites the getter this
-  // replace matches, and identifier minify can delete the helper entirely.
+  // Minify after the loop-binding rewrite. Whitespace minify rewrites the getter
+  // this replace matches, and identifier minify can delete the helper entirely.
   const result = await transform(code, {
     minifyWhitespace: true,
     minifySyntax: true,
@@ -542,11 +543,12 @@ async function compileTarget(entryPath: string, target: PluginBuildTarget): Prom
   checkSharedDependencies(result.metafile.inputs, pluginDirectory);
   let output = result.outputFiles[0]?.text;
   if (!output) throw new Error(`Plugin ${target} compilation produced no output`);
-  let prepared = makeHermesInteropEager(output);
+  const hermesSafe = fixHermesInteropLoopBinding(output);
+  let prepared = hermesSafe;
   if (target === "client") {
     const { transformSync } = nodeRequire("@babel/core");
     const classes = nodeRequire("@babel/plugin-transform-classes");
-    const transformed = transformSync(prepared, {
+    const transformed = transformSync(hermesSafe, {
       babelrc: false,
       configFile: false,
       plugins: [classes],

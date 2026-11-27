@@ -1285,6 +1285,9 @@ export class PiRpcAgentSession implements AgentSession {
   private thinkingBlockHasText = false;
   private activeTurnStarted = false;
   private activeTurnStartedEmitted = false;
+  // A run Pi starts by itself (extension message, process exit notice, answered ask) has no
+  // Paseo turn. This id names it, so the manager can steer it like a Paseo turn.
+  private autonomousTurnId: string | null = null;
   private pendingSettledMessages: PiAgentMessage[] | null = null;
   private activeNoTurnPromptText: string | null = null;
   private readonly pendingNoTurnOutputs: Array<{ turnId: string; message: string }> = [];
@@ -1505,6 +1508,7 @@ export class PiRpcAgentSession implements AgentSession {
     this.activeAssistantMessageId = null;
     this.activeTurnStarted = false;
     this.activeTurnStartedEmitted = false;
+    this.autonomousTurnId = null;
     this.pendingSettledMessages = null;
     this.activePromptRequestId = null;
     this.pendingSteerSubmissions.length = 0;
@@ -1553,6 +1557,7 @@ export class PiRpcAgentSession implements AgentSession {
         this.activeClientMessageId = null;
         this.activeTurnStarted = false;
         this.activeTurnStartedEmitted = false;
+        this.autonomousTurnId = null;
         this.pendingSettledMessages = null;
         this.activeAssistantMessageId = null;
         this.pendingSteerSubmissions.length = 0;
@@ -1584,11 +1589,11 @@ export class PiRpcAgentSession implements AgentSession {
     prompt: AgentPromptInput,
     options: SteerActiveTurnOptions,
   ): Promise<SteerResult> {
-    if (this.closed || this.activeTurnId !== options.expectedTurnId) {
+    if (this.closed || this.currentTurnIdForEvent() !== options.expectedTurnId) {
       return { status: "unavailable" };
     }
     const payload = await convertPromptInput(prompt, { model: this.state.model });
-    if (this.closed || this.activeTurnId !== options.expectedTurnId)
+    if (this.closed || this.currentTurnIdForEvent() !== options.expectedTurnId)
       return { status: "unavailable" };
     // Pi rejects steer RPCs that are extension commands, so slash inputs keep the
     // interrupt-and-replace fallback where they can run directly.
@@ -1851,10 +1856,11 @@ export class PiRpcAgentSession implements AgentSession {
     }
     const epoch = ++this.runAdmissionEpoch;
     const turnId = this.activeTurnId;
+    const eventTurnId = this.currentTurnIdForEvent();
     const canSettleOnAbort = this.canSettleAbortAcknowledgment();
     const interruption =
       this.activeTurnId || this.activeTurnStarted
-        ? { turnId: turnId ?? undefined, error: null as string | null }
+        ? { turnId: eventTurnId, error: null as string | null }
         : null;
     this.interruptingTurn = interruption;
     try {
@@ -1887,12 +1893,31 @@ export class PiRpcAgentSession implements AgentSession {
     try {
       await this.runtimeSession.abort();
     } catch (error) {
-      const terminalError = this.interruptingTurn === interruption ? interruption?.error : null;
+      const terminalError =
+        this.runAdmissionEpoch === epoch &&
+        this.activeTurnId === turnId &&
+        this.currentTurnIdForEvent() === eventTurnId &&
+        this.interruptingTurn === interruption
+          ? interruption?.error
+          : null;
       if (this.interruptingTurn === interruption) this.interruptingTurn = null;
       if (terminalError) {
-        this.completeTurn(turnId ?? undefined, [
-          { role: "assistant", content: [], stopReason: "error", errorMessage: terminalError },
-        ]);
+        this.usagePoller.stopTurn();
+        this.activeTurnId = null;
+        this.activeClientMessageId = null;
+        this.activeTurnStarted = false;
+        this.activeTurnStartedEmitted = false;
+        this.autonomousTurnId = null;
+        this.pendingSettledMessages = null;
+        this.activeAssistantMessageId = null;
+        this.pendingSteerSubmissions.length = 0;
+        this.clearNoTurnBuffers();
+        this.emit({
+          type: "turn_failed",
+          provider: this.provider,
+          turnId: eventTurnId,
+          error: terminalError,
+        });
       }
       throw error;
     }
@@ -1927,6 +1952,7 @@ export class PiRpcAgentSession implements AgentSession {
       this.activeClientMessageId = null;
       this.activeTurnStarted = false;
       this.activeTurnStartedEmitted = false;
+      this.autonomousTurnId = null;
       this.pendingSettledMessages = null;
       this.activeAssistantMessageId = null;
       this.pendingSteerSubmissions.length = 0;
@@ -1935,7 +1961,7 @@ export class PiRpcAgentSession implements AgentSession {
         type: "turn_canceled",
         provider: this.provider,
         reason: "interrupted",
-        turnId: turnId ?? undefined,
+        turnId: interruption.turnId,
       });
     }
   }
@@ -2126,7 +2152,13 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   private currentTurnIdForEvent(): string | undefined {
-    return this.activeTurnId ?? undefined;
+    return this.activeTurnId ?? this.autonomousTurnId ?? undefined;
+  }
+
+  private claimAutonomousTurnId(): void {
+    if (!this.activeTurnId && !this.autonomousTurnId) {
+      this.autonomousTurnId = `autonomous-${randomUUID()}`;
+    }
   }
 
   private async completeNoTurnPrompt(turnId: string): Promise<void> {
@@ -2605,12 +2637,13 @@ export class PiRpcAgentSession implements AgentSession {
     if (!this.activeTurnId && !this.activeTurnStarted) {
       return;
     }
-    const turnId = this.activeTurnId ?? undefined;
+    const turnId = this.currentTurnIdForEvent();
     this.usagePoller.stopTurn();
     this.activeTurnId = null;
     this.activeClientMessageId = null;
     this.activeTurnStarted = false;
     this.activeTurnStartedEmitted = false;
+    this.autonomousTurnId = null;
     this.pendingSettledMessages = null;
     this.pendingSteerSubmissions.length = 0;
     this.clearNoTurnBuffers();
@@ -2644,6 +2677,7 @@ export class PiRpcAgentSession implements AgentSession {
           this.runAdmissionEpoch += 1;
         }
         this.activeTurnStarted = true;
+        this.claimAutonomousTurnId();
         this.clearNoTurnBuffers();
         this.emit({
           type: "thread_started",
@@ -2654,6 +2688,7 @@ export class PiRpcAgentSession implements AgentSession {
       case "turn_start":
         this.firstToken.requestSent(Date.now());
         this.activeTurnStarted = true;
+        this.claimAutonomousTurnId();
         this.clearNoTurnBuffers();
         if (this.activeTurnStartedEmitted) {
           return;
@@ -2662,7 +2697,7 @@ export class PiRpcAgentSession implements AgentSession {
         this.emit({
           type: "turn_started",
           provider: this.provider,
-          turnId,
+          turnId: this.currentTurnIdForEvent(),
         });
         return;
       case "message_start":
@@ -3088,12 +3123,13 @@ export class PiRpcAgentSession implements AgentSession {
     this.activeAssistantMessageId = null;
     this.activeTurnStarted = false;
     this.activeTurnStartedEmitted = false;
+    this.autonomousTurnId = null;
     this.pendingSettledMessages = null;
     this.pendingSteerSubmissions.length = 0;
     this.clearNoTurnBuffers();
     const measured = this.turnMeter.finish(Date.now());
     this.turnMeter.reset();
-    if (isPiAbortedTerminalResponse(messages)) {
+    if (isPiAbortedTerminalResponse(messages) && !errorMessage) {
       this.usagePoller.stopTurn();
       this.emit({
         type: "turn_canceled",
