@@ -1942,7 +1942,7 @@ export async function createPaseoDaemon(
               providerSnapshotManager,
               {
                 listen: formatListenTarget(boundListenTarget ?? listenTarget),
-                getListenStatus: listeners.status,
+                getListenStatus: listeners.refreshStatus,
                 setTailscaleEnabled: (enabled, localEndpoint, confirmed) =>
                   daemonConfigStore.setTailscaleEnabled(enabled, localEndpoint, confirmed),
                 worktreesRoot: config.worktreesRoot,
