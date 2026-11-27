@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -127,14 +127,27 @@ async function listening() {
 }
 
 async function waitForDaemon(daemon) {
-  const deadline = Date.now() + 30_000;
+  const deadline = Date.now() + 60_000;
+  const pidLockPath = path.join(home, "paseo.pid");
+  let lastPidLock = "not written";
   for (;;) {
     if (daemon.exited)
       throw new Error(
-        `Installed daemon exited before listening: ${daemon.launchError ?? JSON.stringify(await daemon.closed)}`,
+        `Installed daemon exited before becoming ready: ${daemon.launchError ?? JSON.stringify(await daemon.closed)}`,
       );
-    if (await listening()) return;
-    assert(Date.now() < deadline, "installed daemon never listened on its isolated endpoint");
+
+    try {
+      const pidLock = JSON.parse(await readFile(pidLockPath, "utf8"));
+      lastPidLock = JSON.stringify(pidLock);
+      if (pidLock.listen === `127.0.0.1:${port}` && (await listening())) return;
+    } catch (error) {
+      lastPidLock = error instanceof Error ? error.message : String(error);
+    }
+
+    assert(
+      Date.now() < deadline,
+      `Installed daemon did not publish its ready listen address in ${pidLockPath}; last state: ${lastPidLock}`,
+    );
     await delay(50);
   }
 }
