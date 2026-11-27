@@ -1,12 +1,7 @@
 import { validatePort, validateSshHost } from "@getpaseo/protocol/ssh-transport";
 import { BrowserWindow } from "electron";
 import { WebSocket, type RawData } from "ws";
-import {
-  buildSshProxyArgs,
-  buildSshSpawnEnv,
-  createSshProxy,
-  resolveSshFailureDetail,
-} from "./ssh-proxy.js";
+import { buildSshProxyArgs, createSshProxy } from "./ssh-proxy.js";
 
 export interface LocalTransportTarget {
   transportType: "socket" | "pipe";

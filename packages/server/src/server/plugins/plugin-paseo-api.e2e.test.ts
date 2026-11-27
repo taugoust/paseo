@@ -55,7 +55,14 @@ test.each(["React Native", "native"])(
         TextDecoder,
       },
     );
-    const daemon = await createTestPaseoDaemon({ mcpEnabled: false });
+    const daemon = await createTestPaseoDaemon({
+      mcpEnabled: false,
+      agentClients: {
+        ...createTestAgentClients(),
+        copilot: createTestAgentClient("copilot"),
+        pi: createTestAgentClient("pi"),
+      },
+    });
     const client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
     const api = sdk.createPaseoApi(client);
     try {

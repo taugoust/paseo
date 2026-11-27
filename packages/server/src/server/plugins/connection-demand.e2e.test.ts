@@ -5,29 +5,63 @@ import { expect, test } from "vitest";
 import { createPaseoApi } from "@getpaseo/client";
 import { DaemonClient } from "../test-utils/daemon-client.js";
 import { createTestPaseoDaemon } from "../test-utils/paseo-daemon.js";
+import { resolveDaemonVersion } from "../daemon-version.js";
+import { createTestAgentClient, createTestAgentClients } from "../test-utils/fake-agent-client.js";
+import type { FetchCatalogOptions } from "../agent/agent-sdk-types.js";
 
 test("an RPC-only plugin receives no agent, project or provider data", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "paseo-quiet-plugin-"));
-  await writeFile(path.join(directory, "paseo-plugin.json"), JSON.stringify({ id: "quiet" }));
+  await writeFile(
+    path.join(directory, "paseo-plugin.json"),
+    JSON.stringify({
+      id: "quiet",
+      requirements: { paseo: `>=${resolveDaemonVersion(import.meta.url)}` },
+    }),
+  );
   await writeFile(
     path.join(directory, "index.server.ts"),
     `
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
+const counts = {};
+const observe = message => {
+  if (message.type !== "paseo_frame" || typeof message.data !== "string") return;
+  const frame = JSON.parse(message.data);
+  const type = frame.message?.type;
+  if (type) counts[type] = (counts[type] ?? 0) + 1;
+};
+// Install before the plugin contribution; the daemon connection can already send its status frame.
+process.on("message", observe);
 export default function contribute(server) {
-  const counts = {};
-  const observe = message => {
-    if (message.type !== "paseo_frame" || typeof message.data !== "string") return;
-    const frame = JSON.parse(message.data);
-    const type = frame.message?.type;
-    if (type) counts[type] = (counts[type] ?? 0) + 1;
-  };
-  process.on("message", observe);
   server.handle(defineRpc({name:"counts", input:z.object({}), output:z.record(z.string(),z.number())}), () => counts);
   return () => process.off("message", observe);
 }`,
   );
-  const daemon = await createTestPaseoDaemon();
+  // New built-in providers probe on demand; fake them so this connection-demand test never starts
+  // local agent runtimes. The forced Claude refresh changes the snapshot to exercise legacy delivery.
+  const agentClients = createTestAgentClients();
+  agentClients.copilot = createTestAgentClient("copilot");
+  agentClients.pi = createTestAgentClient("pi");
+  const claude = agentClients.claude!;
+  const fetchCatalog = claude.fetchCatalog.bind(claude);
+  agentClients.claude = new Proxy(claude, {
+    get(target, property, receiver) {
+      if (property === "fetchCatalog") {
+        return async (options: FetchCatalogOptions) => {
+          const catalog = await fetchCatalog(options);
+          if (!options.force) return catalog;
+          return {
+            ...catalog,
+            models: catalog.models.map((model, index) =>
+              index === 0 ? Object.assign({}, model, { label: "Refreshed test model" }) : model,
+            ),
+          };
+        };
+      }
+      return Reflect.get(target, property, receiver);
+    },
+  });
+  const daemon = await createTestPaseoDaemon({ agentClients });
   const client = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
   const idle = new DaemonClient({ url: `ws://127.0.0.1:${daemon.port}/ws` });
   const legacy = new DaemonClient({
@@ -35,7 +69,9 @@ export default function contribute(server) {
     capabilities: {
       selective_agent_timeline: false,
       explicit_event_subscriptions: false,
+      owned_subscriptions: false,
       provider_snapshot_references: false,
+      project_updates: true,
     },
   });
   const legacyTypes: string[] = [];
@@ -46,6 +82,7 @@ export default function contribute(server) {
     await client.connect();
     await idle.connect();
     await legacy.connect();
+    await client.addProject(directory);
     await client.patchDaemonConfig({ pluginsEnabled: true });
     await client.installDirectoryPlugin(directory);
     const agent = await client.createAgent({ provider: "claude", cwd: directory });

@@ -2,9 +2,14 @@ import { expect, test } from "vitest";
 import { WebSocket, type RawData } from "ws";
 import { createTestPaseoDaemon, type TestPaseoDaemon } from "./test-utils/index.js";
 import { WSOutboundMessageSchema, type WSOutboundMessage } from "./messages.js";
+import { MAX_PHYSICAL_SOCKET_BUFFERED_BYTES } from "./websocket/physical-socket.js";
+import type { AgentModelDefinition, FetchCatalogOptions } from "./agent/agent-sdk-types.js";
+import { createTestAgentClients } from "./test-utils/fake-agent-client.js";
 
-const LARGE_REQUEST_BYTES = 512 * 1024;
-const BURST_MESSAGE_COUNT = 32;
+const LARGE_MODEL_LABEL_BYTES = 512 * 1024;
+const LARGE_MODEL_LABEL = "x".repeat(LARGE_MODEL_LABEL_BYTES);
+const LARGE_MODEL_COUNT =
+  Math.floor(MAX_PHYSICAL_SOCKET_BUFFERED_BYTES / LARGE_MODEL_LABEL_BYTES) + 2;
 const TEST_TIMEOUT_MS = 30_000;
 
 interface SocketClose {
@@ -21,7 +26,32 @@ class ResumedPhysicalSocketSession {
   ) {}
 
   static async launch(): Promise<ResumedPhysicalSocketSession> {
-    const daemon = await createTestPaseoDaemon();
+    // Pings are correlated replies to the replacement socket, not a broadcast. A forced
+    // provider snapshot gives the paused legacy source an actual broadcast larger than its cap.
+    const agentClients = createTestAgentClients();
+    const claude = agentClients.claude!;
+    const fetchCatalog = claude.fetchCatalog.bind(claude);
+    const largeModels: AgentModelDefinition[] = Array.from(
+      { length: LARGE_MODEL_COUNT },
+      (_, index) => ({
+        provider: "claude",
+        id: `physical-buffer-${index}`,
+        label: LARGE_MODEL_LABEL,
+        isDefault: index === 0,
+      }),
+    );
+    agentClients.claude = new Proxy(claude, {
+      get(target, property, receiver) {
+        if (property === "fetchCatalog") {
+          return (options: FetchCatalogOptions) =>
+            options.force
+              ? Promise.resolve({ models: largeModels, modes: [] })
+              : fetchCatalog(options);
+        }
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    const daemon = await createTestPaseoDaemon({ agentClients });
     const original = await connectSocket(daemon.port, "stale-physical-socket");
     return new ResumedPhysicalSocketSession(daemon, original);
   }
@@ -31,35 +61,36 @@ class ResumedPhysicalSocketSession {
   }
 
   async resumeSameClient(): Promise<void> {
-    this.replacement = await connectSocket(this.daemon.port, "stale-physical-socket");
+    this.replacement = await connectSocket(this.daemon.port, "stale-physical-socket", {
+      explicit_event_subscriptions: true,
+    });
   }
 
   async broadcastUntilOriginalCloses(): Promise<SocketClose> {
     const replacement = this.requireReplacement();
     const originalClose = waitForClose(this.original);
-    const finalRequestId = largeRequestId(BURST_MESSAGE_COUNT - 1);
-    const finalResponse = waitForMessage(replacement, (message) => {
-      return (
+    const requestId = "large-provider-snapshot";
+    const refreshResponse = waitForMessage(
+      replacement,
+      (message) =>
         message.type === "session" &&
-        message.message.type === "pong" &&
-        message.message.payload.requestId === finalRequestId
-      );
-    });
+        message.message.type === "refresh_providers_snapshot_response" &&
+        message.message.payload.requestId === requestId,
+    );
 
-    for (let index = 0; index < BURST_MESSAGE_COUNT; index += 1) {
-      replacement.send(
-        JSON.stringify({
-          type: "session",
-          message: {
-            type: "ping",
-            requestId: largeRequestId(index),
-            clientSentAt: index,
-          },
-        }),
-      );
-    }
+    replacement.send(
+      JSON.stringify({
+        type: "session",
+        message: {
+          type: "refresh_providers_snapshot_request",
+          requestId,
+          cwd: this.daemon.staticDir,
+          providers: ["claude"],
+        },
+      }),
+    );
 
-    await finalResponse;
+    await refreshResponse;
     this.original.resume();
     return originalClose;
   }
@@ -111,7 +142,11 @@ test(
   TEST_TIMEOUT_MS,
 );
 
-async function connectSocket(port: number, clientId: string): Promise<WebSocket> {
+async function connectSocket(
+  port: number,
+  clientId: string,
+  capabilities?: { explicit_event_subscriptions: boolean },
+): Promise<WebSocket> {
   const socket = new WebSocket(`ws://127.0.0.1:${port}/ws`);
   await waitForOpen(socket);
   await sendAndWait(
@@ -121,6 +156,7 @@ async function connectSocket(port: number, clientId: string): Promise<WebSocket>
       clientId,
       clientType: "browser",
       protocolVersion: 1,
+      ...(capabilities ? { capabilities } : {}),
     },
     (message) =>
       message.type === "session" &&
@@ -129,10 +165,6 @@ async function connectSocket(port: number, clientId: string): Promise<WebSocket>
   );
   await sendAndWait(socket, { type: "ping" }, (message) => message.type === "pong");
   return socket;
-}
-
-function largeRequestId(index: number): string {
-  return `${index}:`.padEnd(LARGE_REQUEST_BYTES, "x");
 }
 
 function sendAndWait(
