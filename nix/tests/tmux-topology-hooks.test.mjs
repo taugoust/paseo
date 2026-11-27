@@ -45,6 +45,7 @@ async function fixture(t) {
     return {
       get: async (id) => records.get(id) ?? null,
       list: async () => [...records.values()],
+      listActive: async () => [...records.values()].filter((record) => !record.archivedAt),
       update: async (id, fn) => {
         const record = fn(records.get(id) ?? null);
         records.set(id, record);
@@ -135,6 +136,7 @@ function fakeProviderManager() {
     createSession: async (_config, launch) => ({ env: launch.env }),
   });
   manager.paseoToolPolicies = new Map();
+  manager.providerDefinitions = new Map();
   manager.buildLaunchContext = async (_id, _client, _cwd, _policy, env) => ({ env });
   manager.resolveProviderLaunchConfig = (config) => config;
   manager.buildCreateSessionOptions = () => undefined;
@@ -734,7 +736,8 @@ test("project removal kills only the session and preserves windows linked into a
     workspaceRegistry: f.workspaceRegistry,
     paseoHome: f.home,
     sessionLogger: { info() {}, warn() {}, error() {} },
-    markWorkspaceArchiving: () => assert.fail("destroyed windows should already be retired"),
+    markWorkspaceArchiving: (ids) => assert.deepEqual(ids, []),
+    clearWorkspaceArchiving: (ids) => assert.deepEqual(ids, []),
     archiveWorkspaceRecord: () => assert.fail("must not archive a linked surviving window"),
     emitWorkspaceUpdatesForWorkspaceIds: async () => {},
     emit: (value) => responses.push(value),
