@@ -1733,6 +1733,35 @@ export class AgentManager {
     );
   }
 
+  private async applyAgentCreateHooks(
+    config: AgentSessionConfig,
+    options: CreateAgentOptions,
+  ): Promise<{ config: AgentSessionConfig; options: CreateAgentOptions }> {
+    const pluginLifecycle = this.pluginLifecycle;
+    if (!pluginLifecycle || config.internal) return { config, options };
+
+    const sent = exposeFeatureValuesToHook(config);
+    const request = await pluginLifecycle.before("agent.create.before", {
+      config: sent,
+      env: options.env,
+      metadata: options.metadata ?? {},
+      workspaceId: options.workspaceId ?? null,
+    });
+    // COMPAT(featureValues): added in v0.15.0, remove after 2027-05-01. A plugin written
+    // against the previous SDK edits `config.featureValues`.
+    return {
+      config: {
+        ...foldHookFeatureValues({
+          returned: request.config,
+          sent,
+          convert: (values) => this.convertLegacyOptions(request.config.provider, values),
+        }),
+        internal: config.internal,
+      },
+      options: { ...options, env: request.env, metadata: request.metadata ?? options.metadata },
+    };
+  }
+
   private async createAgentSession(
     config: AgentSessionConfig,
     resolvedAgentId: string,
@@ -1740,26 +1769,7 @@ export class AgentManager {
   ): Promise<ManagedAgent> {
     this.assertAcceptingAgentRegistrations();
     config = this.withConvertedOptions(config);
-    if (this.pluginLifecycle && !config.internal) {
-      const sent = exposeFeatureValuesToHook(config);
-      const request = await this.pluginLifecycle.before("agent.create.before", {
-        config: sent,
-        env: options.env,
-        metadata: options.metadata ?? {},
-        workspaceId: options.workspaceId ?? null,
-      });
-      // COMPAT(featureValues): added in v0.15.0, remove after 2027-05-01. A plugin written
-      // against the previous SDK edits `config.featureValues`.
-      config = {
-        ...foldHookFeatureValues({
-          returned: request.config,
-          sent,
-          convert: (values) => this.convertLegacyOptions(request.config.provider, values),
-        }),
-        internal: config.internal,
-      };
-      options = { ...options, env: request.env, metadata: request.metadata ?? options.metadata };
-    }
+    ({ config, options } = await this.applyAgentCreateHooks(config, options));
     if (hasIndependentHistory(config)) config = { ...config, cwd: resolveIndependentCwd(config) };
     const topology = getTmuxTopology();
     if (topology && config.provider === "pi") {

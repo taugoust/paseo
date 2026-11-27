@@ -701,6 +701,18 @@ async function createPiSessionCopy(sessionFile: string, cwd: string): Promise<Pi
   return { path: filePath, cleanup };
 }
 
+async function createResumeSessionCopy(
+  sessionFile: string,
+  cwd: string,
+  originalCwd: string,
+  tempFiles: PiTempFile[],
+): Promise<PiTempFile | null> {
+  if (cwd === originalCwd) return null;
+  const sessionCopy = await createPiSessionCopy(sessionFile, cwd);
+  tempFiles.push(sessionCopy);
+  return sessionCopy;
+}
+
 function createPiPaseoExtensionFile({
   systemPrompt,
   mcpServers = {},
@@ -3293,10 +3305,12 @@ export class PiRpcAgentClient implements AgentClient {
     let sessionCopy: PiTempFile | null = null;
     let runtimeSession: PiRuntimeSession;
     try {
-      if (processCwd !== resumeConfig.cwd) {
-        sessionCopy = await createPiSessionCopy(sessionFile, processCwd);
-        tempFiles.push(sessionCopy);
-      }
+      sessionCopy = await createResumeSessionCopy(
+        sessionFile,
+        processCwd,
+        resumeConfig.cwd,
+        tempFiles,
+      );
       runtimeSession = await runtime.startSession(
         buildResumeStartInput({
           resumeConfig,

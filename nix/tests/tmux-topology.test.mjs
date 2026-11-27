@@ -1085,8 +1085,9 @@ test("closing an agent of an exited tmux server needs proof the server is gone",
     const topology = f.topology;
     await topology.start();
     topology.stop();
-    const workspace = [...topology.placements.values()].find((p) => p.tmuxWindowId === "@2")
-      .workspaceId;
+    const workspace = [...topology.placements.values()].find(
+      (p) => p.tmuxWindowId === "@2",
+    ).workspaceId;
     const live = f.options.snapshot;
     f.options.snapshot = async () => {
       throw new Error("no server running on /fake/socket");
@@ -1099,7 +1100,10 @@ test("closing an agent of an exited tmux server needs proof the server is gone",
         assert.equal(await topology.closeAgent(currentA, workspace), true);
         assert.deepEqual(await savedAgents(f), [], "exited server's agent was retired");
       }
-      assert.deepEqual(f.calls.filter(([, args]) => args[0] === "kill-pane"), []);
+      assert.deepEqual(
+        f.calls.filter(([, args]) => args[0] === "kill-pane"),
+        [],
+      );
     } finally {
       f.options.snapshot = live;
     }
